@@ -34,16 +34,32 @@ fn highlight_tile_below_cursor(
         &TilemapType,
         &TileStorage,
         &Transform,
+        &ChunkData,
     )>,
-    highlighted_tiles_q: Query<Entity, With<HighlightedTile>>,
+    highlighted_tiles_q: Query<Entity, (With<HighlightedTile>, Without<TileCursor>)>,
+    mut tile_cursor_q: Query<
+        (&mut Transform, &mut Visibility),
+        (
+            With<TileCursor>,
+            Without<HighlightedTile>,
+            Without<TilemapSize>,
+        ),
+    >,
 ) {
     // Un-highlight any previously highlighted tile labels.
+    // TODO: Remove/Add highlights after detecting which tiles are selected this frame.
     for entity in highlighted_tiles_q.iter() {
         commands.entity(entity).remove::<HighlightedTile>();
     }
 
+    for (_, mut visibility) in tile_cursor_q.iter_mut() {
+        *visibility = Visibility::Hidden;
+    }
+
     let cursor_pos: Vec4 = Vec4::from((cursor_pos.world, 0.0, 1.0));
-    for (map_size, grid_size, map_type, tile_storage, map_transform) in tilemap_q.iter() {
+    // TODO: Once we have multiple layers we might to only want to query the ground layer for this kind of selection.
+    for (map_size, grid_size, map_type, tile_storage, map_transform, chunk_data) in tilemap_q.iter()
+    {
         // We need to make sure that the cursor's world position is correct relative to the map
         // due to any map transformation.
         let cursor_pos_relative_to_tilemap: Vec2 = {
@@ -60,16 +76,48 @@ fn highlight_tile_below_cursor(
             // Highlight the relevant tile's label
             if let Some(tile_entity) = tile_storage.get(&tile_pos) {
                 commands.entity(tile_entity).insert(HighlightedTile);
+
+                for (mut transform, mut visibility) in tile_cursor_q.iter_mut() {
+                    transform.translation =
+                        tile_pos_to_world_pos(&tile_pos, &chunk_data.position, 100.0);
+                    *visibility = Visibility::Visible;
+                }
             }
         }
     }
 }
+
+fn tile_pos_to_world_pos(tile_pos: &TilePos, chunk_position: &IVec2, z: f32) -> Vec3 {
+    Vec3::new(
+        tile_pos.x as f32 * TILE_SIZE.x
+            + chunk_position.x as f32 * CHUNK_SIZE.x as f32 * TILE_SIZE.x,
+        tile_pos.y as f32 * TILE_SIZE.y
+            + chunk_position.y as f32 * CHUNK_SIZE.y as f32 * TILE_SIZE.y,
+        z,
+    )
+}
+
+#[derive(Component)]
+struct TileCursor {}
 
 fn spawn_testing_chunks(mut commands: Commands, asset_server: Res<AssetServer>) {
     spawn_chunk(&mut commands, &asset_server, IVec2::new(0, 0));
     spawn_chunk(&mut commands, &asset_server, IVec2::new(0, -1));
     spawn_chunk(&mut commands, &asset_server, IVec2::new(-1, 0));
     spawn_chunk(&mut commands, &asset_server, IVec2::new(-1, -1));
+
+    let tile_cursor_texture: Handle<Image> = asset_server.load("sprites/tile_cursor.png");
+    commands
+        .spawn(SpriteBundle {
+            texture: tile_cursor_texture,
+            visibility: Visibility::Hidden,
+            sprite: Sprite {
+                color: Color::rgba(1.0, 1.0, 1.0, 0.25),
+                ..default()
+            },
+            ..default()
+        })
+        .insert(TileCursor {});
 }
 
 #[derive(Debug)]
