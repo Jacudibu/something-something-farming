@@ -107,9 +107,18 @@ const MAX_ZOOM: f32 = 4.0;
 const MIN_ZOOM: f32 = 1.0;
 
 fn zoom_camera(
-    mut query: Query<(&mut OrthographicProjection, &ActionState<CameraAction>), With<Camera2d>>,
+    mut query: Query<
+        (
+            &mut OrthographicProjection,
+            &Camera,
+            &ActionState<CameraAction>,
+            &GlobalTransform,
+        ),
+        With<Camera2d>,
+    >,
+    mut cursor_pos: ResMut<CursorPos>,
 ) {
-    let (mut projection, action_state) = query.single_mut();
+    let (mut projection, camera, action_state, transform) = query.single_mut();
 
     let current_scaling = match projection.scaling_mode {
         ScalingMode::Fixed { .. } => 1.0,
@@ -120,10 +129,22 @@ fn zoom_camera(
         ScalingMode::FixedHorizontal(_) => 1.0,
     };
 
+    if let Some(direction) = zoom_direction(action_state, current_scaling) {
+        projection.scaling_mode = ScalingMode::WindowSize(current_scaling + 0.25 * direction);
+
+        if let Some(pos) = camera.viewport_to_world_2d(transform, cursor_pos.screen) {
+            cursor_pos.world = pos;
+        }
+    }
+}
+
+fn zoom_direction(action_state: &ActionState<CameraAction>, current_scaling: f32) -> Option<f32> {
     if action_state.pressed(CameraAction::ZoomIn) && current_scaling < MAX_ZOOM {
-        projection.scaling_mode = ScalingMode::WindowSize(current_scaling + 0.25)
+        Some(1.0)
     } else if action_state.pressed(CameraAction::ZoomOut) && current_scaling > MIN_ZOOM {
-        projection.scaling_mode = ScalingMode::WindowSize(current_scaling - 0.25)
+        Some(-1.0)
+    } else {
+        None
     }
 }
 
