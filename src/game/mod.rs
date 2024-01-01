@@ -1,11 +1,11 @@
 use crate::game::camera::CameraPlugin;
-use crate::game::game_map::GameMapPlugin;
+use crate::game::tilemap::GameMapPlugin;
 use bevy::app::{App, First, Plugin};
 use bevy::math::Vec2;
 use bevy::prelude::{Camera, CursorMoved, EventReader, GlobalTransform, Query, ResMut, Resource};
 
 mod camera;
-mod game_map;
+mod tilemap;
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
