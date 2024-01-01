@@ -2961,17 +2961,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69d3587f8a9e599cc7ec2c00e331f71c4e69a5f9a4b8a6efd5b07466b9736f9a"
 
 [[package]]
-name = "plant-reaper"
-version = "0.1.0"
-dependencies = [
- "bevy",
- "bevy_ecs_tilemap",
- "bevy_egui",
- "bevy_screen_diagnostics",
- "leafwing-input-manager",
-]
-
-[[package]]
 name = "png"
 version = "0.17.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3287,6 +3276,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "74212e6bbe9a4352329b2f68ba3130c15a3f26fe88ff22dbdc6cdd58fa85e99c"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "something-something-farming"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_ecs_tilemap",
+ "bevy_egui",
+ "bevy_screen_diagnostics",
+ "leafwing-input-manager",
 ]
 
 [[package]]
