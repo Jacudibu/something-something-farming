@@ -1,6 +1,4 @@
-mod camera;
 mod game;
-mod game_map;
 
 use crate::game::GamePlugin;
 use bevy::prelude::*;
