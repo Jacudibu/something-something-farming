@@ -1,17 +1,17 @@
 use crate::game::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
 use crate::game::tilemap::chunk_data::ChunkData;
-use crate::game::tilemap::tile_selection::TileSelectionPlugin;
+use crate::game::tilemap::tile_cursor::TileCursorPlugin;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tile_type::{TileData, TileType};
 
 pub(crate) mod chunk_data;
-pub(crate) mod tile_selection;
+pub(crate) mod tile_cursor;
 mod tile_type;
 pub(crate) mod tilemap_layer;
 
 pub(crate) mod prelude {
-    pub(crate) use super::{chunk_data, tile_selection, tilemap_layer};
+    pub(crate) use super::{chunk_data, tile_cursor, tilemap_layer};
 }
 
 const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 16.0, y: 16.0 };
@@ -29,7 +29,7 @@ impl Plugin for GameMapPlugin {
             ..Default::default()
         })
         .add_plugins(TilemapPlugin)
-        .add_plugins(TileSelectionPlugin)
+        .add_plugins(TileCursorPlugin)
         .add_systems(Startup, spawn_testing_chunks);
     }
 }

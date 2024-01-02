@@ -12,11 +12,11 @@ use bevy::prelude::{
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapSize, TilemapType};
 use bevy_ecs_tilemap::prelude::{TilePos, TileStorage};
 
-pub struct TileSelectionPlugin;
-impl Plugin for TileSelectionPlugin {
+pub struct TileCursorPlugin;
+impl Plugin for TileCursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, initialize_cursor)
-            .add_systems(Update, highlight_tile_below_cursor);
+            .add_systems(Update, update);
     }
 }
 
@@ -45,7 +45,7 @@ fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-fn highlight_tile_below_cursor(
+fn update(
     cursor_pos: Res<CursorPos>,
     tilemap_q: Query<
         (
@@ -70,7 +70,6 @@ fn highlight_tile_below_cursor(
     }
 
     let cursor_pos: Vec4 = Vec4::from((cursor_pos.world, 0.0, 1.0));
-    // TODO: Once we have multiple layers we might to only want to query the ground layer for this kind of selection.
     for (map_size, grid_size, map_type, tile_storage, map_transform, chunk_data) in tilemap_q.iter()
     {
         // We need to make sure that the cursor's world position is correct relative to the map

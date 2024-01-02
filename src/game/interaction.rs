@@ -1,5 +1,5 @@
 use crate::game::prelude::chunk_data::ChunkData;
-use crate::game::prelude::tile_selection::TileCursor;
+use crate::game::prelude::tile_cursor::TileCursor;
 use crate::game::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
