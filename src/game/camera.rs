@@ -1,4 +1,5 @@
-use crate::game::CursorPos;
+use crate::game::interaction::PlayerAction;
+use crate::game::{interaction, CursorPos};
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 use leafwing_input_manager::action_state::ActionState;
@@ -46,6 +47,10 @@ fn init(mut commands: Commands) {
         .spawn(camera)
         .insert(InputManagerBundle::<CameraAction> {
             input_map: default_input_map_camera(),
+            ..default()
+        })
+        .insert(InputManagerBundle::<PlayerAction> {
+            input_map: interaction::default_input_map(),
             ..default()
         });
 }
