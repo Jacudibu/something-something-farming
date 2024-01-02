@@ -1,5 +1,10 @@
-use crate::game::tilemap;
+use crate::game::prelude::chunk_data::ChunkData;
+use crate::game::prelude::tile_highlighting::{GroundLayer, HighlightedTile};
+use crate::game::prelude::tilemap_layer::TilemapLayer;
 use bevy::prelude::*;
+use bevy_ecs_tilemap::map::TilemapId;
+use bevy_ecs_tilemap::prelude::{TileBundle, TilePos};
+use bevy_ecs_tilemap::tiles::{TileStorage, TileTextureIndex};
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
 use leafwing_input_manager::input_map::InputMap;
@@ -26,9 +31,32 @@ impl Plugin for InteractionPlugin {
     }
 }
 
+// TODO: Have a proper Chunk Entity which contains Entity References to all layers within the chunk, so we don't have to do this abomination here.
+fn get_floor_layer_for_pos<'a>(
+    query: &'a mut Query<
+        (Entity, &ChunkData, &TilemapLayer, &mut TileStorage),
+        Without<GroundLayer>,
+    >,
+    target: IVec2,
+) -> Option<(Entity, Mut<'a, TileStorage>)> {
+    for (entity, data, layer, storage) in query.iter_mut() {
+        if layer == &TilemapLayer::Floor && data.position == target {
+            return Some((entity, storage));
+        }
+    }
+
+    None
+}
+
 fn interact_with_tile(
-    mut query: Query<&ActionState<PlayerAction>>,
-    mut selected_tiles: Query<&tilemap::tile_highlighting::HighlightedTile>,
+    mut commands: Commands,
+    query: Query<&ActionState<PlayerAction>>,
+    selected_tiles: Query<(&TilePos, &TilemapId), With<HighlightedTile>>,
+    ground_chunks: Query<&ChunkData, With<GroundLayer>>,
+    mut object_chunks: Query<
+        (Entity, &ChunkData, &TilemapLayer, &mut TileStorage),
+        Without<GroundLayer>,
+    >,
 ) {
     let action_state = query.get_single();
     if action_state.is_err() {
@@ -41,8 +69,29 @@ fn interact_with_tile(
         return;
     }
 
-    for x in selected_tiles.iter() {
-        info!("clicky!");
+    for (tile_pos, tilemap_id) in selected_tiles.iter() {
+        info!(
+            "G: {} O: {}",
+            ground_chunks.iter().len(),
+            object_chunks.iter().len()
+        );
+
+        let chunk_data = ground_chunks.get(tilemap_id.0).expect("oh no");
+        let (tilled_tilemap, mut tilled_tilemap_storage) =
+            get_floor_layer_for_pos(&mut object_chunks, chunk_data.position).expect("oh no no no");
+
+        let tilled_tile = commands
+            .spawn(TileBundle {
+                position: tile_pos.clone(),
+                tilemap_id: TilemapId(tilled_tilemap),
+                texture_index: TileTextureIndex(0),
+                ..Default::default()
+            })
+            .id();
+        commands.entity(tilled_tilemap).add_child(tilled_tile);
+        tilled_tilemap_storage.set(&tile_pos, tilled_tile);
+
+        info!("clicky at {:?}", tile_pos);
     }
 }
 

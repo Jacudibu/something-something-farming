@@ -1,4 +1,3 @@
-use bevy::math::IVec2;
 use bevy::prelude::Component;
 use bevy_ecs_tilemap::prelude::TileTextureIndex;
 
@@ -18,9 +17,4 @@ impl TileType {
 #[derive(Debug, Component)]
 pub struct TileData {
     pub tile_type: TileType,
-}
-
-#[derive(Component)]
-pub struct ChunkData {
-    pub position: IVec2,
 }

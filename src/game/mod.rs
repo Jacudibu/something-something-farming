@@ -7,6 +7,7 @@ use bevy::prelude::{Camera, CursorMoved, EventReader, GlobalTransform, Query, Re
 
 mod camera;
 mod interaction;
+mod prelude;
 mod tilemap;
 
 pub struct GamePlugin;

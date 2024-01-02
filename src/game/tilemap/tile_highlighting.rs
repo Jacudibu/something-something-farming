@@ -1,5 +1,5 @@
+use crate::game::prelude::chunk_data::ChunkData;
 use crate::game::tilemap::tile_pos_to_world_pos;
-use crate::game::tilemap::tile_type::ChunkData;
 use crate::game::CursorPos;
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::asset::{AssetServer, Handle};
@@ -25,6 +25,9 @@ struct TileCursor {}
 #[derive(Component)]
 pub struct HighlightedTile;
 
+#[derive(Component)]
+pub struct GroundLayer;
+
 fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
     let tile_cursor_texture: Handle<Image> = asset_server.load("sprites/tile_cursor.png");
     commands
@@ -43,14 +46,17 @@ fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn highlight_tile_below_cursor(
     mut commands: Commands,
     cursor_pos: Res<CursorPos>,
-    tilemap_q: Query<(
-        &TilemapSize,
-        &TilemapGridSize,
-        &TilemapType,
-        &TileStorage,
-        &Transform,
-        &ChunkData,
-    )>,
+    tilemap_q: Query<
+        (
+            &TilemapSize,
+            &TilemapGridSize,
+            &TilemapType,
+            &TileStorage,
+            &Transform,
+            &ChunkData,
+        ),
+        With<GroundLayer>,
+    >,
     highlighted_tiles_q: Query<Entity, (With<HighlightedTile>, Without<TileCursor>)>,
     mut tile_cursor_q: Query<
         (&mut Transform, &mut Visibility),
