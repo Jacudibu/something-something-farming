@@ -1,4 +1,5 @@
 use crate::game::prelude::chunk_data::ChunkData;
+use crate::game::prelude::tilemap_layer::GroundLayer;
 use crate::game::tilemap::tile_pos_to_world_pos;
 use crate::game::CursorPos;
 use bevy::app::{App, Plugin, Startup, Update};
@@ -11,8 +12,8 @@ use bevy::prelude::{
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapSize, TilemapType};
 use bevy_ecs_tilemap::prelude::{TilePos, TileStorage};
 
-pub struct TileHighlightingPlugin;
-impl Plugin for TileHighlightingPlugin {
+pub struct TileSelectionPlugin;
+impl Plugin for TileSelectionPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, initialize_cursor)
             .add_systems(Update, highlight_tile_below_cursor);
@@ -24,9 +25,6 @@ pub struct TileCursor {
     pub tile_pos: TilePos,
     pub chunk_pos: IVec2,
 }
-
-#[derive(Component)]
-pub struct GroundLayer;
 
 fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
     // TODO: Initialize Cursors only when tiles are actually selected

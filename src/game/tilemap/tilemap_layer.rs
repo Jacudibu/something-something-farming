@@ -1,6 +1,9 @@
 use bevy::prelude::Component;
 use std::fmt::{Display, Formatter};
 
+#[derive(Component)]
+pub struct GroundLayer;
+
 #[derive(Component, PartialOrd, PartialEq)]
 pub enum TilemapLayer {
     Ground, // The actual natural ground

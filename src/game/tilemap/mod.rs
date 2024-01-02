@@ -1,18 +1,17 @@
-use crate::game::prelude::tile_highlighting::GroundLayer;
+use crate::game::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
 use crate::game::tilemap::chunk_data::ChunkData;
-use crate::game::tilemap::tile_highlighting::TileHighlightingPlugin;
-use crate::game::tilemap::tilemap_layer::TilemapLayer;
+use crate::game::tilemap::tile_selection::TileSelectionPlugin;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 use tile_type::{TileData, TileType};
 
 pub(crate) mod chunk_data;
-pub(crate) mod tile_highlighting;
+pub(crate) mod tile_selection;
 mod tile_type;
 pub(crate) mod tilemap_layer;
 
 pub(crate) mod prelude {
-    pub(crate) use super::{chunk_data, tile_highlighting, tilemap_layer};
+    pub(crate) use super::{chunk_data, tile_selection, tilemap_layer};
 }
 
 const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 16.0, y: 16.0 };
@@ -30,7 +29,7 @@ impl Plugin for GameMapPlugin {
             ..Default::default()
         })
         .add_plugins(TilemapPlugin)
-        .add_plugins(TileHighlightingPlugin)
+        .add_plugins(TileSelectionPlugin)
         .add_systems(Startup, spawn_testing_chunks);
     }
 }

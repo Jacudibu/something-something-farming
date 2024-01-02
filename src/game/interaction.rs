@@ -1,6 +1,6 @@
 use crate::game::prelude::chunk_data::ChunkData;
-use crate::game::prelude::tile_highlighting::{GroundLayer, TileCursor};
-use crate::game::prelude::tilemap_layer::TilemapLayer;
+use crate::game::prelude::tile_selection::TileCursor;
+use crate::game::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
@@ -75,6 +75,10 @@ fn interact_with_tile(
 
         let (tilled_tilemap, mut tilled_tilemap_storage) =
             get_floor_layer_for_pos(&mut object_chunks, cursor.chunk_pos).unwrap();
+
+        if tilled_tilemap_storage.get(&cursor.tile_pos).is_some() {
+            continue;
+        }
 
         let tilled_tile = commands
             .spawn(TileBundle {
