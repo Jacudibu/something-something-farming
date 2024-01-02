@@ -1,4 +1,4 @@
-use crate::game::{tilemap, CursorPos};
+use crate::game::tilemap;
 use bevy::prelude::*;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};

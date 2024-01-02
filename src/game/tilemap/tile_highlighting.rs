@@ -88,7 +88,6 @@ fn highlight_tile_below_cursor(
             grid_size,
             map_type,
         ) {
-            // Highlight the relevant tile's label
             if let Some(tile_entity) = tile_storage.get(&tile_pos) {
                 commands.entity(tile_entity).insert(HighlightedTile);
 

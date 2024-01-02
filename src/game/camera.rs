@@ -44,7 +44,7 @@ fn init(mut commands: Commands) {
     camera.projection.scaling_mode = ScalingMode::WindowSize(2.0);
 
     commands
-        .spawn(camera)
+        .spawn((Name::new("Camera"), camera))
         .insert(InputManagerBundle::<CameraAction> {
             input_map: default_input_map_camera(),
             ..default()
