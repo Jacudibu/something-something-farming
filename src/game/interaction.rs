@@ -1,9 +1,9 @@
 use crate::game::prelude::chunk_data::ChunkData;
-use crate::game::prelude::tile_highlighting::{GroundLayer, HighlightedTile};
+use crate::game::prelude::tile_highlighting::{GroundLayer, TileCursor};
 use crate::game::prelude::tilemap_layer::TilemapLayer;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
-use bevy_ecs_tilemap::prelude::{TileBundle, TilePos};
+use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::{TileStorage, TileTextureIndex};
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
@@ -51,8 +51,7 @@ fn get_floor_layer_for_pos<'a>(
 fn interact_with_tile(
     mut commands: Commands,
     query: Query<&ActionState<PlayerAction>>,
-    selected_tiles: Query<(&TilePos, &TilemapId), With<HighlightedTile>>,
-    ground_chunks: Query<&ChunkData, With<GroundLayer>>,
+    tile_cursor: Query<(&TileCursor, &Visibility)>,
     mut object_chunks: Query<
         (Entity, &ChunkData, &TilemapLayer, &mut TileStorage),
         Without<GroundLayer>,
@@ -69,29 +68,24 @@ fn interact_with_tile(
         return;
     }
 
-    for (tile_pos, tilemap_id) in selected_tiles.iter() {
-        info!(
-            "G: {} O: {}",
-            ground_chunks.iter().len(),
-            object_chunks.iter().len()
-        );
+    for (cursor, visibility) in tile_cursor.iter() {
+        if visibility == Visibility::Hidden {
+            continue;
+        }
 
-        let chunk_data = ground_chunks.get(tilemap_id.0).expect("oh no");
         let (tilled_tilemap, mut tilled_tilemap_storage) =
-            get_floor_layer_for_pos(&mut object_chunks, chunk_data.position).expect("oh no no no");
+            get_floor_layer_for_pos(&mut object_chunks, cursor.chunk_pos).unwrap();
 
         let tilled_tile = commands
             .spawn(TileBundle {
-                position: tile_pos.clone(),
+                position: cursor.tile_pos.clone(),
                 tilemap_id: TilemapId(tilled_tilemap),
                 texture_index: TileTextureIndex(0),
                 ..Default::default()
             })
             .id();
         commands.entity(tilled_tilemap).add_child(tilled_tile);
-        tilled_tilemap_storage.set(&tile_pos, tilled_tile);
-
-        info!("clicky at {:?}", tile_pos);
+        tilled_tilemap_storage.set(&cursor.tile_pos, tilled_tile);
     }
 }
 

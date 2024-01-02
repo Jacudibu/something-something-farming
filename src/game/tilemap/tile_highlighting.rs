@@ -3,10 +3,10 @@ use crate::game::tilemap::tile_pos_to_world_pos;
 use crate::game::CursorPos;
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::asset::{AssetServer, Handle};
-use bevy::math::{Vec2, Vec4};
+use bevy::math::{IVec2, Vec2, Vec4};
 use bevy::prelude::{
-    default, Color, Commands, Component, Entity, Image, Query, Res, Sprite, SpriteBundle,
-    Transform, Vec4Swizzles, Visibility, With, Without,
+    default, Color, Commands, Component, Image, Query, Res, Sprite, SpriteBundle, Transform,
+    Vec4Swizzles, Visibility, With, Without,
 };
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapSize, TilemapType};
 use bevy_ecs_tilemap::prelude::{TilePos, TileStorage};
@@ -20,15 +20,16 @@ impl Plugin for TileHighlightingPlugin {
 }
 
 #[derive(Component)]
-struct TileCursor {}
-
-#[derive(Component)]
-pub struct HighlightedTile;
+pub struct TileCursor {
+    pub tile_pos: TilePos,
+    pub chunk_pos: IVec2,
+}
 
 #[derive(Component)]
 pub struct GroundLayer;
 
 fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // TODO: Initialize Cursors only when tiles are actually selected
     let tile_cursor_texture: Handle<Image> = asset_server.load("sprites/tile_cursor.png");
     commands
         .spawn(SpriteBundle {
@@ -40,11 +41,13 @@ fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
             },
             ..default()
         })
-        .insert(TileCursor {});
+        .insert(TileCursor {
+            chunk_pos: IVec2::new(-100, -100),
+            tile_pos: TilePos::new(10000, 10000),
+        });
 }
 
 fn highlight_tile_below_cursor(
-    mut commands: Commands,
     cursor_pos: Res<CursorPos>,
     tilemap_q: Query<
         (
@@ -57,23 +60,14 @@ fn highlight_tile_below_cursor(
         ),
         With<GroundLayer>,
     >,
-    highlighted_tiles_q: Query<Entity, (With<HighlightedTile>, Without<TileCursor>)>,
     mut tile_cursor_q: Query<
-        (&mut Transform, &mut Visibility),
-        (
-            With<TileCursor>,
-            Without<HighlightedTile>,
-            Without<TilemapSize>,
-        ),
+        (&mut Transform, &mut Visibility, &mut TileCursor),
+        Without<TilemapSize>,
     >,
 ) {
     // Un-highlight any previously highlighted tile labels.
-    // TODO: Remove/Add highlights after detecting which tiles are selected this frame.
-    for entity in highlighted_tiles_q.iter() {
-        commands.entity(entity).remove::<HighlightedTile>();
-    }
-
-    for (_, mut visibility) in tile_cursor_q.iter_mut() {
+    // TODO: Remove/Add cursors after detecting which tiles are selected this frame.
+    for (_, mut visibility, _) in tile_cursor_q.iter_mut() {
         *visibility = Visibility::Hidden;
     }
 
@@ -94,13 +88,13 @@ fn highlight_tile_below_cursor(
             grid_size,
             map_type,
         ) {
-            if let Some(tile_entity) = tile_storage.get(&tile_pos) {
-                commands.entity(tile_entity).insert(HighlightedTile);
-
-                for (mut transform, mut visibility) in tile_cursor_q.iter_mut() {
+            if tile_storage.get(&tile_pos).is_some() {
+                for (mut transform, mut visibility, mut cursor) in tile_cursor_q.iter_mut() {
                     transform.translation =
                         tile_pos_to_world_pos(&tile_pos, &chunk_data.position, 100.0);
                     *visibility = Visibility::Visible;
+                    cursor.tile_pos = tile_pos.clone();
+                    cursor.chunk_pos = chunk_data.position.clone();
                 }
             }
         }
