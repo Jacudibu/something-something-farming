@@ -6,11 +6,10 @@ use bevy::app::{App, First, Plugin};
 use bevy::math::Vec2;
 use bevy::prelude::{Camera, CursorMoved, EventReader, GlobalTransform, Query, ResMut, Resource};
 
-mod camera;
-mod interaction;
-mod prelude;
-mod tilemap;
-mod world_data;
+pub mod camera;
+pub mod interaction;
+pub mod tilemap;
+pub mod world_data;
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {

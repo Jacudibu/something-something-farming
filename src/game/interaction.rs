@@ -1,7 +1,7 @@
-use crate::game::prelude::chunk_data::ChunkData;
-use crate::game::prelude::tile_cursor::TileCursor;
-use crate::game::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::game::prelude::{ChunkPosition, WorldData, CHUNK_SIZE};
+use crate::prelude::chunk_identifier::ChunkIdentifier;
+use crate::prelude::tile_cursor::TileCursor;
+use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
+use crate::prelude::{ChunkPosition, WorldData, CHUNK_SIZE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
@@ -35,7 +35,7 @@ impl Plugin for InteractionPlugin {
 // TODO: Have a proper Chunk Entity which contains Entity References to all layers within the chunk, so we don't have to do this abomination here.
 fn get_floor_layer_for_pos<'a>(
     query: &'a mut Query<
-        (Entity, &ChunkData, &TilemapLayer, &mut TileStorage),
+        (Entity, &ChunkIdentifier, &TilemapLayer, &mut TileStorage),
         Without<GroundLayer>,
     >,
     target: IVec2,
@@ -55,7 +55,7 @@ fn interact_with_tile(
     query: Query<&ActionState<PlayerAction>>,
     tile_cursor: Query<(&TileCursor, &Visibility)>,
     mut object_chunks: Query<
-        (Entity, &ChunkData, &TilemapLayer, &mut TileStorage),
+        (Entity, &ChunkIdentifier, &TilemapLayer, &mut TileStorage),
         Without<GroundLayer>,
     >,
 ) {

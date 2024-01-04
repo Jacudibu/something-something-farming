@@ -1,17 +1,17 @@
-use crate::game::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::game::prelude::{Chunk, WorldData};
-use crate::game::tilemap::chunk_data::ChunkData;
-use crate::game::tilemap::tile_cursor::TileCursorPlugin;
+use crate::prelude::chunk_identifier::ChunkIdentifier;
+use crate::prelude::tile_cursor::TileCursorPlugin;
+use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
+use crate::prelude::{Chunk, WorldData};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
-pub(crate) mod chunk_data;
+pub(crate) mod chunk_identifier;
 pub(crate) mod ground_type;
 pub(crate) mod tile_cursor;
 pub(crate) mod tilemap_layer;
 
 pub(crate) mod prelude {
-    pub(crate) use super::{chunk_data, tile_cursor, tilemap_layer};
+    pub(crate) use super::{chunk_identifier, tile_cursor, tilemap_layer};
 }
 
 const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 16.0, y: 16.0 };
@@ -81,7 +81,7 @@ fn spawn_chunk(
     commands.spawn((
         get_chunk_name(chunk_pos, TilemapLayer::Floor),
         TilemapLayer::Floor,
-        ChunkData {
+        ChunkIdentifier {
             position: chunk_pos,
         },
         TilemapBundle {
@@ -106,7 +106,7 @@ fn spawn_ground_layer(
         .spawn((
             get_chunk_name(chunk_pos, TilemapLayer::Ground),
             TilemapLayer::Ground,
-            ChunkData {
+            ChunkIdentifier {
                 position: chunk_pos,
             },
             GroundLayer {},

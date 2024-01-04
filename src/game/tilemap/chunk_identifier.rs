@@ -2,6 +2,6 @@ use bevy::math::IVec2;
 use bevy::prelude::Component;
 
 #[derive(Component)]
-pub struct ChunkData {
+pub struct ChunkIdentifier {
     pub position: IVec2,
 }

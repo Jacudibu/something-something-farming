@@ -1,7 +1,7 @@
-use crate::game::prelude::chunk_data::ChunkData;
-use crate::game::prelude::tilemap_layer::GroundLayer;
 use crate::game::tilemap::tile_pos_to_world_pos;
-use crate::game::CursorPos;
+use crate::prelude::chunk_identifier::ChunkIdentifier;
+use crate::prelude::tilemap_layer::GroundLayer;
+use crate::prelude::CursorPos;
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::asset::{AssetServer, Handle};
 use bevy::math::{IVec2, Vec2, Vec4};
@@ -54,7 +54,7 @@ fn update(
             &TilemapType,
             &TileStorage,
             &Transform,
-            &ChunkData,
+            &ChunkIdentifier,
         ),
         With<GroundLayer>,
     >,

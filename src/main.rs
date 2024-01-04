@@ -1,4 +1,5 @@
 mod game;
+mod prelude;
 
 use crate::game::GamePlugin;
 use bevy::prelude::*;
