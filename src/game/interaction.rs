@@ -1,7 +1,7 @@
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::prelude::{ChunkPosition, WorldData, CHUNK_SIZE};
+use crate::prelude::{ActiveTool, ChunkPosition, WorldData, CHUNK_SIZE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
@@ -13,6 +13,7 @@ use leafwing_input_manager::plugin::InputManagerPlugin;
 use leafwing_input_manager::prelude::UserInput;
 use leafwing_input_manager::user_input::InputKind;
 use leafwing_input_manager::Actionlike;
+use std::ops::Deref;
 
 #[derive(Actionlike, PartialEq, Eq, Hash, Clone, Copy, Debug, Reflect)]
 pub enum PlayerAction {
@@ -22,13 +23,34 @@ pub enum PlayerAction {
     Left,
     Right,
     Interact,
+    SelectHoe,
+    SelectPickaxe,
 }
 
 pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<PlayerAction>::default())
+            .insert_resource(ActiveTool::Hoe)
+            .add_systems(Update, select_active_tool)
             .add_systems(Update, interact_with_tile);
+    }
+}
+
+fn select_active_tool(
+    mut active_tool: ResMut<ActiveTool>,
+    action_state: Query<&ActionState<PlayerAction>>,
+) {
+    let action_state = action_state.get_single();
+    if action_state.is_err() {
+        error!("PlayerAction State was missing!");
+        return;
+    }
+    let action_state = action_state.unwrap();
+    if action_state.just_pressed(PlayerAction::SelectHoe) {
+        *active_tool = ActiveTool::Hoe;
+    } else if action_state.just_pressed(PlayerAction::SelectPickaxe) {
+        *active_tool = ActiveTool::Pickaxe;
     }
 }
 
@@ -52,14 +74,15 @@ fn get_floor_layer_for_pos<'a>(
 fn interact_with_tile(
     mut commands: Commands,
     mut world_data: ResMut<WorldData>,
-    query: Query<&ActionState<PlayerAction>>,
+    active_tool: Res<ActiveTool>,
+    action_state: Query<&ActionState<PlayerAction>>,
     tile_cursor: Query<(&TileCursor, &Visibility)>,
     mut object_chunks: Query<
         (Entity, &ChunkIdentifier, &TilemapLayer, &mut TileStorage),
         Without<GroundLayer>,
     >,
 ) {
-    let action_state = query.get_single();
+    let action_state = action_state.get_single();
     if action_state.is_err() {
         error!("PlayerAction State was missing!");
         return;
@@ -75,33 +98,55 @@ fn interact_with_tile(
             continue;
         }
 
-        let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
-        if chunk.at_pos(&cursor.tile_pos).is_tilled {
-            continue;
+        match active_tool.deref() {
+            ActiveTool::Hoe => {
+                let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
+                if chunk.at_pos(&cursor.tile_pos).is_tilled {
+                    continue;
+                }
+
+                chunk.set_at_pos(&cursor.tile_pos, true);
+
+                // -- update tiles --
+                // This could happen in an event
+
+                let (tilled_tilemap, mut tilled_tilemap_storage) =
+                    get_floor_layer_for_pos(&mut object_chunks, cursor.chunk_pos).unwrap();
+
+                let tilled_tile = commands
+                    .spawn(TileBundle {
+                        position: cursor.tile_pos.clone(),
+                        tilemap_id: TilemapId(tilled_tilemap),
+                        texture_index: determine_texture_index(
+                            &cursor.tile_pos,
+                            &cursor.chunk_pos,
+                            &world_data,
+                        ),
+                        ..Default::default()
+                    })
+                    .id();
+                commands.entity(tilled_tilemap).add_child(tilled_tile);
+                tilled_tilemap_storage.set(&cursor.tile_pos, tilled_tile);
+            }
+            ActiveTool::Pickaxe => {
+                let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
+                if !chunk.at_pos(&cursor.tile_pos).is_tilled {
+                    continue;
+                }
+
+                chunk.set_at_pos(&cursor.tile_pos, false);
+
+                let (_, mut tilled_tilemap_storage) =
+                    get_floor_layer_for_pos(&mut object_chunks, cursor.chunk_pos).unwrap();
+
+                if let Some(entity) = tilled_tilemap_storage.get(&cursor.tile_pos) {
+                    tilled_tilemap_storage.remove(&cursor.tile_pos);
+                    commands.entity(entity).despawn();
+                } else {
+                    warn!("Entity was not set at {:?}.", cursor);
+                }
+            }
         }
-
-        chunk.set_at_pos(&cursor.tile_pos, true);
-
-        // -- update tiles --
-        // This could happen in an event
-
-        let (tilled_tilemap, mut tilled_tilemap_storage) =
-            get_floor_layer_for_pos(&mut object_chunks, cursor.chunk_pos).unwrap();
-
-        let tilled_tile = commands
-            .spawn(TileBundle {
-                position: cursor.tile_pos.clone(),
-                tilemap_id: TilemapId(tilled_tilemap),
-                texture_index: determine_texture_index(
-                    &cursor.tile_pos,
-                    &cursor.chunk_pos,
-                    &world_data,
-                ),
-                ..Default::default()
-            })
-            .id();
-        commands.entity(tilled_tilemap).add_child(tilled_tile);
-        tilled_tilemap_storage.set(&cursor.tile_pos, tilled_tile);
     }
 }
 
@@ -234,6 +279,9 @@ pub fn default_input_map() -> InputMap<PlayerAction> {
     // input_map.insert(UserInput::VirtualDPad(VirtualDPad::dpad()), Action::Move);
 
     input_map.insert(MouseButton::Left, PlayerAction::Interact);
+
+    input_map.insert(KeyCode::Key1, PlayerAction::SelectHoe);
+    input_map.insert(KeyCode::Key2, PlayerAction::SelectPickaxe);
 
     input_map.insert(KeyCode::Up, PlayerAction::Up);
     input_map.insert(KeyCode::W, PlayerAction::Up);

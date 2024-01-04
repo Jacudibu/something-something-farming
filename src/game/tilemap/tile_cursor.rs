@@ -20,7 +20,7 @@ impl Plugin for TileCursorPlugin {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct TileCursor {
     pub tile_pos: TilePos,
     pub chunk_pos: IVec2,
