@@ -76,7 +76,7 @@ fn interact_with_tile(
         }
 
         let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
-        if chunk.at_pos(&cursor.tile_pos) {
+        if chunk.at_pos(&cursor.tile_pos).is_tilled {
             continue;
         }
 
@@ -116,49 +116,49 @@ fn determine_texture_index(
 ) -> TileTextureIndex {
     let chunk = world_data.chunks.get(chunk_pos).unwrap();
     let up = if pos.y < CHUNK_SIZE as u32 - 1 {
-        chunk.at(pos.x, pos.y + 1)
+        chunk.at(pos.x, pos.y + 1).is_tilled
     } else {
         let chunk = world_data
             .chunks
             .get(&ChunkPosition::new(chunk_pos.x, chunk_pos.y + 1));
         if let Some(chunk) = chunk {
-            chunk.at(pos.x, 0)
+            chunk.at(pos.x, 0).is_tilled
         } else {
             false
         }
     };
     let down = if pos.y > 0 {
-        chunk.at(pos.x, pos.y - 1)
+        chunk.at(pos.x, pos.y - 1).is_tilled
     } else {
         let chunk = world_data
             .chunks
             .get(&ChunkPosition::new(chunk_pos.x, chunk_pos.y - 1));
         if let Some(chunk) = chunk {
-            chunk.at(pos.x, CHUNK_SIZE as u32 - 1)
+            chunk.at(pos.x, CHUNK_SIZE as u32 - 1).is_tilled
         } else {
             false
         }
     };
     let right = if pos.x < CHUNK_SIZE as u32 - 1 {
-        chunk.at(pos.x + 1, pos.y)
+        chunk.at(pos.x + 1, pos.y).is_tilled
     } else {
         let chunk = world_data
             .chunks
             .get(&ChunkPosition::new(chunk_pos.x + 1, chunk_pos.y));
         if let Some(chunk) = chunk {
-            chunk.at(0, pos.y)
+            chunk.at(0, pos.y).is_tilled
         } else {
             false
         }
     };
     let left = if pos.x > 0 {
-        chunk.at(pos.x - 1, pos.y)
+        chunk.at(pos.x - 1, pos.y).is_tilled
     } else {
         let chunk = world_data
             .chunks
             .get(&ChunkPosition::new(chunk_pos.x - 1, chunk_pos.y));
         if let Some(chunk) = chunk {
-            chunk.at(CHUNK_SIZE as u32 - 1, pos.y)
+            chunk.at(CHUNK_SIZE as u32 - 1, pos.y).is_tilled
         } else {
             false
         }

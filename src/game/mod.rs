@@ -11,6 +11,8 @@ pub mod interaction;
 pub mod tilemap;
 pub mod world_data;
 
+pub const CHUNK_SIZE: usize = 32;
+
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {

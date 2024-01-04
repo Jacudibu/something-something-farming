@@ -1,12 +1,12 @@
+use crate::prelude::chunk_data::Chunk;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::tile_cursor::TileCursorPlugin;
 use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::prelude::{Chunk, WorldData};
+use crate::prelude::WorldData;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
 pub(crate) mod chunk_identifier;
-pub(crate) mod ground_type;
 pub(crate) mod tile_cursor;
 pub(crate) mod tilemap_layer;
 
@@ -117,7 +117,7 @@ fn spawn_ground_layer(
     for x in 0..CHUNK_SIZE.x {
         for y in 0..CHUNK_SIZE.y {
             let tile_pos = TilePos { x, y };
-            let ground_type = &chunk.ground[(x + (y * CHUNK_SIZE.x)) as usize];
+            let ground_type = &chunk.at(x, y).ground_type;
             let tile_entity = commands
                 .spawn(TileBundle {
                     position: tile_pos,
