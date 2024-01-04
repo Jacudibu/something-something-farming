@@ -1,7 +1,8 @@
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::{ActiveTool, WorldData};
 use bevy::app::{App, Plugin, Update};
-use bevy::prelude::{error, Query, Res};
+use bevy::log::error;
+use bevy::prelude::{Query, Res};
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use std::ops::Deref;

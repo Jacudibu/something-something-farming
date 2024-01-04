@@ -1,3 +1,4 @@
+use crate::game::tilemap::update_tile_event::UpdateTileEventPlugin;
 use crate::prelude::chunk_data::Chunk;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::tile_cursor::TileCursorPlugin;
@@ -7,15 +8,13 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
 pub(crate) mod chunk_identifier;
+pub(crate) mod helpers;
 pub(crate) mod tile_cursor;
 pub(crate) mod tilemap_layer;
-
-pub(crate) mod prelude {
-    pub(crate) use super::{chunk_identifier, tile_cursor, tilemap_layer};
-}
+pub(crate) mod update_tile_event;
 
 const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 16.0, y: 16.0 };
-pub const CHUNK_SIZE: UVec2 = UVec2 { x: 32, y: 32 };
+const CHUNK_SIZE: UVec2 = UVec2 { x: 32, y: 32 };
 const RENDER_CHUNK_SIZE: UVec2 = UVec2 {
     x: CHUNK_SIZE.x * 2,
     y: CHUNK_SIZE.y * 2,
@@ -30,6 +29,7 @@ impl Plugin for GameMapPlugin {
         })
         .add_plugins(TilemapPlugin)
         .add_plugins(TileCursorPlugin)
+        .add_plugins(UpdateTileEventPlugin)
         .add_systems(Startup, spawn_testing_chunks);
     }
 }
