@@ -1,7 +1,7 @@
 use crate::game::tilemap::tile_pos_to_world_pos;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::tilemap_layer::GroundLayer;
-use crate::prelude::CursorPos;
+use crate::prelude::{CursorPos, CHUNK_SIZE};
 use bevy::app::{App, Plugin, Startup, Update};
 use bevy::asset::{AssetServer, Handle};
 use bevy::math::{IVec2, Vec2, Vec4};
@@ -24,6 +24,15 @@ impl Plugin for TileCursorPlugin {
 pub struct TileCursor {
     pub tile_pos: TilePos,
     pub chunk_pos: IVec2,
+}
+
+impl TileCursor {
+    pub fn global_position(&self) -> IVec2 {
+        IVec2::new(
+            self.chunk_pos.x * CHUNK_SIZE as i32 + self.tile_pos.x as i32,
+            self.chunk_pos.y * CHUNK_SIZE as i32 + self.tile_pos.y as i32,
+        )
+    }
 }
 
 fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {

@@ -1,6 +1,7 @@
 use crate::game::camera::CameraPlugin;
 use crate::game::interaction::InteractionPlugin;
 use crate::game::tilemap::GameMapPlugin;
+use crate::game::ui::UiPlugin;
 use crate::game::world_data::WorldDataPlugin;
 use bevy::app::{App, First, Plugin};
 use bevy::math::Vec2;
@@ -10,6 +11,7 @@ pub mod active_tool;
 pub mod camera;
 pub mod interaction;
 pub mod tilemap;
+mod ui;
 pub mod world_data;
 
 pub const CHUNK_SIZE: usize = 32;
@@ -22,6 +24,7 @@ impl Plugin for GamePlugin {
             .add_plugins(GameMapPlugin)
             .add_plugins(CameraPlugin)
             .add_plugins(InteractionPlugin)
+            .add_plugins(UiPlugin)
             .add_systems(First, update_cursor_pos);
     }
 }

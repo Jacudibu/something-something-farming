@@ -1,6 +1,6 @@
 use crate::prelude::ground_type::GroundType;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct TileData {
     pub ground_type: GroundType,
     pub is_tilled: bool,
