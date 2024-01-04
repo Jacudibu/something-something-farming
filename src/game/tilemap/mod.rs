@@ -1,13 +1,13 @@
 use crate::game::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
+use crate::game::prelude::{Chunk, WorldData};
 use crate::game::tilemap::chunk_data::ChunkData;
 use crate::game::tilemap::tile_cursor::TileCursorPlugin;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
-use tile_type::{TileData, TileType};
 
 pub(crate) mod chunk_data;
+pub(crate) mod ground_type;
 pub(crate) mod tile_cursor;
-mod tile_type;
 pub(crate) mod tilemap_layer;
 
 pub(crate) mod prelude {
@@ -44,19 +44,38 @@ fn tile_pos_to_world_pos(tile_pos: &TilePos, chunk_position: &IVec2, z: f32) -> 
     )
 }
 
-fn spawn_testing_chunks(mut commands: Commands, asset_server: Res<AssetServer>) {
-    spawn_chunk(&mut commands, &asset_server, IVec2::new(0, 0));
-    spawn_chunk(&mut commands, &asset_server, IVec2::new(0, -1));
-    spawn_chunk(&mut commands, &asset_server, IVec2::new(-1, 0));
-    spawn_chunk(&mut commands, &asset_server, IVec2::new(-1, -1));
+fn spawn_testing_chunks(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    world_data: Res<WorldData>,
+) {
+    spawn_chunk(&mut commands, &asset_server, IVec2::new(0, 0), &world_data);
+    spawn_chunk(&mut commands, &asset_server, IVec2::new(0, -1), &world_data);
+    spawn_chunk(&mut commands, &asset_server, IVec2::new(-1, 0), &world_data);
+    spawn_chunk(
+        &mut commands,
+        &asset_server,
+        IVec2::new(-1, -1),
+        &world_data,
+    );
 }
 
 fn get_chunk_name(chunk_pos: IVec2, layer: TilemapLayer) -> Name {
     Name::new(format!("{} | {}", chunk_pos, layer))
 }
 
-fn spawn_chunk(commands: &mut Commands, asset_server: &AssetServer, chunk_pos: IVec2) {
-    spawn_ground_layer(commands, asset_server, chunk_pos);
+fn spawn_chunk(
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    chunk_pos: IVec2,
+    world_data: &WorldData,
+) {
+    let chunk_data = world_data
+        .chunks
+        .get(&chunk_pos)
+        .expect(&format!("World data should exists for chunk {}", chunk_pos));
+
+    spawn_ground_layer(commands, asset_server, chunk_pos, chunk_data);
 
     let tilled_tile_texture: Handle<Image> = asset_server.load("sprites/tilled_tile.png");
     commands.spawn((
@@ -77,7 +96,12 @@ fn spawn_chunk(commands: &mut Commands, asset_server: &AssetServer, chunk_pos: I
     ));
 }
 
-fn spawn_ground_layer(commands: &mut Commands, asset_server: &AssetServer, chunk_pos: IVec2) {
+fn spawn_ground_layer(
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    chunk_pos: IVec2,
+    chunk: &Chunk,
+) {
     let tilemap_entity = commands
         .spawn((
             get_chunk_name(chunk_pos, TilemapLayer::Ground),
@@ -93,17 +117,14 @@ fn spawn_ground_layer(commands: &mut Commands, asset_server: &AssetServer, chunk
     for x in 0..CHUNK_SIZE.x {
         for y in 0..CHUNK_SIZE.y {
             let tile_pos = TilePos { x, y };
-            let tile_data = TileData {
-                tile_type: TileType::Grass,
-            };
+            let ground_type = &chunk.ground[(x + (y * CHUNK_SIZE.x)) as usize];
             let tile_entity = commands
                 .spawn(TileBundle {
                     position: tile_pos,
                     tilemap_id: TilemapId(tilemap_entity),
-                    texture_index: tile_data.tile_type.texture_index(),
+                    texture_index: ground_type.texture_index(),
                     ..Default::default()
                 })
-                .insert(tile_data)
                 .id();
             commands.entity(tilemap_entity).add_child(tile_entity);
             tile_storage.set(&tile_pos, tile_entity);

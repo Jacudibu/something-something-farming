@@ -1,6 +1,7 @@
 use crate::game::camera::CameraPlugin;
 use crate::game::interaction::InteractionPlugin;
 use crate::game::tilemap::GameMapPlugin;
+use crate::game::world_data::WorldDataPlugin;
 use bevy::app::{App, First, Plugin};
 use bevy::math::Vec2;
 use bevy::prelude::{Camera, CursorMoved, EventReader, GlobalTransform, Query, ResMut, Resource};
@@ -9,11 +10,13 @@ mod camera;
 mod interaction;
 mod prelude;
 mod tilemap;
+mod world_data;
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
+            .add_plugins(WorldDataPlugin)
             .add_plugins(GameMapPlugin)
             .add_plugins(CameraPlugin)
             .add_plugins(InteractionPlugin)

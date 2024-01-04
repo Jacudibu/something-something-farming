@@ -1,10 +1,11 @@
 use crate::game::prelude::chunk_data::ChunkData;
 use crate::game::prelude::tile_cursor::TileCursor;
 use crate::game::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
+use crate::game::tilemap::CHUNK_SIZE;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
-use bevy_ecs_tilemap::tiles::{TileStorage, TileTextureIndex};
+use bevy_ecs_tilemap::tiles::{TilePos, TileStorage, TileTextureIndex};
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
 use leafwing_input_manager::input_map::InputMap;
@@ -84,12 +85,91 @@ fn interact_with_tile(
             .spawn(TileBundle {
                 position: cursor.tile_pos.clone(),
                 tilemap_id: TilemapId(tilled_tilemap),
-                texture_index: TileTextureIndex(0),
+                texture_index: determine_texture_index(&cursor.tile_pos, &tilled_tilemap_storage),
                 ..Default::default()
             })
             .id();
         commands.entity(tilled_tilemap).add_child(tilled_tile);
         tilled_tilemap_storage.set(&cursor.tile_pos, tilled_tile);
+    }
+}
+
+// 00 01 02 03
+// 04 05 06 07
+// 08 09 10 11
+// 12 13 14 15
+fn determine_texture_index(pos: &TilePos, tile_storage: &TileStorage) -> TileTextureIndex {
+    let up = if pos.y < CHUNK_SIZE.y - 1 {
+        tile_storage.get(&TilePos::new(pos.x, pos.y + 1))
+    } else {
+        None
+    };
+    let down = if pos.y > 0 {
+        tile_storage.get(&TilePos::new(pos.x, pos.y - 1))
+    } else {
+        None
+    };
+    let left = if pos.x > 0 {
+        tile_storage.get(&TilePos::new(pos.x - 1, pos.y))
+    } else {
+        None
+    };
+    let right = if pos.x < CHUNK_SIZE.x - 1 {
+        tile_storage.get(&TilePos::new(pos.x + 1, pos.y))
+    } else {
+        None
+    };
+
+    if up.is_some() {
+        if down.is_some() {
+            if left.is_some() {
+                if right.is_some() {
+                    TileTextureIndex(10)
+                } else {
+                    TileTextureIndex(11)
+                }
+            } else if right.is_some() {
+                TileTextureIndex(9)
+            } else {
+                TileTextureIndex(8)
+            }
+        } else if left.is_some() {
+            if right.is_some() {
+                TileTextureIndex(14)
+            } else {
+                TileTextureIndex(15)
+            }
+        } else {
+            if right.is_some() {
+                TileTextureIndex(13)
+            } else {
+                TileTextureIndex(12)
+            }
+        }
+    } else if down.is_some() {
+        if left.is_some() {
+            if right.is_some() {
+                TileTextureIndex(6)
+            } else {
+                TileTextureIndex(7)
+            }
+        } else if right.is_some() {
+            TileTextureIndex(5)
+        } else {
+            TileTextureIndex(4)
+        }
+    } else if left.is_some() {
+        if right.is_some() {
+            TileTextureIndex(2)
+        } else {
+            TileTextureIndex(3)
+        }
+    } else {
+        if right.is_some() {
+            TileTextureIndex(1)
+        } else {
+            TileTextureIndex(0)
+        }
     }
 }
 
