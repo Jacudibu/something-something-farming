@@ -1,4 +1,3 @@
-use bevy::prelude::Component;
 use bevy_ecs_tilemap::prelude::TileTextureIndex;
 
 #[derive(Debug, Copy, Clone)]
@@ -12,9 +11,4 @@ impl GroundType {
             GroundType::Grass => TileTextureIndex(2),
         }
     }
-}
-
-#[derive(Debug, Component)]
-pub struct TileData {
-    pub tile_type: GroundType,
 }

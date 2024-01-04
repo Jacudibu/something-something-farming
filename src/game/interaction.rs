@@ -1,7 +1,7 @@
 use crate::game::prelude::chunk_data::ChunkData;
 use crate::game::prelude::tile_cursor::TileCursor;
 use crate::game::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::game::tilemap::CHUNK_SIZE;
+use crate::game::prelude::{ChunkPosition, WorldData, CHUNK_SIZE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
@@ -51,6 +51,7 @@ fn get_floor_layer_for_pos<'a>(
 
 fn interact_with_tile(
     mut commands: Commands,
+    mut world_data: ResMut<WorldData>,
     query: Query<&ActionState<PlayerAction>>,
     tile_cursor: Query<(&TileCursor, &Visibility)>,
     mut object_chunks: Query<
@@ -74,18 +75,28 @@ fn interact_with_tile(
             continue;
         }
 
-        let (tilled_tilemap, mut tilled_tilemap_storage) =
-            get_floor_layer_for_pos(&mut object_chunks, cursor.chunk_pos).unwrap();
-
-        if tilled_tilemap_storage.get(&cursor.tile_pos).is_some() {
+        let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
+        if chunk.at_pos(&cursor.tile_pos) {
             continue;
         }
+
+        chunk.set_at_pos(&cursor.tile_pos, true);
+
+        // -- update tiles --
+        // This could happen in an event
+
+        let (tilled_tilemap, mut tilled_tilemap_storage) =
+            get_floor_layer_for_pos(&mut object_chunks, cursor.chunk_pos).unwrap();
 
         let tilled_tile = commands
             .spawn(TileBundle {
                 position: cursor.tile_pos.clone(),
                 tilemap_id: TilemapId(tilled_tilemap),
-                texture_index: determine_texture_index(&cursor.tile_pos, &tilled_tilemap_storage),
+                texture_index: determine_texture_index(
+                    &cursor.tile_pos,
+                    &cursor.chunk_pos,
+                    &world_data,
+                ),
                 ..Default::default()
             })
             .id();
@@ -98,74 +109,107 @@ fn interact_with_tile(
 // 04 05 06 07
 // 08 09 10 11
 // 12 13 14 15
-fn determine_texture_index(pos: &TilePos, tile_storage: &TileStorage) -> TileTextureIndex {
-    let up = if pos.y < CHUNK_SIZE.y - 1 {
-        tile_storage.get(&TilePos::new(pos.x, pos.y + 1))
+fn determine_texture_index(
+    pos: &TilePos,
+    chunk_pos: &ChunkPosition,
+    world_data: &WorldData,
+) -> TileTextureIndex {
+    let chunk = world_data.chunks.get(chunk_pos).unwrap();
+    let up = if pos.y < CHUNK_SIZE as u32 - 1 {
+        chunk.at(pos.x, pos.y + 1)
     } else {
-        None
+        let chunk = world_data
+            .chunks
+            .get(&ChunkPosition::new(chunk_pos.x, chunk_pos.y + 1));
+        if let Some(chunk) = chunk {
+            chunk.at(pos.x, 0)
+        } else {
+            false
+        }
     };
     let down = if pos.y > 0 {
-        tile_storage.get(&TilePos::new(pos.x, pos.y - 1))
+        chunk.at(pos.x, pos.y - 1)
     } else {
-        None
+        let chunk = world_data
+            .chunks
+            .get(&ChunkPosition::new(chunk_pos.x, chunk_pos.y - 1));
+        if let Some(chunk) = chunk {
+            chunk.at(pos.x, CHUNK_SIZE as u32 - 1)
+        } else {
+            false
+        }
+    };
+    let right = if pos.x < CHUNK_SIZE as u32 - 1 {
+        chunk.at(pos.x + 1, pos.y)
+    } else {
+        let chunk = world_data
+            .chunks
+            .get(&ChunkPosition::new(chunk_pos.x + 1, chunk_pos.y));
+        if let Some(chunk) = chunk {
+            chunk.at(0, pos.y)
+        } else {
+            false
+        }
     };
     let left = if pos.x > 0 {
-        tile_storage.get(&TilePos::new(pos.x - 1, pos.y))
+        chunk.at(pos.x - 1, pos.y)
     } else {
-        None
-    };
-    let right = if pos.x < CHUNK_SIZE.x - 1 {
-        tile_storage.get(&TilePos::new(pos.x + 1, pos.y))
-    } else {
-        None
+        let chunk = world_data
+            .chunks
+            .get(&ChunkPosition::new(chunk_pos.x - 1, chunk_pos.y));
+        if let Some(chunk) = chunk {
+            chunk.at(CHUNK_SIZE as u32 - 1, pos.y)
+        } else {
+            false
+        }
     };
 
-    if up.is_some() {
-        if down.is_some() {
-            if left.is_some() {
-                if right.is_some() {
+    if up {
+        if down {
+            if left {
+                if right {
                     TileTextureIndex(10)
                 } else {
                     TileTextureIndex(11)
                 }
-            } else if right.is_some() {
+            } else if right {
                 TileTextureIndex(9)
             } else {
                 TileTextureIndex(8)
             }
-        } else if left.is_some() {
-            if right.is_some() {
+        } else if left {
+            if right {
                 TileTextureIndex(14)
             } else {
                 TileTextureIndex(15)
             }
         } else {
-            if right.is_some() {
+            if right {
                 TileTextureIndex(13)
             } else {
                 TileTextureIndex(12)
             }
         }
-    } else if down.is_some() {
-        if left.is_some() {
-            if right.is_some() {
+    } else if down {
+        if left {
+            if right {
                 TileTextureIndex(6)
             } else {
                 TileTextureIndex(7)
             }
-        } else if right.is_some() {
+        } else if right {
             TileTextureIndex(5)
         } else {
             TileTextureIndex(4)
         }
-    } else if left.is_some() {
-        if right.is_some() {
+    } else if left {
+        if right {
             TileTextureIndex(2)
         } else {
             TileTextureIndex(3)
         }
     } else {
-        if right.is_some() {
+        if right {
             TileTextureIndex(1)
         } else {
             TileTextureIndex(0)
