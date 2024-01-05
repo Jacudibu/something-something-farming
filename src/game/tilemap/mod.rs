@@ -90,6 +90,17 @@ fn get_chunk_name(chunk_pos: IVec2, layer: TilemapLayer) -> Name {
     Name::new(format!("{} | {}", chunk_pos, layer))
 }
 
+fn despawn_chunk(
+    mut commands: Commands,
+    loaded_chunks: &mut LoadedChunks,
+    chunk_pos: ChunkPosition,
+) {
+    if let Some(chunk) = loaded_chunks.chunks.remove(&chunk_pos) {
+        commands.entity(chunk.floor_tilemap).despawn_recursive();
+        commands.entity(chunk.ground_tilemap).despawn_recursive();
+    }
+}
+
 fn spawn_chunk(
     commands: &mut Commands,
     asset_server: &AssetServer,
