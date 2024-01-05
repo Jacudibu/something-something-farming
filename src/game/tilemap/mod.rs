@@ -1,14 +1,17 @@
+use crate::game::tilemap::loaded_chunks::{LoadedChunkPlugin, LoadedChunks};
 use crate::game::tilemap::update_tile_event::UpdateTileEventPlugin;
 use crate::prelude::chunk_data::Chunk;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
+use crate::prelude::loaded_chunks::LoadedChunkData;
 use crate::prelude::tile_cursor::TileCursorPlugin;
 use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::prelude::{WorldData, CHUNK_SIZE};
+use crate::prelude::{ChunkPosition, WorldData, CHUNK_SIZE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
 pub(crate) mod chunk_identifier;
 pub(crate) mod helpers;
+pub(crate) mod loaded_chunks;
 pub(crate) mod tile_cursor;
 pub(crate) mod tilemap_layer;
 pub(crate) mod update_tile_event;
@@ -34,6 +37,7 @@ impl Plugin for GameMapPlugin {
         .add_plugins(TilemapPlugin)
         .add_plugins(TileCursorPlugin)
         .add_plugins(UpdateTileEventPlugin)
+        .add_plugins(LoadedChunkPlugin)
         .add_systems(Startup, spawn_testing_chunks);
     }
 }
@@ -50,15 +54,35 @@ fn spawn_testing_chunks(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     world_data: Res<WorldData>,
+    mut loaded_chunks: ResMut<LoadedChunks>,
 ) {
-    spawn_chunk(&mut commands, &asset_server, IVec2::new(0, 0), &world_data);
-    spawn_chunk(&mut commands, &asset_server, IVec2::new(0, -1), &world_data);
-    spawn_chunk(&mut commands, &asset_server, IVec2::new(-1, 0), &world_data);
+    spawn_chunk(
+        &mut commands,
+        &asset_server,
+        ChunkPosition::new(0, 0),
+        &world_data,
+        &mut loaded_chunks,
+    );
+    spawn_chunk(
+        &mut commands,
+        &asset_server,
+        ChunkPosition::new(0, -1),
+        &world_data,
+        &mut loaded_chunks,
+    );
+    spawn_chunk(
+        &mut commands,
+        &asset_server,
+        ChunkPosition::new(-1, 0),
+        &world_data,
+        &mut loaded_chunks,
+    );
     spawn_chunk(
         &mut commands,
         &asset_server,
         IVec2::new(-1, -1),
         &world_data,
+        &mut loaded_chunks,
     );
 }
 
@@ -69,33 +93,43 @@ fn get_chunk_name(chunk_pos: IVec2, layer: TilemapLayer) -> Name {
 fn spawn_chunk(
     commands: &mut Commands,
     asset_server: &AssetServer,
-    chunk_pos: IVec2,
+    chunk_pos: ChunkPosition,
     world_data: &WorldData,
+    loaded_chunks: &mut LoadedChunks,
 ) {
     let chunk_data = world_data
         .chunks
         .get(&chunk_pos)
         .expect(&format!("World data should exists for chunk {}", chunk_pos));
 
-    spawn_ground_layer(commands, asset_server, chunk_pos, chunk_data);
+    let ground_tilemap = spawn_ground_layer(commands, asset_server, chunk_pos, chunk_data);
 
     let tilled_tile_texture: Handle<Image> = asset_server.load("sprites/tilled_tile.png");
-    commands.spawn((
-        get_chunk_name(chunk_pos, TilemapLayer::Floor),
-        TilemapLayer::Floor,
-        ChunkIdentifier {
-            position: chunk_pos,
-        },
-        TilemapBundle {
-            grid_size: TILE_SIZE.into(),
-            size: TILEMAP_SIZE,
-            texture: TilemapTexture::Single(tilled_tile_texture),
-            tile_size: TILE_SIZE,
-            transform: get_tilemap_transform(chunk_pos, TilemapLayer::Floor),
-            storage: TileStorage::empty(TILEMAP_SIZE),
-            ..Default::default()
-        },
-    ));
+    let floor_tilemap = commands
+        .spawn((
+            get_chunk_name(chunk_pos, TilemapLayer::Floor),
+            TilemapLayer::Floor,
+            ChunkIdentifier {
+                position: chunk_pos,
+            },
+            TilemapBundle {
+                grid_size: TILE_SIZE.into(),
+                size: TILEMAP_SIZE,
+                texture: TilemapTexture::Single(tilled_tile_texture),
+                tile_size: TILE_SIZE,
+                transform: get_tilemap_transform(chunk_pos, TilemapLayer::Floor),
+                storage: TileStorage::empty(TILEMAP_SIZE),
+                ..Default::default()
+            },
+        ))
+        .id();
+
+    let loaded_chunk_data = LoadedChunkData {
+        ground_tilemap,
+        floor_tilemap,
+    };
+
+    loaded_chunks.chunks.insert(chunk_pos, loaded_chunk_data);
 }
 
 fn spawn_ground_layer(
@@ -103,7 +137,7 @@ fn spawn_ground_layer(
     asset_server: &AssetServer,
     chunk_pos: IVec2,
     chunk: &Chunk,
-) {
+) -> Entity {
     let tilemap_entity = commands
         .spawn((
             get_chunk_name(chunk_pos, TilemapLayer::Ground),
@@ -143,6 +177,8 @@ fn spawn_ground_layer(
         transform: get_tilemap_transform(chunk_pos, TilemapLayer::Ground),
         ..Default::default()
     });
+
+    tilemap_entity
 }
 
 fn get_tilemap_transform(chunk_pos: IVec2, layer: TilemapLayer) -> Transform {

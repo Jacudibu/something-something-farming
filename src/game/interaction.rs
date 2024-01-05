@@ -1,7 +1,7 @@
-use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::helpers::determine_texture_index;
+use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
-use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
+use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::{ActiveTool, PlayerAction, WorldData};
 use bevy::prelude::*;
@@ -37,34 +37,15 @@ fn select_active_tool(
     }
 }
 
-// TODO: Have a proper Chunk Entity which contains Entity References to all layers within the chunk, so we don't have to do this abomination here.
-fn get_floor_layer_for_pos<'a>(
-    query: &'a mut Query<
-        (Entity, &ChunkIdentifier, &TilemapLayer, &mut TileStorage),
-        Without<GroundLayer>,
-    >,
-    target: IVec2,
-) -> Option<(Entity, Mut<'a, TileStorage>)> {
-    for (entity, data, layer, storage) in query.iter_mut() {
-        if layer == &TilemapLayer::Floor && data.position == target {
-            return Some((entity, storage));
-        }
-    }
-
-    None
-}
-
 fn interact_with_tile(
     mut commands: Commands,
+    mut update_tile_events: EventWriter<UpdateTileEvent>,
     mut world_data: ResMut<WorldData>,
     active_tool: Res<ActiveTool>,
-    mut update_tile_events: EventWriter<UpdateTileEvent>,
     action_state: Query<&ActionState<PlayerAction>>,
     tile_cursor: Query<(&TileCursor, &Visibility)>,
-    mut object_chunks: Query<
-        (Entity, &ChunkIdentifier, &TilemapLayer, &mut TileStorage),
-        Without<GroundLayer>,
-    >,
+    mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
+    loaded_chunk_data: Res<LoadedChunks>,
 ) {
     let action_state = action_state.get_single();
     if action_state.is_err() {
@@ -84,6 +65,7 @@ fn interact_with_tile(
 
         match active_tool.deref() {
             ActiveTool::Hoe => {
+                let world_data = &mut *world_data;
                 let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
                 if chunk.at_pos(&cursor.tile_pos).is_tilled {
                     continue;
@@ -94,27 +76,31 @@ fn interact_with_tile(
                 // -- update tiles --
                 // This could happen in an event
 
-                let (tilled_tilemap, mut tilled_tilemap_storage) =
-                    get_floor_layer_for_pos(&mut object_chunks, cursor.chunk_pos).unwrap();
+                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&cursor.chunk_pos) {
+                    let mut floor_tilemap_storage =
+                        object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
 
-                let tilled_tile = commands
-                    .spawn(TileBundle {
-                        position: cursor.tile_pos.clone(),
-                        tilemap_id: TilemapId(tilled_tilemap),
-                        texture_index: determine_texture_index(
-                            &cursor.tile_pos,
-                            &cursor.chunk_pos,
-                            &world_data,
-                        ),
-                        ..Default::default()
-                    })
-                    .id();
-                commands.entity(tilled_tilemap).add_child(tilled_tile);
-                tilled_tilemap_storage.set(&cursor.tile_pos, tilled_tile);
-                update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
-                    cursor.chunk_pos,
-                    cursor.tile_pos,
-                ));
+                    let tilled_tile = commands
+                        .spawn(TileBundle {
+                            position: cursor.tile_pos.clone(),
+                            tilemap_id: TilemapId(loaded_data.floor_tilemap),
+                            texture_index: determine_texture_index(
+                                &cursor.tile_pos,
+                                &cursor.chunk_pos,
+                                &world_data,
+                            ),
+                            ..Default::default()
+                        })
+                        .id();
+                    commands
+                        .entity(loaded_data.floor_tilemap)
+                        .add_child(tilled_tile);
+                    floor_tilemap_storage.set(&cursor.tile_pos, tilled_tile);
+                    update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
+                        cursor.chunk_pos,
+                        cursor.tile_pos,
+                    ));
+                }
             }
             ActiveTool::Pickaxe => {
                 let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
@@ -124,20 +110,22 @@ fn interact_with_tile(
 
                 chunk.set_at_pos(&cursor.tile_pos, false);
 
-                let (_, mut tilled_tilemap_storage) =
-                    get_floor_layer_for_pos(&mut object_chunks, cursor.chunk_pos).unwrap();
+                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&cursor.chunk_pos) {
+                    let mut floor_tilemap_storage =
+                        object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
 
-                if let Some(entity) = tilled_tilemap_storage.get(&cursor.tile_pos) {
-                    tilled_tilemap_storage.remove(&cursor.tile_pos);
-                    commands.entity(entity).despawn();
-                } else {
-                    warn!("Entity was not set at {:?}.", cursor);
+                    if let Some(entity) = floor_tilemap_storage.get(&cursor.tile_pos) {
+                        floor_tilemap_storage.remove(&cursor.tile_pos);
+                        commands.entity(entity).despawn();
+                    } else {
+                        warn!("Entity was not set at {:?}.", cursor);
+                    }
+
+                    update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
+                        cursor.chunk_pos,
+                        cursor.tile_pos,
+                    ));
                 }
-
-                update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
-                    cursor.chunk_pos,
-                    cursor.tile_pos,
-                ));
             }
         }
     }
