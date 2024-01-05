@@ -51,8 +51,8 @@ fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(TileCursor {
-            chunk_pos: IVec2::new(-100, -100),
-            tile_pos: TilePos::new(10000, 10000),
+            chunk_pos: IVec2::new(0, 0),
+            tile_pos: TilePos::new(0, 0),
         });
 }
 
