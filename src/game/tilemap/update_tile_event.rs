@@ -49,17 +49,19 @@ fn update_tiles(
     mut tiles: Query<&mut TileTextureIndex>,
 ) {
     for event in events.read() {
-        let chunk = world_data.chunks.get(&event.chunk_pos).unwrap();
-        let tile = chunk.at_pos(&event.tile_pos);
+        if let Some(chunk) = world_data.chunks.get(&event.chunk_pos) {
+            let tile = chunk.at_pos(&event.tile_pos);
 
-        if tile.is_tilled {
-            if let Some((tile_storage, _)) = loaded_chunks
-                .iter()
-                .find(|(_, identifier)| identifier.position == event.chunk_pos)
-            {
-                let tile_entity = tile_storage.get(&event.tile_pos).unwrap();
-                let mut index = tiles.get_mut(tile_entity).unwrap();
-                *index = determine_texture_index(&event.tile_pos, &event.chunk_pos, &world_data);
+            if tile.is_tilled {
+                if let Some((tile_storage, _)) = loaded_chunks
+                    .iter()
+                    .find(|(_, identifier)| identifier.position == event.chunk_pos)
+                {
+                    let tile_entity = tile_storage.get(&event.tile_pos).unwrap();
+                    let mut index = tiles.get_mut(tile_entity).unwrap();
+                    *index =
+                        determine_texture_index(&event.tile_pos, &event.chunk_pos, &world_data);
+                }
             }
         }
     }
