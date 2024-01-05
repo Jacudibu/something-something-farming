@@ -2,12 +2,12 @@ use crate::game::tilemap::tile_pos_to_world_pos;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::{CursorPos, CHUNK_SIZE};
-use bevy::app::{App, Plugin, Startup, Update};
+use bevy::app::{App, First, Plugin, Startup};
 use bevy::asset::{AssetServer, Handle};
 use bevy::math::{IVec2, Vec2, Vec4};
 use bevy::prelude::{
-    default, Color, Commands, Component, Image, Query, Res, Sprite, SpriteBundle, Transform,
-    Vec4Swizzles, Visibility, With, Without,
+    default, Color, Commands, Component, Image, IntoSystemConfigs, Query, Res, Sprite,
+    SpriteBundle, Transform, Vec4Swizzles, Visibility, With, Without,
 };
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapSize, TilemapType};
 use bevy_ecs_tilemap::prelude::{TilePos, TileStorage};
@@ -15,8 +15,10 @@ use bevy_ecs_tilemap::prelude::{TilePos, TileStorage};
 pub struct TileCursorPlugin;
 impl Plugin for TileCursorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, initialize_cursor)
-            .add_systems(Update, update);
+        app.add_systems(Startup, initialize_cursor).add_systems(
+            First,
+            update_tile_cursor.after(crate::game::update_cursor_pos),
+        );
     }
 }
 
@@ -54,7 +56,7 @@ fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
         });
 }
 
-fn update(
+fn update_tile_cursor(
     cursor_pos: Res<CursorPos>,
     tilemap_q: Query<
         (
