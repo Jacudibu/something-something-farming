@@ -34,6 +34,8 @@ fn select_active_tool(
         *active_tool = ActiveTool::Hoe;
     } else if action_state.just_pressed(PlayerAction::SelectPickaxe) {
         *active_tool = ActiveTool::Pickaxe;
+    } else if action_state.just_pressed(PlayerAction::SelectSeed) {
+        *active_tool = ActiveTool::Seed;
     }
 }
 
@@ -144,6 +146,14 @@ fn interact_with_tile(
                         cursor.tile_pos,
                     ));
                 }
+            }
+            ActiveTool::Seed => {
+                let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
+                if !chunk.at_pos(&cursor.tile_pos).is_tilled {
+                    continue;
+                }
+
+                info!("Planty planty!");
             }
         }
     }

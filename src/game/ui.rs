@@ -5,7 +5,6 @@ use bevy::log::error;
 use bevy::prelude::{Query, Res};
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
-use std::ops::Deref;
 
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
@@ -51,12 +50,5 @@ fn ui_system(
         .resizable(false)
         .anchor(Align2::LEFT_BOTTOM, egui::Vec2::new(0.0, 0.0))
         .fixed_pos(Pos2::new(5.0, 5.0))
-        .show(contexts.ctx_mut(), |ui| match active_tool.deref() {
-            ActiveTool::Hoe => {
-                ui.label("Hoe");
-            }
-            ActiveTool::Pickaxe => {
-                ui.label("Pickaxe");
-            }
-        });
+        .show(contexts.ctx_mut(), |ui| ui.label(active_tool.to_string()));
 }
