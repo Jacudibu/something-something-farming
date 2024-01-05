@@ -2,7 +2,7 @@ use crate::game::tilemap::helpers::{below_of, left_of, right_of, top_of};
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::helpers::determine_texture_index;
 use crate::prelude::tilemap_layer::GroundLayer;
-use crate::prelude::{ChunkPosition, WorldData};
+use crate::prelude::{ChunkPos, WorldData};
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::{Event, EventReader, Query, Res, Without};
 use bevy_ecs_tilemap::prelude::{TilePos, TileStorage, TileTextureIndex};
@@ -17,18 +17,18 @@ impl Plugin for UpdateTileEventPlugin {
 
 #[derive(Event)]
 pub struct UpdateTileEvent {
-    chunk_pos: ChunkPosition,
+    chunk_pos: ChunkPos,
     tile_pos: TilePos,
 }
 impl UpdateTileEvent {
-    pub fn new(chunk_pos: ChunkPosition, tile_pos: TilePos) -> Self {
+    pub fn new(chunk_pos: ChunkPos, tile_pos: TilePos) -> Self {
         UpdateTileEvent {
             chunk_pos,
             tile_pos,
         }
     }
 
-    pub fn surrounding_tiles(chunk_pos: ChunkPosition, tile_pos: TilePos) -> [Self; 4] {
+    pub fn surrounding_tiles(chunk_pos: ChunkPos, tile_pos: TilePos) -> [Self; 4] {
         let left = left_of(&chunk_pos, &tile_pos);
         let right = right_of(&chunk_pos, &tile_pos);
         let top = top_of(&chunk_pos, &tile_pos);

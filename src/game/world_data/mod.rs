@@ -1,4 +1,4 @@
-use crate::prelude::chunk_data::Chunk;
+use crate::prelude::chunk_data::ChunkData;
 use bevy::prelude::{App, IVec2, Plugin, Resource};
 use bevy::utils::HashMap;
 
@@ -6,7 +6,7 @@ pub mod chunk_data;
 pub mod ground_type;
 pub mod tile_data;
 
-pub type ChunkPosition = IVec2;
+pub type ChunkPos = IVec2;
 
 pub struct WorldDataPlugin;
 impl Plugin for WorldDataPlugin {
@@ -17,7 +17,7 @@ impl Plugin for WorldDataPlugin {
 
 #[derive(Resource)]
 pub struct WorldData {
-    pub chunks: HashMap<ChunkPosition, Chunk>,
+    pub chunks: HashMap<ChunkPos, ChunkData>,
 }
 
 impl Default for WorldData {
@@ -30,7 +30,7 @@ impl Default for WorldData {
             for y in [-1, 0] {
                 result
                     .chunks
-                    .insert(ChunkPosition::new(x, y), Chunk::default());
+                    .insert(ChunkPos::new(x, y), ChunkData::default());
             }
         }
 

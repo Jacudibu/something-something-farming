@@ -1,7 +1,7 @@
-use bevy::math::IVec2;
+use crate::prelude::ChunkPos;
 use bevy::prelude::Component;
 
 #[derive(Component)]
 pub struct ChunkIdentifier {
-    pub position: IVec2,
+    pub position: ChunkPos,
 }

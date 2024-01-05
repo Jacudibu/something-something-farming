@@ -1,11 +1,11 @@
 use crate::game::tilemap::loaded_chunks::{LoadedChunkPlugin, LoadedChunks};
 use crate::game::tilemap::update_tile_event::UpdateTileEventPlugin;
-use crate::prelude::chunk_data::Chunk;
+use crate::prelude::chunk_data::ChunkData;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::loaded_chunks::LoadedChunkData;
 use crate::prelude::tile_cursor::TileCursorPlugin;
 use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::prelude::{ChunkPosition, WorldData, CHUNK_SIZE};
+use crate::prelude::{ChunkPos, WorldData, CHUNK_SIZE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
@@ -42,7 +42,7 @@ impl Plugin for GameMapPlugin {
     }
 }
 
-fn tile_pos_to_world_pos(tile_pos: &TilePos, chunk_position: &IVec2, z: f32) -> Vec3 {
+fn tile_pos_to_world_pos(tile_pos: &TilePos, chunk_position: &ChunkPos, z: f32) -> Vec3 {
     Vec3::new(
         tile_pos.x as f32 * TILE_SIZE.x + chunk_position.x as f32 * CHUNK_SIZE as f32 * TILE_SIZE.x,
         tile_pos.y as f32 * TILE_SIZE.y + chunk_position.y as f32 * CHUNK_SIZE as f32 * TILE_SIZE.y,
@@ -59,42 +59,38 @@ fn spawn_testing_chunks(
     spawn_chunk(
         &mut commands,
         &asset_server,
-        ChunkPosition::new(0, 0),
+        ChunkPos::new(0, 0),
         &world_data,
         &mut loaded_chunks,
     );
     spawn_chunk(
         &mut commands,
         &asset_server,
-        ChunkPosition::new(0, -1),
+        ChunkPos::new(0, -1),
         &world_data,
         &mut loaded_chunks,
     );
     spawn_chunk(
         &mut commands,
         &asset_server,
-        ChunkPosition::new(-1, 0),
+        ChunkPos::new(-1, 0),
         &world_data,
         &mut loaded_chunks,
     );
     spawn_chunk(
         &mut commands,
         &asset_server,
-        IVec2::new(-1, -1),
+        ChunkPos::new(-1, -1),
         &world_data,
         &mut loaded_chunks,
     );
 }
 
-fn get_chunk_name(chunk_pos: IVec2, layer: TilemapLayer) -> Name {
+fn get_chunk_name(chunk_pos: ChunkPos, layer: TilemapLayer) -> Name {
     Name::new(format!("{} | {}", chunk_pos, layer))
 }
 
-fn despawn_chunk(
-    mut commands: Commands,
-    loaded_chunks: &mut LoadedChunks,
-    chunk_pos: ChunkPosition,
-) {
+fn despawn_chunk(mut commands: Commands, loaded_chunks: &mut LoadedChunks, chunk_pos: ChunkPos) {
     if let Some(chunk) = loaded_chunks.chunks.remove(&chunk_pos) {
         commands.entity(chunk.floor_tilemap).despawn_recursive();
         commands.entity(chunk.ground_tilemap).despawn_recursive();
@@ -104,7 +100,7 @@ fn despawn_chunk(
 fn spawn_chunk(
     commands: &mut Commands,
     asset_server: &AssetServer,
-    chunk_pos: ChunkPosition,
+    chunk_pos: ChunkPos,
     world_data: &WorldData,
     loaded_chunks: &mut LoadedChunks,
 ) {
@@ -146,8 +142,8 @@ fn spawn_chunk(
 fn spawn_ground_layer(
     commands: &mut Commands,
     asset_server: &AssetServer,
-    chunk_pos: IVec2,
-    chunk: &Chunk,
+    chunk_pos: ChunkPos,
+    chunk: &ChunkData,
 ) -> Entity {
     let tilemap_entity = commands
         .spawn((
@@ -192,7 +188,7 @@ fn spawn_ground_layer(
     tilemap_entity
 }
 
-fn get_tilemap_transform(chunk_pos: IVec2, layer: TilemapLayer) -> Transform {
+fn get_tilemap_transform(chunk_pos: ChunkPos, layer: TilemapLayer) -> Transform {
     Transform::from_translation(Vec3::new(
         chunk_pos.x as f32 * CHUNK_SIZE as f32 * TILE_SIZE.x,
         chunk_pos.y as f32 * CHUNK_SIZE as f32 * TILE_SIZE.y,

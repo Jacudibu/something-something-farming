@@ -1,11 +1,11 @@
 use crate::game::CHUNK_SIZE;
-use crate::prelude::{ChunkPosition, WorldData};
+use crate::prelude::{ChunkPos, WorldData};
 use bevy_ecs_tilemap::prelude::{TilePos, TileTextureIndex};
 
-pub fn left_of(chunk_pos: &ChunkPosition, tile_pos: &TilePos) -> (ChunkPosition, TilePos) {
+pub fn left_of(chunk_pos: &ChunkPos, tile_pos: &TilePos) -> (ChunkPos, TilePos) {
     if tile_pos.x == 0 {
         (
-            ChunkPosition::new(chunk_pos.x - 1, chunk_pos.y),
+            ChunkPos::new(chunk_pos.x - 1, chunk_pos.y),
             TilePos::new(CHUNK_SIZE as u32 - 1, tile_pos.y),
         )
     } else {
@@ -13,10 +13,10 @@ pub fn left_of(chunk_pos: &ChunkPosition, tile_pos: &TilePos) -> (ChunkPosition,
     }
 }
 
-pub fn right_of(chunk_pos: &ChunkPosition, tile_pos: &TilePos) -> (ChunkPosition, TilePos) {
+pub fn right_of(chunk_pos: &ChunkPos, tile_pos: &TilePos) -> (ChunkPos, TilePos) {
     if tile_pos.x >= CHUNK_SIZE as u32 - 1 {
         (
-            ChunkPosition::new(chunk_pos.x + 1, chunk_pos.y),
+            ChunkPos::new(chunk_pos.x + 1, chunk_pos.y),
             TilePos::new(0, tile_pos.y),
         )
     } else {
@@ -24,10 +24,10 @@ pub fn right_of(chunk_pos: &ChunkPosition, tile_pos: &TilePos) -> (ChunkPosition
     }
 }
 
-pub fn below_of(chunk_pos: &ChunkPosition, tile_pos: &TilePos) -> (ChunkPosition, TilePos) {
+pub fn below_of(chunk_pos: &ChunkPos, tile_pos: &TilePos) -> (ChunkPos, TilePos) {
     if tile_pos.y == 0 {
         (
-            ChunkPosition::new(chunk_pos.x, chunk_pos.y - 1),
+            ChunkPos::new(chunk_pos.x, chunk_pos.y - 1),
             TilePos::new(tile_pos.x, CHUNK_SIZE as u32 - 1),
         )
     } else {
@@ -35,10 +35,10 @@ pub fn below_of(chunk_pos: &ChunkPosition, tile_pos: &TilePos) -> (ChunkPosition
     }
 }
 
-pub fn top_of(chunk_pos: &ChunkPosition, tile_pos: &TilePos) -> (ChunkPosition, TilePos) {
+pub fn top_of(chunk_pos: &ChunkPos, tile_pos: &TilePos) -> (ChunkPos, TilePos) {
     if tile_pos.y >= CHUNK_SIZE as u32 - 1 {
         (
-            ChunkPosition::new(chunk_pos.x, chunk_pos.y + 1),
+            ChunkPos::new(chunk_pos.x, chunk_pos.y + 1),
             TilePos::new(tile_pos.x, 0),
         )
     } else {
@@ -52,7 +52,7 @@ pub fn top_of(chunk_pos: &ChunkPosition, tile_pos: &TilePos) -> (ChunkPosition, 
 // 12 13 14 15
 pub fn determine_texture_index(
     pos: &TilePos,
-    chunk_pos: &ChunkPosition,
+    chunk_pos: &ChunkPos,
     world_data: &WorldData,
 ) -> TileTextureIndex {
     let chunk = world_data.chunks.get(chunk_pos).unwrap();
@@ -61,7 +61,7 @@ pub fn determine_texture_index(
     } else {
         let chunk = world_data
             .chunks
-            .get(&ChunkPosition::new(chunk_pos.x, chunk_pos.y + 1));
+            .get(&ChunkPos::new(chunk_pos.x, chunk_pos.y + 1));
         if let Some(chunk) = chunk {
             chunk.at(pos.x, 0).is_tilled
         } else {
@@ -73,7 +73,7 @@ pub fn determine_texture_index(
     } else {
         let chunk = world_data
             .chunks
-            .get(&ChunkPosition::new(chunk_pos.x, chunk_pos.y - 1));
+            .get(&ChunkPos::new(chunk_pos.x, chunk_pos.y - 1));
         if let Some(chunk) = chunk {
             chunk.at(pos.x, CHUNK_SIZE as u32 - 1).is_tilled
         } else {
@@ -85,7 +85,7 @@ pub fn determine_texture_index(
     } else {
         let chunk = world_data
             .chunks
-            .get(&ChunkPosition::new(chunk_pos.x + 1, chunk_pos.y));
+            .get(&ChunkPos::new(chunk_pos.x + 1, chunk_pos.y));
         if let Some(chunk) = chunk {
             chunk.at(0, pos.y).is_tilled
         } else {
@@ -97,7 +97,7 @@ pub fn determine_texture_index(
     } else {
         let chunk = world_data
             .chunks
-            .get(&ChunkPosition::new(chunk_pos.x - 1, chunk_pos.y));
+            .get(&ChunkPos::new(chunk_pos.x - 1, chunk_pos.y));
         if let Some(chunk) = chunk {
             chunk.at(CHUNK_SIZE as u32 - 1, pos.y).is_tilled
         } else {

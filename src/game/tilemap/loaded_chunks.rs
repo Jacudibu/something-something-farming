@@ -1,4 +1,4 @@
-use crate::prelude::ChunkPosition;
+use crate::prelude::ChunkPos;
 use bevy::prelude::{App, Entity, Plugin, Resource};
 use bevy::utils::HashMap;
 
@@ -13,7 +13,7 @@ impl Plugin for LoadedChunkPlugin {
 
 #[derive(Resource)]
 pub struct LoadedChunks {
-    pub chunks: HashMap<ChunkPosition, LoadedChunkData>,
+    pub chunks: HashMap<ChunkPos, LoadedChunkData>,
 }
 
 pub struct LoadedChunkData {

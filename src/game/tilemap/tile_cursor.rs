@@ -1,7 +1,7 @@
 use crate::game::tilemap::tile_pos_to_world_pos;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::tilemap_layer::GroundLayer;
-use crate::prelude::{CursorPos, CHUNK_SIZE};
+use crate::prelude::{ChunkPos, CursorPos, CHUNK_SIZE};
 use bevy::app::{App, First, Plugin, Startup};
 use bevy::asset::{AssetServer, Handle};
 use bevy::math::{IVec2, Vec2, Vec4};
@@ -25,7 +25,7 @@ impl Plugin for TileCursorPlugin {
 #[derive(Component, Debug)]
 pub struct TileCursor {
     pub tile_pos: TilePos,
-    pub chunk_pos: IVec2,
+    pub chunk_pos: ChunkPos,
 }
 
 impl TileCursor {
@@ -51,7 +51,7 @@ fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         })
         .insert(TileCursor {
-            chunk_pos: IVec2::new(0, 0),
+            chunk_pos: ChunkPos::new(0, 0),
             tile_pos: TilePos::new(0, 0),
         });
 }
@@ -81,7 +81,8 @@ fn update_tile_cursor(
     }
 
     let cursor_pos: Vec4 = Vec4::from((cursor_pos.world, 0.0, 1.0));
-    for (map_size, grid_size, map_type, tile_storage, map_transform, chunk_data) in tilemap_q.iter()
+    for (map_size, grid_size, map_type, tile_storage, map_transform, chunk_identifier) in
+        tilemap_q.iter()
     {
         // We need to make sure that the cursor's world position is correct relative to the map
         // due to any map transformation.
@@ -99,10 +100,10 @@ fn update_tile_cursor(
             if tile_storage.get(&tile_pos).is_some() {
                 for (mut transform, mut visibility, mut cursor) in tile_cursor_q.iter_mut() {
                     transform.translation =
-                        tile_pos_to_world_pos(&tile_pos, &chunk_data.position, 100.0);
+                        tile_pos_to_world_pos(&tile_pos, &chunk_identifier.position, 100.0);
                     *visibility = Visibility::Visible;
                     cursor.tile_pos = tile_pos.clone();
-                    cursor.chunk_pos = chunk_data.position.clone();
+                    cursor.chunk_pos = chunk_identifier.position.clone();
                 }
             }
         }

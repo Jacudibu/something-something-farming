@@ -2,11 +2,11 @@ use crate::prelude::tile_data::TileData;
 use crate::prelude::CHUNK_SIZE;
 use bevy_ecs_tilemap::prelude::TilePos;
 
-pub struct Chunk {
+pub struct ChunkData {
     pub tiles: [TileData; CHUNK_SIZE * CHUNK_SIZE],
 }
 
-impl Chunk {
+impl ChunkData {
     pub fn at(&self, x: u32, y: u32) -> &TileData {
         &self.tiles[x as usize + y as usize * CHUNK_SIZE]
     }
@@ -21,9 +21,9 @@ impl Chunk {
     }
 }
 
-impl Default for Chunk {
+impl Default for ChunkData {
     fn default() -> Self {
-        Chunk {
+        ChunkData {
             tiles: [TileData::default(); CHUNK_SIZE * CHUNK_SIZE],
         }
     }
