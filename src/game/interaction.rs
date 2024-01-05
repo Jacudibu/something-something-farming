@@ -7,7 +7,7 @@ use crate::prelude::{ActiveTool, PlayerAction, WorldData};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
-use bevy_ecs_tilemap::tiles::TileStorage;
+use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use leafwing_input_manager::action_state::ActionState;
 use std::ops::Deref;
 
@@ -46,6 +46,7 @@ fn interact_with_tile(
     tile_cursor: Query<(&TileCursor, &Visibility)>,
     mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
     loaded_chunk_data: Res<LoadedChunks>,
+    mut previously_interacted_tile: Local<Option<TilePos>>,
 ) {
     let action_state = action_state.get_single();
     if action_state.is_err() {
@@ -54,14 +55,31 @@ fn interact_with_tile(
     }
     let action_state = action_state.unwrap();
 
-    if !action_state.just_pressed(PlayerAction::Interact) {
+    if !action_state.pressed(PlayerAction::Interact) {
         return;
+    }
+
+    if action_state.just_pressed(PlayerAction::Interact) {
+        *previously_interacted_tile = None;
     }
 
     for (cursor, visibility) in tile_cursor.iter() {
         if visibility == Visibility::Hidden {
             continue;
         }
+
+        if let Some(previous) = *previously_interacted_tile {
+            if previous == cursor.tile_pos {
+                return;
+            } else {
+                *previously_interacted_tile = Some(cursor.tile_pos);
+            }
+        } else {
+            *previously_interacted_tile = Some(cursor.tile_pos);
+        }
+
+        // Could we technically just spawn a "TileInteractionEvent(ActiveTool, TileCursor) event right here?
+        // Could this maybe even be generic on the active tool instance, so we have a "pickaxe listener" and a "water can listener"?
 
         match active_tool.deref() {
             ActiveTool::Hoe => {
