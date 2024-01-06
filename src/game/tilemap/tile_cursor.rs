@@ -4,6 +4,7 @@ use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::{ChunkPos, CursorPos, CHUNK_SIZE};
 use bevy::app::{App, First, Plugin, Startup};
 use bevy::asset::{AssetServer, Handle};
+use bevy::core::Name;
 use bevy::math::{IVec2, Vec2, Vec4};
 use bevy::prelude::{
     default, Color, Commands, Component, Image, IntoSystemConfigs, Query, Res, Sprite,
@@ -40,8 +41,9 @@ impl TileCursor {
 fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
     // TODO: Initialize Cursors only when tiles are actually selected
     let tile_cursor_texture: Handle<Image> = asset_server.load("sprites/tile_cursor.png");
-    commands
-        .spawn(SpriteBundle {
+    commands.spawn((
+        Name::new("Tile Cursor"),
+        SpriteBundle {
             texture: tile_cursor_texture,
             visibility: Visibility::Hidden,
             sprite: Sprite {
@@ -49,11 +51,12 @@ fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
                 ..default()
             },
             ..default()
-        })
-        .insert(TileCursor {
+        },
+        TileCursor {
             chunk_pos: ChunkPos::new(0, 0),
             tile_pos: TilePos::new(0, 0),
-        });
+        },
+    ));
 }
 
 fn update_tile_cursor(
