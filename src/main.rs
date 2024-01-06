@@ -1,9 +1,8 @@
 mod game;
 mod prelude;
-mod world_inspector;
 
 use crate::game::GamePlugin;
-use crate::prelude::WorldInspectorPlugin;
+use crate::prelude::DebugOverlayPlugin;
 use bevy::prelude::*;
 use bevy::window::PresentMode;
 use bevy_screen_diagnostics::{
@@ -27,6 +26,6 @@ fn main() {
         .add_plugins(ScreenDiagnosticsPlugin::default())
         .add_plugins(ScreenFrameDiagnosticsPlugin)
         .add_plugins(ScreenEntityDiagnosticsPlugin)
-        .add_plugins(WorldInspectorPlugin)
+        .add_plugins(DebugOverlayPlugin)
         .run();
 }

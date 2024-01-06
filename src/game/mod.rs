@@ -18,6 +18,7 @@ use leafwing_input_manager::Actionlike;
 
 pub mod active_tool;
 pub mod camera;
+pub mod debug_overlay;
 pub mod interaction;
 pub mod tilemap;
 mod ui;
@@ -80,6 +81,7 @@ pub enum PlayerAction {
     SelectHoe,
     SelectPickaxe,
     SelectSeed,
+    ToggleDebugOverlay,
 }
 
 pub fn default_input_map() -> InputMap<PlayerAction> {
@@ -103,6 +105,7 @@ pub fn default_input_map() -> InputMap<PlayerAction> {
     input_map.insert(KeyCode::Key1, PlayerAction::SelectHoe);
     input_map.insert(KeyCode::Key2, PlayerAction::SelectPickaxe);
     input_map.insert(KeyCode::Key3, PlayerAction::SelectSeed);
+    input_map.insert(KeyCode::F2, PlayerAction::ToggleDebugOverlay);
 
     input_map.insert(KeyCode::Up, PlayerAction::Up);
     input_map.insert(KeyCode::W, PlayerAction::Up);
