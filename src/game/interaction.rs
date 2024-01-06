@@ -3,7 +3,7 @@ use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
-use crate::prelude::{ActiveTool, PlayerAction, WorldData};
+use crate::prelude::{ActiveTool, ChunkPos, PlayerAction, WorldData};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
@@ -15,8 +15,13 @@ pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ActiveTool::Hoe)
+            .add_event::<TileInteractionEvent>()
             .add_systems(Update, select_active_tool)
-            .add_systems(Update, interact_with_tile);
+            .add_systems(Update, detect_tile_interactions)
+            .add_systems(
+                Update,
+                process_tile_interactions.after(detect_tile_interactions),
+            );
     }
 }
 
@@ -39,16 +44,19 @@ fn select_active_tool(
     }
 }
 
-fn interact_with_tile(
-    mut commands: Commands,
-    mut update_tile_events: EventWriter<UpdateTileEvent>,
-    mut world_data: ResMut<WorldData>,
+#[derive(Event, Debug)]
+struct TileInteractionEvent {
+    pub chunk_pos: ChunkPos,
+    pub tile_pos: TilePos,
+    pub used_tool: ActiveTool,
+}
+
+fn detect_tile_interactions(
     active_tool: Res<ActiveTool>,
     action_state: Query<&ActionState<PlayerAction>>,
     tile_cursor: Query<(&TileCursor, &Visibility)>,
-    mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
-    loaded_chunk_data: Res<LoadedChunks>,
     mut previously_interacted_tile: Local<Option<TilePos>>,
+    mut tile_interaction_events: EventWriter<TileInteractionEvent>,
 ) {
     let action_state = action_state.get_single();
     if action_state.is_err() {
@@ -80,33 +88,48 @@ fn interact_with_tile(
             *previously_interacted_tile = Some(cursor.tile_pos);
         }
 
-        // Could we technically just spawn a "TileInteractionEvent(ActiveTool, TileCursor) event right here?
-        // Could this maybe even be generic on the active tool instance, so we have a "pickaxe listener" and a "water can listener"?
+        // in case we ever regularly happening AoE interaction events, it batch_send might be more performant
+        tile_interaction_events.send(TileInteractionEvent {
+            tile_pos: cursor.tile_pos,
+            chunk_pos: cursor.chunk_pos,
+            used_tool: active_tool.deref().clone(),
+        });
+    }
+}
 
-        match active_tool.deref() {
+fn process_tile_interactions(
+    mut tile_interaction_event: EventReader<TileInteractionEvent>,
+    mut commands: Commands,
+    mut update_tile_events: EventWriter<UpdateTileEvent>,
+    mut world_data: ResMut<WorldData>,
+    mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
+    loaded_chunk_data: Res<LoadedChunks>,
+) {
+    for event in tile_interaction_event.read() {
+        match event.used_tool {
             ActiveTool::Hoe => {
                 let world_data = &mut *world_data;
-                let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
-                if chunk.at_pos(&cursor.tile_pos).is_tilled {
+                let chunk = world_data.chunks.get_mut(&event.chunk_pos).unwrap();
+                if chunk.at_pos(&event.tile_pos).is_tilled {
                     continue;
                 }
 
-                chunk.set_at_pos(&cursor.tile_pos, true);
+                chunk.set_at_pos(&event.tile_pos, true);
 
                 // -- update tiles --
                 // This could happen in an event
 
-                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&cursor.chunk_pos) {
+                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&event.chunk_pos) {
                     let mut floor_tilemap_storage =
                         object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
 
                     let tilled_tile = commands
                         .spawn(TileBundle {
-                            position: cursor.tile_pos.clone(),
+                            position: event.tile_pos.clone(),
                             tilemap_id: TilemapId(loaded_data.floor_tilemap),
                             texture_index: determine_texture_index(
-                                &cursor.tile_pos,
-                                &cursor.chunk_pos,
+                                &event.tile_pos,
+                                &event.chunk_pos,
                                 &world_data,
                             ),
                             ..Default::default()
@@ -115,41 +138,41 @@ fn interact_with_tile(
                     commands
                         .entity(loaded_data.floor_tilemap)
                         .add_child(tilled_tile);
-                    floor_tilemap_storage.set(&cursor.tile_pos, tilled_tile);
+                    floor_tilemap_storage.set(&event.tile_pos, tilled_tile);
                     update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
-                        cursor.chunk_pos,
-                        cursor.tile_pos,
+                        event.chunk_pos,
+                        event.tile_pos,
                     ));
                 }
             }
             ActiveTool::Pickaxe => {
-                let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
-                if !chunk.at_pos(&cursor.tile_pos).is_tilled {
+                let chunk = world_data.chunks.get_mut(&event.chunk_pos).unwrap();
+                if !chunk.at_pos(&event.tile_pos).is_tilled {
                     continue;
                 }
 
-                chunk.set_at_pos(&cursor.tile_pos, false);
+                chunk.set_at_pos(&event.tile_pos, false);
 
-                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&cursor.chunk_pos) {
+                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&event.chunk_pos) {
                     let mut floor_tilemap_storage =
                         object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
 
-                    if let Some(entity) = floor_tilemap_storage.get(&cursor.tile_pos) {
-                        floor_tilemap_storage.remove(&cursor.tile_pos);
+                    if let Some(entity) = floor_tilemap_storage.get(&event.tile_pos) {
+                        floor_tilemap_storage.remove(&event.tile_pos);
                         commands.entity(entity).despawn();
                     } else {
-                        warn!("Entity was not set at {:?}.", cursor);
+                        warn!("Entity was not set at {:?}.", event);
                     }
 
                     update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
-                        cursor.chunk_pos,
-                        cursor.tile_pos,
+                        event.chunk_pos,
+                        event.tile_pos,
                     ));
                 }
             }
             ActiveTool::Seed => {
-                let chunk = world_data.chunks.get_mut(&cursor.chunk_pos).unwrap();
-                if !chunk.at_pos(&cursor.tile_pos).is_tilled {
+                let chunk = world_data.chunks.get_mut(&event.chunk_pos).unwrap();
+                if !chunk.at_pos(&event.tile_pos).is_tilled {
                     continue;
                 }
 
