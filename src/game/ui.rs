@@ -9,7 +9,11 @@ use bevy_egui::{egui, EguiContexts, EguiPlugin};
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(EguiPlugin).add_systems(Update, ui_system);
+        if !app.is_plugin_added::<EguiPlugin>() {
+            app.add_plugins(EguiPlugin);
+        }
+
+        app.add_systems(Update, ui_system);
     }
 }
 
