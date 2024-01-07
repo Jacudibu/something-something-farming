@@ -20,10 +20,12 @@ pub mod active_tool;
 pub mod camera;
 pub mod debug_overlay;
 pub mod interaction;
+pub mod map_pos;
 pub mod tilemap;
 pub mod ui;
 pub mod world_data;
 
+pub const TILE_SIZE: f32 = 16.0;
 pub const CHUNK_SIZE: usize = 32;
 
 pub struct GamePlugin;

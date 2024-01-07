@@ -5,7 +5,7 @@ use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::loaded_chunks::LoadedChunkData;
 use crate::prelude::tile_cursor::TileCursorPlugin;
 use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::prelude::{ChunkPos, WorldData, CHUNK_SIZE};
+use crate::prelude::{ChunkPos, WorldData, CHUNK_SIZE, TILE_SIZE};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
@@ -16,7 +16,10 @@ pub(crate) mod tile_cursor;
 pub(crate) mod tilemap_layer;
 pub(crate) mod update_tile_event;
 
-const TILE_SIZE: TilemapTileSize = TilemapTileSize { x: 16.0, y: 16.0 };
+const TILEMAP_TILE_SIZE: TilemapTileSize = TilemapTileSize {
+    x: TILE_SIZE,
+    y: TILE_SIZE,
+};
 const TILEMAP_SIZE: TilemapSize = TilemapSize {
     x: CHUNK_SIZE as u32,
     y: CHUNK_SIZE as u32,
@@ -44,8 +47,10 @@ impl Plugin for GameMapPlugin {
 
 fn tile_pos_to_world_pos(tile_pos: &TilePos, chunk_position: &ChunkPos, z: f32) -> Vec3 {
     Vec3::new(
-        tile_pos.x as f32 * TILE_SIZE.x + chunk_position.x as f32 * CHUNK_SIZE as f32 * TILE_SIZE.x,
-        tile_pos.y as f32 * TILE_SIZE.y + chunk_position.y as f32 * CHUNK_SIZE as f32 * TILE_SIZE.y,
+        tile_pos.x as f32 * TILEMAP_TILE_SIZE.x
+            + chunk_position.x as f32 * CHUNK_SIZE as f32 * TILEMAP_TILE_SIZE.x,
+        tile_pos.y as f32 * TILEMAP_TILE_SIZE.y
+            + chunk_position.y as f32 * CHUNK_SIZE as f32 * TILEMAP_TILE_SIZE.y,
         z,
     )
 }
@@ -120,10 +125,10 @@ fn spawn_chunk(
                 position: chunk_pos,
             },
             TilemapBundle {
-                grid_size: TILE_SIZE.into(),
+                grid_size: TILEMAP_TILE_SIZE.into(),
                 size: TILEMAP_SIZE,
                 texture: TilemapTexture::Single(tilled_tile_texture),
-                tile_size: TILE_SIZE,
+                tile_size: TILEMAP_TILE_SIZE,
                 transform: get_tilemap_transform(chunk_pos, TilemapLayer::Floor),
                 storage: TileStorage::empty(TILEMAP_SIZE),
                 ..Default::default()
@@ -176,11 +181,11 @@ fn spawn_ground_layer(
 
     let tile_texture: Handle<Image> = asset_server.load("sprites/simple_tiles.png");
     commands.entity(tilemap_entity).insert(TilemapBundle {
-        grid_size: TILE_SIZE.into(),
+        grid_size: TILEMAP_TILE_SIZE.into(),
         size: TILEMAP_SIZE,
         storage: tile_storage,
         texture: TilemapTexture::Single(tile_texture),
-        tile_size: TILE_SIZE,
+        tile_size: TILEMAP_TILE_SIZE,
         transform: get_tilemap_transform(chunk_pos, TilemapLayer::Ground),
         ..Default::default()
     });
@@ -190,8 +195,8 @@ fn spawn_ground_layer(
 
 fn get_tilemap_transform(chunk_pos: ChunkPos, layer: TilemapLayer) -> Transform {
     Transform::from_translation(Vec3::new(
-        chunk_pos.x as f32 * CHUNK_SIZE as f32 * TILE_SIZE.x,
-        chunk_pos.y as f32 * CHUNK_SIZE as f32 * TILE_SIZE.y,
+        chunk_pos.x as f32 * CHUNK_SIZE as f32 * TILEMAP_TILE_SIZE.x,
+        chunk_pos.y as f32 * CHUNK_SIZE as f32 * TILEMAP_TILE_SIZE.y,
         layer.into(),
     ))
 }

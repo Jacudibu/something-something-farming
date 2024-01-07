@@ -52,23 +52,23 @@ fn ui_system(
         .get_single()
         .expect("Multiselection isn't yet supported by debug ui");
 
-    let chunk = world_data.chunks.get(&cursor.chunk_pos);
+    let chunk = world_data.chunks.get(&cursor.pos.chunk);
     if chunk.is_none() {
-        error!("Chunk at {} did not exist!", cursor.chunk_pos);
+        error!("Chunk at {} did not exist!", cursor.pos.chunk);
         return;
     }
     let chunk = chunk.unwrap();
-    let tile = chunk.at_pos(&cursor.tile_pos);
+    let tile = chunk.at_pos(&cursor.pos.tile);
 
     egui::Window::new(format!("{}", cursor.global_position()))
         .collapsible(false)
         .resizable(false)
         .fixed_pos(Pos2::new(5.0, 5.0))
         .show(contexts.ctx_mut(), |ui| {
-            ui.label(format!("Chunk: {}", cursor.chunk_pos));
+            ui.label(format!("Chunk: {}", cursor.pos.chunk));
             ui.label(format!(
                 "Local Position: [{}, {}]",
-                cursor.tile_pos.x, cursor.tile_pos.y
+                cursor.pos.tile.x, cursor.pos.tile.y
             ));
             ui.label(format!("Tile: {:?}", tile))
         });

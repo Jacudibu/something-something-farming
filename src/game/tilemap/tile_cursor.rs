@@ -1,7 +1,7 @@
 use crate::game::tilemap::tile_pos_to_world_pos;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::tilemap_layer::GroundLayer;
-use crate::prelude::{ChunkPos, CursorPos, CHUNK_SIZE};
+use crate::prelude::{ChunkPos, CursorPos, MapPos, CHUNK_SIZE};
 use bevy::app::{App, First, Plugin, Startup};
 use bevy::asset::{AssetServer, Handle};
 use bevy::core::Name;
@@ -25,15 +25,14 @@ impl Plugin for TileCursorPlugin {
 
 #[derive(Component, Debug)]
 pub struct TileCursor {
-    pub tile_pos: TilePos,
-    pub chunk_pos: ChunkPos,
+    pub pos: MapPos,
 }
 
 impl TileCursor {
     pub fn global_position(&self) -> IVec2 {
         IVec2::new(
-            self.chunk_pos.x * CHUNK_SIZE as i32 + self.tile_pos.x as i32,
-            self.chunk_pos.y * CHUNK_SIZE as i32 + self.tile_pos.y as i32,
+            self.pos.chunk.x * CHUNK_SIZE as i32 + self.pos.tile.x as i32,
+            self.pos.chunk.y * CHUNK_SIZE as i32 + self.pos.tile.y as i32,
         )
     }
 }
@@ -53,8 +52,7 @@ fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
             ..default()
         },
         TileCursor {
-            chunk_pos: ChunkPos::new(0, 0),
-            tile_pos: TilePos::new(0, 0),
+            pos: MapPos::new(ChunkPos::new(0, 0), TilePos::new(0, 0)),
         },
     ));
 }
@@ -105,8 +103,8 @@ fn update_tile_cursor(
                     transform.translation =
                         tile_pos_to_world_pos(&tile_pos, &chunk_identifier.position, 100.0);
                     *visibility = Visibility::Visible;
-                    cursor.tile_pos = tile_pos.clone();
-                    cursor.chunk_pos = chunk_identifier.position.clone();
+                    cursor.pos.tile = tile_pos.clone();
+                    cursor.pos.chunk = chunk_identifier.position.clone();
                 }
             }
         }
