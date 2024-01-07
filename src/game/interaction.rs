@@ -3,7 +3,7 @@ use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
-use crate::prelude::{ActiveTool, ChunkPos, PlayerAction, WorldData};
+use crate::prelude::{ActiveTool, ChunkPos, MouseCursorOverUiState, PlayerAction, WorldData};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
@@ -17,7 +17,10 @@ impl Plugin for InteractionPlugin {
         app.insert_resource(ActiveTool::Hoe)
             .add_event::<TileInteractionEvent>()
             .add_systems(Update, select_active_tool)
-            .add_systems(Update, detect_tile_interactions)
+            .add_systems(
+                Update,
+                detect_tile_interactions.run_if(in_state(MouseCursorOverUiState::NotOverUI)),
+            )
             .add_systems(
                 Update,
                 process_tile_interactions.after(detect_tile_interactions),

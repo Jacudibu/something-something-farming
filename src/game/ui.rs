@@ -1,8 +1,8 @@
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::{ActiveTool, WorldData};
-use bevy::app::{App, Plugin, Update};
+use bevy::app::{App, First, Plugin, Update};
 use bevy::log::error;
-use bevy::prelude::{Query, Res};
+use bevy::prelude::{NextState, Query, Res, ResMut, State, States};
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
@@ -13,7 +13,32 @@ impl Plugin for UiPlugin {
             app.add_plugins(EguiPlugin);
         }
 
-        app.add_systems(Update, ui_system);
+        app.add_state::<MouseCursorOverUiState>()
+            .add_systems(First, detect_mouse_cursor_over_ui)
+            .add_systems(Update, ui_system);
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash, States)]
+pub enum MouseCursorOverUiState {
+    #[default]
+    NotOverUI,
+    OverUI,
+}
+
+fn detect_mouse_cursor_over_ui(
+    mut contexts: EguiContexts,
+    current_mouse_state: Res<State<MouseCursorOverUiState>>,
+    mut next_state: ResMut<NextState<MouseCursorOverUiState>>,
+) {
+    if contexts.ctx_mut().is_pointer_over_area() {
+        if current_mouse_state.get() != &MouseCursorOverUiState::OverUI {
+            next_state.set(MouseCursorOverUiState::OverUI);
+        }
+    } else {
+        if current_mouse_state.get() != &MouseCursorOverUiState::NotOverUI {
+            next_state.set(MouseCursorOverUiState::NotOverUI);
+        }
     }
 }
 

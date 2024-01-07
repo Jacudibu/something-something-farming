@@ -21,7 +21,7 @@ pub mod camera;
 pub mod debug_overlay;
 pub mod interaction;
 pub mod tilemap;
-mod ui;
+pub mod ui;
 pub mod world_data;
 
 pub const CHUNK_SIZE: usize = 32;
