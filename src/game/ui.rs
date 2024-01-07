@@ -1,8 +1,8 @@
 use crate::prelude::tile_cursor::TileCursor;
-use crate::prelude::{ActiveTool, WorldData};
+use crate::prelude::{ActiveTool, GameState, WorldData};
 use bevy::app::{App, First, Plugin, Update};
 use bevy::log::error;
-use bevy::prelude::{NextState, Query, Res, ResMut, State, States};
+use bevy::prelude::{in_state, IntoSystemConfigs, NextState, Query, Res, ResMut, State, States};
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
@@ -15,7 +15,7 @@ impl Plugin for UiPlugin {
 
         app.add_state::<MouseCursorOverUiState>()
             .add_systems(First, detect_mouse_cursor_over_ui)
-            .add_systems(Update, ui_system);
+            .add_systems(Update, ui_system.run_if(in_state(GameState::Playing)));
     }
 }
 

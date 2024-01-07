@@ -1,5 +1,5 @@
 use crate::game::CursorPos;
-use crate::prelude::{default_input_map, MouseCursorOverUiState, PlayerAction};
+use crate::prelude::{default_input_map, GameState, MouseCursorOverUiState, PlayerAction};
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 use leafwing_input_manager::action_state::ActionState;
@@ -21,9 +21,11 @@ impl Plugin for CameraPlugin {
             .add_systems(Startup, init)
             .add_systems(
                 Update,
-                zoom_camera.run_if(in_state(MouseCursorOverUiState::NotOverUI)),
+                zoom_camera
+                    .run_if(in_state(MouseCursorOverUiState::NotOverUI))
+                    .run_if(in_state(GameState::Playing)),
             )
-            .add_systems(Last, move_camera);
+            .add_systems(Last, move_camera.run_if(in_state(GameState::Playing)));
     }
 }
 

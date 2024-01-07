@@ -1,13 +1,14 @@
 use crate::game::tilemap::tile_pos_to_world_pos;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::tilemap_layer::GroundLayer;
+use crate::prelude::SpriteAssets;
 use crate::prelude::{ChunkPos, CursorPos, MapPos, CHUNK_SIZE};
+use crate::GameState;
 use bevy::app::{App, First, Plugin, Startup};
-use bevy::asset::{AssetServer, Handle};
 use bevy::core::Name;
 use bevy::math::{IVec2, Vec2, Vec4};
 use bevy::prelude::{
-    default, Color, Commands, Component, Image, IntoSystemConfigs, Query, Res, Sprite,
+    default, in_state, Color, Commands, Component, IntoSystemConfigs, OnEnter, Query, Res, Sprite,
     SpriteBundle, Transform, Vec4Swizzles, Visibility, With, Without,
 };
 use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapSize, TilemapType};
@@ -16,10 +17,13 @@ use bevy_ecs_tilemap::prelude::{TilePos, TileStorage};
 pub struct TileCursorPlugin;
 impl Plugin for TileCursorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, initialize_cursor).add_systems(
-            First,
-            update_tile_cursor.after(crate::game::update_cursor_pos),
-        );
+        app.add_systems(OnEnter(GameState::Playing), initialize_cursor)
+            .add_systems(
+                First,
+                update_tile_cursor
+                    .after(crate::game::update_cursor_pos)
+                    .run_if(in_state(GameState::Playing)),
+            );
     }
 }
 
@@ -37,13 +41,12 @@ impl TileCursor {
     }
 }
 
-fn initialize_cursor(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn initialize_cursor(mut commands: Commands, assets: Res<SpriteAssets>) {
     // TODO: Initialize Cursors only when tiles are actually selected
-    let tile_cursor_texture: Handle<Image> = asset_server.load("sprites/tile_cursor.png");
     commands.spawn((
         Name::new("Tile Cursor"),
         SpriteBundle {
-            texture: tile_cursor_texture,
+            texture: assets.cursor.clone(),
             visibility: Visibility::Hidden,
             sprite: Sprite {
                 color: Color::rgba(1.0, 1.0, 1.0, 0.25),

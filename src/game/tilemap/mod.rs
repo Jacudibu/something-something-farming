@@ -6,6 +6,7 @@ use crate::prelude::loaded_chunks::LoadedChunkData;
 use crate::prelude::tile_cursor::TileCursorPlugin;
 use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
 use crate::prelude::{ChunkPos, WorldData, CHUNK_SIZE, TILE_SIZE};
+use crate::{GameState, SpriteAssets};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::prelude::*;
 
@@ -41,7 +42,7 @@ impl Plugin for GameMapPlugin {
         .add_plugins(TileCursorPlugin)
         .add_plugins(UpdateTileEventPlugin)
         .add_plugins(LoadedChunkPlugin)
-        .add_systems(Startup, spawn_testing_chunks);
+        .add_systems(OnEnter(GameState::Playing), spawn_testing_chunks);
     }
 }
 
@@ -57,34 +58,34 @@ fn tile_pos_to_world_pos(tile_pos: &TilePos, chunk_position: &ChunkPos, z: f32) 
 
 fn spawn_testing_chunks(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    assets: Res<SpriteAssets>,
     world_data: Res<WorldData>,
     mut loaded_chunks: ResMut<LoadedChunks>,
 ) {
     spawn_chunk(
         &mut commands,
-        &asset_server,
+        &assets,
         ChunkPos::new(0, 0),
         &world_data,
         &mut loaded_chunks,
     );
     spawn_chunk(
         &mut commands,
-        &asset_server,
+        &assets,
         ChunkPos::new(0, -1),
         &world_data,
         &mut loaded_chunks,
     );
     spawn_chunk(
         &mut commands,
-        &asset_server,
+        &assets,
         ChunkPos::new(-1, 0),
         &world_data,
         &mut loaded_chunks,
     );
     spawn_chunk(
         &mut commands,
-        &asset_server,
+        &assets,
         ChunkPos::new(-1, -1),
         &world_data,
         &mut loaded_chunks,
@@ -104,7 +105,7 @@ fn despawn_chunk(mut commands: Commands, loaded_chunks: &mut LoadedChunks, chunk
 
 fn spawn_chunk(
     commands: &mut Commands,
-    asset_server: &AssetServer,
+    assets: &SpriteAssets,
     chunk_pos: ChunkPos,
     world_data: &WorldData,
     loaded_chunks: &mut LoadedChunks,
@@ -114,9 +115,8 @@ fn spawn_chunk(
         .get(&chunk_pos)
         .expect(&format!("World data should exists for chunk {}", chunk_pos));
 
-    let ground_tilemap = spawn_ground_layer(commands, asset_server, chunk_pos, chunk_data);
+    let ground_tilemap = spawn_ground_layer(commands, assets, chunk_pos, chunk_data);
 
-    let tilled_tile_texture: Handle<Image> = asset_server.load("sprites/tilled_tile.png");
     let floor_tilemap = commands
         .spawn((
             get_chunk_name(chunk_pos, TilemapLayer::Floor),
@@ -127,7 +127,7 @@ fn spawn_chunk(
             TilemapBundle {
                 grid_size: TILEMAP_TILE_SIZE.into(),
                 size: TILEMAP_SIZE,
-                texture: TilemapTexture::Single(tilled_tile_texture),
+                texture: TilemapTexture::Single(assets.tilled_tiles.clone()),
                 tile_size: TILEMAP_TILE_SIZE,
                 transform: get_tilemap_transform(chunk_pos, TilemapLayer::Floor),
                 storage: TileStorage::empty(TILEMAP_SIZE),
@@ -146,7 +146,7 @@ fn spawn_chunk(
 
 fn spawn_ground_layer(
     commands: &mut Commands,
-    asset_server: &AssetServer,
+    assets: &SpriteAssets,
     chunk_pos: ChunkPos,
     chunk: &ChunkData,
 ) -> Entity {
@@ -179,12 +179,11 @@ fn spawn_ground_layer(
         }
     }
 
-    let tile_texture: Handle<Image> = asset_server.load("sprites/simple_tiles.png");
     commands.entity(tilemap_entity).insert(TilemapBundle {
         grid_size: TILEMAP_TILE_SIZE.into(),
         size: TILEMAP_SIZE,
         storage: tile_storage,
-        texture: TilemapTexture::Single(tile_texture),
+        texture: TilemapTexture::Single(assets.simple_tiles.clone()),
         tile_size: TILEMAP_TILE_SIZE,
         transform: get_tilemap_transform(chunk_pos, TilemapLayer::Ground),
         ..Default::default()

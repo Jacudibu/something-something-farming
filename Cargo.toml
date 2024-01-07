@@ -22,6 +22,7 @@ bevy_screen_diagnostics = "0.4.0"
 bevy_ecs_tilemap = "0.12"
 bevy_egui = "0.24.0"
 bevy-inspector-egui = "0.22.1"
+bevy_asset_loader = { version = "0.19.1", features = ["2d"] }
 
 [patch.crates-io]
 bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }

@@ -4,6 +4,8 @@ use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
+use crate::prelude::GameState;
+use crate::prelude::SpriteAssets;
 use crate::prelude::{ActiveTool, MouseCursorOverUiState, PlayerAction, WorldData};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
@@ -17,14 +19,21 @@ impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ActiveTool::Hoe)
             .add_event::<TileInteractionEvent>()
-            .add_systems(Update, select_active_tool)
             .add_systems(
                 Update,
-                detect_tile_interactions.run_if(in_state(MouseCursorOverUiState::NotOverUI)),
+                select_active_tool.run_if(in_state(GameState::Playing)),
             )
             .add_systems(
                 Update,
-                process_tile_interactions.after(detect_tile_interactions),
+                detect_tile_interactions
+                    .run_if(in_state(MouseCursorOverUiState::NotOverUI))
+                    .run_if(in_state(GameState::Playing)),
+            )
+            .add_systems(
+                Update,
+                process_tile_interactions
+                    .after(detect_tile_interactions)
+                    .run_if(in_state(GameState::Playing)),
             );
     }
 }
@@ -102,7 +111,7 @@ fn detect_tile_interactions(
 fn process_tile_interactions(
     mut tile_interaction_event: EventReader<TileInteractionEvent>,
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    assets: Res<SpriteAssets>,
     mut update_tile_events: EventWriter<UpdateTileEvent>,
     mut world_data: ResMut<WorldData>,
     mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
@@ -179,7 +188,15 @@ fn process_tile_interactions(
                     continue;
                 }
 
-                info!("Planty planty!");
+                commands.spawn((
+                    Name::new("Plant"),
+                    SpriteSheetBundle {
+                        texture_atlas: assets.plant.clone(),
+                        sprite: TextureAtlasSprite::new(0),
+                        transform: Transform::from_translation(event.pos.world_pos(100.0)),
+                        ..default()
+                    },
+                ));
             }
         }
     }

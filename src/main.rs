@@ -5,6 +5,7 @@ use crate::game::GamePlugin;
 use crate::prelude::DebugOverlayPlugin;
 use bevy::prelude::*;
 use bevy::window::PresentMode;
+use bevy_asset_loader::prelude::*;
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
@@ -16,11 +17,18 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
                     primary_window: Some(Window {
+                        title: "Something something farming".to_string(),
                         present_mode: PresentMode::AutoNoVsync,
                         ..default()
                     }),
                     ..default()
                 }),
+        )
+        .add_state::<GameState>()
+        .add_loading_state(
+            LoadingState::new(GameState::Loading)
+                .continue_to_state(GameState::Playing)
+                .load_collection::<SpriteAssets>(),
         )
         .add_plugins(GamePlugin)
         .add_plugins(ScreenDiagnosticsPlugin::default())
@@ -28,4 +36,25 @@ fn main() {
         .add_plugins(ScreenEntityDiagnosticsPlugin)
         .add_plugins(DebugOverlayPlugin)
         .run();
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+enum GameState {
+    #[default]
+    Loading,
+    Playing,
+}
+
+#[derive(AssetCollection, Resource)]
+struct SpriteAssets {
+    #[asset(texture_atlas(tile_size_x = 16.0, tile_size_y = 16.0, columns = 4, rows = 1))]
+    #[asset(path = "sprites/debug_plant.png")]
+    plant: Handle<TextureAtlas>,
+
+    #[asset(path = "sprites/tile_cursor.png")]
+    cursor: Handle<Image>,
+    #[asset(path = "sprites/tilled_tile.png")]
+    tilled_tiles: Handle<Image>,
+    #[asset(path = "sprites/simple_tiles.png")]
+    simple_tiles: Handle<Image>,
 }

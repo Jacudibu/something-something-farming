@@ -2,16 +2,17 @@ use crate::game::tilemap::helpers::{below_of, left_of, right_of, top_of};
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::helpers::determine_texture_index;
 use crate::prelude::tilemap_layer::GroundLayer;
+use crate::prelude::GameState;
 use crate::prelude::{ChunkPos, WorldData};
 use bevy::app::{App, Plugin, Update};
-use bevy::prelude::{Event, EventReader, Query, Res, Without};
+use bevy::prelude::{in_state, Event, EventReader, IntoSystemConfigs, Query, Res, Without};
 use bevy_ecs_tilemap::prelude::{TilePos, TileStorage, TileTextureIndex};
 
 pub struct UpdateTileEventPlugin;
 impl Plugin for UpdateTileEventPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<UpdateTileEvent>()
-            .add_systems(Update, update_tiles);
+            .add_systems(Update, update_tiles.run_if(in_state(GameState::Playing)));
     }
 }
 
