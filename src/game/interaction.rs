@@ -116,7 +116,7 @@ fn process_tile_interactions(
     mut update_tile_events: EventWriter<UpdateTileEvent>,
     mut world_data: ResMut<WorldData>,
     mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
-    loaded_chunk_data: Res<LoadedChunks>,
+    mut loaded_chunk_data: ResMut<LoadedChunks>,
 ) {
     for event in tile_interaction_event.read() {
         match event.used_tool {
@@ -129,9 +129,7 @@ fn process_tile_interactions(
 
                 chunk.set_at_pos(&event.pos.tile, true);
 
-                // -- update tiles --
-                // This could happen in an event
-
+                // TODO: Event - Place Floor tile
                 if let Some(loaded_data) = loaded_chunk_data.chunks.get(&event.pos.chunk) {
                     let mut floor_tilemap_storage =
                         object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
@@ -164,8 +162,23 @@ fn process_tile_interactions(
                     continue;
                 }
 
-                chunk.set_at_pos(&event.pos.tile, false);
+                // TODO: Event - Remove Crop/Prop
+                if let Some(_) = chunk.crops.get(&event.pos.tile) {
+                    chunk.crops.remove(&event.pos.tile);
 
+                    if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
+                        if let Some(entity) = loaded_data.crops.remove(&event.pos.tile) {
+                            commands.entity(entity).despawn();
+                        } else {
+                            warn!("Prop was not set at {:?}.", event);
+                        }
+                    }
+
+                    continue;
+                }
+
+                // TODO: Event - Remove tilled tile
+                chunk.set_at_pos(&event.pos.tile, false);
                 if let Some(loaded_data) = loaded_chunk_data.chunks.get(&event.pos.chunk) {
                     let mut floor_tilemap_storage =
                         object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
@@ -195,8 +208,9 @@ fn process_tile_interactions(
 
                 chunk.crops.insert(event.pos.tile, CropData {});
 
-                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&event.pos.chunk) {
-                    commands
+                // TODO: Event - Plant Seed
+                if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
+                    let entity = commands
                         .spawn((
                             Name::new("Plant"),
                             SpriteSheetBundle {
@@ -208,7 +222,10 @@ fn process_tile_interactions(
                                 ..default()
                             },
                         ))
-                        .set_parent(loaded_data.ground_tilemap);
+                        .set_parent(loaded_data.ground_tilemap)
+                        .id();
+
+                    loaded_data.crops.insert(event.pos.tile, entity);
                 }
             }
         }

@@ -1,6 +1,7 @@
 use crate::prelude::ChunkPos;
 use bevy::prelude::{App, Entity, Plugin, Resource};
 use bevy::utils::HashMap;
+use bevy_ecs_tilemap::tiles::TilePos;
 
 pub struct LoadedChunkPlugin;
 impl Plugin for LoadedChunkPlugin {
@@ -19,4 +20,5 @@ pub struct LoadedChunks {
 pub struct LoadedChunkData {
     pub ground_tilemap: Entity,
     pub floor_tilemap: Entity,
+    pub crops: HashMap<TilePos, Entity>,
 }

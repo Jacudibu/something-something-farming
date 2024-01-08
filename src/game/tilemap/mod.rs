@@ -8,6 +8,7 @@ use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
 use crate::prelude::{ChunkPos, WorldData, CHUNK_SIZE, TILE_SIZE};
 use crate::{GameState, SpriteAssets};
 use bevy::prelude::*;
+use bevy::utils::hashbrown::HashMap;
 use bevy_ecs_tilemap::prelude::*;
 
 pub(crate) mod chunk_identifier;
@@ -139,6 +140,7 @@ fn spawn_chunk(
     let loaded_chunk_data = LoadedChunkData {
         ground_tilemap,
         floor_tilemap,
+        crops: HashMap::new(),
     };
 
     loaded_chunks.chunks.insert(chunk_pos, loaded_chunk_data);
