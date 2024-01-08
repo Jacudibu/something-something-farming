@@ -35,7 +35,8 @@ impl Plugin for InteractionPlugin {
                 process_tile_interactions
                     .after(detect_tile_interactions)
                     .run_if(in_state(GameState::Playing)),
-            );
+            )
+            .add_systems(Update, grow_plants.run_if(in_state(GameState::Playing)));
     }
 }
 
@@ -117,6 +118,7 @@ fn process_tile_interactions(
     mut world_data: ResMut<WorldData>,
     mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
     mut loaded_chunk_data: ResMut<LoadedChunks>,
+    time: Res<Time>,
 ) {
     for event in tile_interaction_event.read() {
         match event.used_tool {
@@ -206,7 +208,7 @@ fn process_tile_interactions(
                     continue;
                 }
 
-                chunk.crops.insert(event.pos.tile, CropData {});
+                chunk.crops.insert(event.pos.tile, CropData::new(&time));
 
                 // TODO: Event - Plant Seed
                 if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
@@ -230,4 +232,70 @@ fn process_tile_interactions(
             }
         }
     }
+}
+
+struct NextItemToUpdate {
+    update_at: f32,
+    pos: MapPos,
+}
+
+fn grow_plants(
+    mut world_data: ResMut<WorldData>,
+    mut sprites: Query<&mut TextureAtlasSprite>,
+    time: Res<Time>,
+    loaded_chunk_data: Res<LoadedChunks>,
+) {
+    // TODO: Performance Improvements
+    // Step #1: Cache the next item that should be updated instead of doing this every frame, mark cache as dirty when timers are changed
+    // Step #2: Collect all items which request an update in an ordered list, listen to events to add & remove them as needed
+
+    if let Some(next) = find_next_tile_to_update(&world_data) {
+        if next.update_at < time.elapsed_seconds() {
+            // TODO: Update
+            let crop = world_data
+                .chunks
+                .get_mut(&next.pos.chunk)
+                .unwrap()
+                .crops
+                .get_mut(&next.pos.tile)
+                .unwrap();
+
+            crop.stage += 1;
+            // TODO: Move those values into a config file
+            if crop.stage < 3 {
+                crop.next_stage_at = Some(time.elapsed_seconds() + 5.0);
+            } else {
+                crop.next_stage_at = None;
+            }
+
+            // TODO: Move that into an event
+            if let Some(chunk) = loaded_chunk_data.chunks.get(&next.pos.chunk) {
+                if let Some(entity) = chunk.crops.get(&next.pos.tile) {
+                    if let Ok(mut bla) = sprites.get_mut(entity.clone()) {
+                        bla.index += 1;
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn find_next_tile_to_update(world_data: &WorldData) -> Option<NextItemToUpdate> {
+    let mut lowest_time_found = f32::MAX;
+    let mut next: Option<NextItemToUpdate> = None;
+    for (chunk_pos, chunk) in world_data.chunks.iter() {
+        for (tile_pos, crop) in chunk.crops.iter() {
+            if let Some(remaining_time) = crop.next_stage_at {
+                if lowest_time_found > remaining_time {
+                    lowest_time_found = remaining_time;
+                    next = Some(NextItemToUpdate {
+                        update_at: remaining_time,
+                        pos: MapPos::new(chunk_pos.clone(), tile_pos.clone()),
+                    })
+                }
+            }
+        }
+    }
+
+    next
 }
