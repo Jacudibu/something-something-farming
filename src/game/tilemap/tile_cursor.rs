@@ -4,7 +4,7 @@ use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::SpriteAssets;
 use crate::prelude::{ChunkPos, CursorPos, MapPos, CHUNK_SIZE};
 use crate::GameState;
-use bevy::app::{App, First, Plugin, Startup};
+use bevy::app::{App, First, Plugin};
 use bevy::core::Name;
 use bevy::math::{IVec2, Vec2, Vec4};
 use bevy::prelude::{

@@ -1,4 +1,5 @@
 use crate::game::map_pos::MapPos;
+use crate::prelude::chunk_data::CropData;
 use crate::prelude::helpers::determine_texture_index;
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
@@ -187,6 +188,12 @@ fn process_tile_interactions(
                 if !chunk.at_pos(&event.pos.tile).is_tilled {
                     continue;
                 }
+
+                if chunk.crops.get(&event.pos.tile).is_some() {
+                    continue;
+                }
+
+                chunk.crops.insert(event.pos.tile, CropData {});
 
                 if let Some(loaded_data) = loaded_chunk_data.chunks.get(&event.pos.chunk) {
                     commands

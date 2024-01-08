@@ -1,10 +1,14 @@
 use crate::prelude::tile_data::TileData;
 use crate::prelude::CHUNK_SIZE;
+use bevy::utils::HashMap;
 use bevy_ecs_tilemap::prelude::TilePos;
 
 pub struct ChunkData {
     pub tiles: [TileData; CHUNK_SIZE * CHUNK_SIZE],
+    pub crops: HashMap<TilePos, CropData>,
 }
+
+pub struct CropData {}
 
 impl ChunkData {
     pub fn at(&self, x: u32, y: u32) -> &TileData {
@@ -25,6 +29,7 @@ impl Default for ChunkData {
     fn default() -> Self {
         ChunkData {
             tiles: [TileData::default(); CHUNK_SIZE * CHUNK_SIZE],
+            crops: HashMap::new(),
         }
     }
 }
