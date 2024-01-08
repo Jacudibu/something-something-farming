@@ -1,5 +1,6 @@
 use crate::game::camera::CameraPlugin;
 use crate::game::interaction::InteractionPlugin;
+use crate::game::tile_updater::TileUpdaterPlugin;
 use crate::game::tilemap::GameMapPlugin;
 use crate::game::ui::UiPlugin;
 use crate::game::world_data::WorldDataPlugin;
@@ -21,6 +22,7 @@ pub mod camera;
 pub mod debug_overlay;
 pub mod interaction;
 pub mod map_pos;
+pub mod tile_updater;
 pub mod tilemap;
 pub mod ui;
 pub mod world_data;
@@ -38,6 +40,7 @@ impl Plugin for GamePlugin {
             .add_plugins(CameraPlugin)
             .add_plugins(InteractionPlugin)
             .add_plugins(UiPlugin)
+            .add_plugins(TileUpdaterPlugin)
             .add_systems(First, update_cursor_pos);
     }
 }
@@ -61,7 +64,7 @@ pub fn update_cursor_pos(
     mut cursor_moved_events: EventReader<CursorMoved>,
     mut cursor_pos: ResMut<CursorPos>,
 ) {
-    // TODO: If we are using the gamepad, cursorpos should be playerPos + stick * value
+    // TODO: If we are using the gamepad, cursorpos should be playerPos + stick * range
     for cursor_moved in cursor_moved_events.read() {
         cursor_pos.screen = cursor_moved.position;
         for (cam_t, cam) in camera_q.iter() {
