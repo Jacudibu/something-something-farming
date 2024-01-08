@@ -188,15 +188,21 @@ fn process_tile_interactions(
                     continue;
                 }
 
-                commands.spawn((
-                    Name::new("Plant"),
-                    SpriteSheetBundle {
-                        texture_atlas: assets.plant.clone(),
-                        sprite: TextureAtlasSprite::new(0),
-                        transform: Transform::from_translation(event.pos.world_pos(100.0)),
-                        ..default()
-                    },
-                ));
+                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&event.pos.chunk) {
+                    commands
+                        .spawn((
+                            Name::new("Plant"),
+                            SpriteSheetBundle {
+                                texture_atlas: assets.plant.clone(),
+                                sprite: TextureAtlasSprite::new(0),
+                                transform: Transform::from_translation(
+                                    event.pos.pos_inside_chunk(100.0),
+                                ),
+                                ..default()
+                            },
+                        ))
+                        .set_parent(loaded_data.ground_tilemap);
+                }
             }
         }
     }

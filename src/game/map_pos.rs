@@ -24,4 +24,12 @@ impl MapPos {
             z,
         }
     }
+
+    pub fn pos_inside_chunk(&self, z: f32) -> Vec3 {
+        Vec3 {
+            x: self.tile.x as f32 * TILE_SIZE,
+            y: self.tile.y as f32 * TILE_SIZE,
+            z,
+        }
+    }
 }
