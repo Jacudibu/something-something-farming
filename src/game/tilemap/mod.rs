@@ -5,7 +5,7 @@ use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::loaded_chunks::LoadedChunkData;
 use crate::prelude::tile_cursor::TileCursorPlugin;
 use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::prelude::{ChunkPos, WorldData, CHUNK_SIZE, TILE_SIZE};
+use crate::prelude::{ChunkPos, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX, TILE_SIZE};
 use crate::{GameState, SpriteAssets};
 use bevy::prelude::*;
 use bevy::utils::hashbrown::HashMap;
@@ -63,34 +63,17 @@ fn spawn_testing_chunks(
     world_data: Res<WorldData>,
     mut loaded_chunks: ResMut<LoadedChunks>,
 ) {
-    spawn_chunk(
-        &mut commands,
-        &assets,
-        ChunkPos::new(0, 0),
-        &world_data,
-        &mut loaded_chunks,
-    );
-    spawn_chunk(
-        &mut commands,
-        &assets,
-        ChunkPos::new(0, -1),
-        &world_data,
-        &mut loaded_chunks,
-    );
-    spawn_chunk(
-        &mut commands,
-        &assets,
-        ChunkPos::new(-1, 0),
-        &world_data,
-        &mut loaded_chunks,
-    );
-    spawn_chunk(
-        &mut commands,
-        &assets,
-        ChunkPos::new(-1, -1),
-        &world_data,
-        &mut loaded_chunks,
-    );
+    for x in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
+        for y in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
+            spawn_chunk(
+                &mut commands,
+                &assets,
+                ChunkPos::new(x, y),
+                &world_data,
+                &mut loaded_chunks,
+            );
+        }
+    }
 }
 
 fn get_chunk_name(chunk_pos: ChunkPos, layer: TilemapLayer) -> Name {

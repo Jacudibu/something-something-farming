@@ -6,6 +6,8 @@ pub mod chunk_data;
 pub mod ground_type;
 pub mod tile_data;
 
+pub const DEBUG_WORLD_SIZE_MIN_AND_MAX: i32 = 1;
+
 pub type ChunkPos = IVec2;
 
 pub struct WorldDataPlugin;
@@ -26,8 +28,8 @@ impl Default for WorldData {
             chunks: HashMap::default(),
         };
 
-        for x in [-1, 0] {
-            for y in [-1, 0] {
+        for x in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
+            for y in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
                 result
                     .chunks
                     .insert(ChunkPos::new(x, y), ChunkData::default());
