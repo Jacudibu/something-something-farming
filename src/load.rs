@@ -1,5 +1,5 @@
 use crate::GameState;
-use bevy::prelude::{App, Handle, Image, Plugin, Resource, TextureAtlas, Vec2};
+use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_asset_loader::prelude::*;
 
@@ -9,18 +9,15 @@ impl Plugin for LoadingPlugin {
         app.add_loading_state(
             LoadingState::new(GameState::Loading)
                 .continue_to_state(GameState::Playing)
-                .load_collection::<SpriteAssets>(),
+                .load_collection::<SpriteAssets>()
+                .load_collection::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>(),
         )
-        .insert_resource(AllCrops::default());
+            .add_systems(OnExit(GameState::Loading), insert_crop_resource);
     }
 }
 
 #[derive(Resource, AssetCollection)]
 pub struct SpriteAssets {
-    #[asset(texture_atlas(tile_size_x = 16.0, tile_size_y = 16.0, columns = 4, rows = 1))]
-    #[asset(path = "sprites/debug_plant.png")]
-    pub plant: Handle<TextureAtlas>,
-
     #[asset(path = "sprites/tile_cursor.png")]
     pub cursor: Handle<Image>,
     #[asset(path = "sprites/tilled_tile.png")]
@@ -29,13 +26,27 @@ pub struct SpriteAssets {
     pub simple_tiles: Handle<Image>,
 }
 
+#[derive(Resource, AssetCollection)]
+struct HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually {
+    #[asset(texture_atlas(tile_size_x = 16.0, tile_size_y = 16.0, columns = 4, rows = 1))]
+    #[asset(path = "sprites/debug_plant.png")]
+    pub plant: Handle<TextureAtlas>,
+}
+
+fn insert_crop_resource(world: &mut World) {
+    let assets = world
+        .get_resource::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>()
+        .expect("Hardcoded assets should be loaded! :(");
+    world.insert_resource(AllCrops::from(&assets));
+}
+
 #[derive(Resource)]
 pub struct AllCrops {
     pub(crate) definitions: HashMap<CropId, CropDefinition>,
 }
 
-impl Default for AllCrops {
-    fn default() -> Self {
+impl AllCrops {
+    fn from(assets: &HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually) -> Self {
         let mut definitions = HashMap::new();
 
         definitions.insert(
@@ -44,6 +55,7 @@ impl Default for AllCrops {
                 id: CropId(0),
                 stages: 4,
                 growth_time_per_stage: 5,
+                texture_atlas: assets.plant.clone(),
             },
         );
 
@@ -55,6 +67,7 @@ pub struct CropDefinition {
     pub id: CropId,
     pub stages: u8,
     pub growth_time_per_stage: u32,
+    pub texture_atlas: Handle<TextureAtlas>,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]

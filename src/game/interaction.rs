@@ -6,7 +6,7 @@ use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::{ActiveTool, CropId, MouseCursorOverUiState, PlayerAction, WorldData};
-use crate::prelude::{AllCrops, GameState, SpriteAssets};
+use crate::prelude::{AllCrops, GameState};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
@@ -111,7 +111,6 @@ fn detect_tile_interactions(
 fn process_tile_interactions(
     mut tile_interaction_event: EventReader<TileInteractionEvent>,
     mut commands: Commands,
-    assets: Res<SpriteAssets>,
     mut update_tile_events: EventWriter<UpdateTileEvent>,
     mut world_data: ResMut<WorldData>,
     mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
@@ -218,7 +217,7 @@ fn process_tile_interactions(
                         .spawn((
                             Name::new("Plant"),
                             SpriteSheetBundle {
-                                texture_atlas: assets.plant.clone(),
+                                texture_atlas: crop_definition.texture_atlas.clone(),
                                 sprite: TextureAtlasSprite::new(0),
                                 transform: Transform::from_translation(
                                     event.pos.pos_inside_chunk(100.0),
