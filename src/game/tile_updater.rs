@@ -1,6 +1,6 @@
 use crate::prelude::loaded_chunks::LoadedChunks;
-use crate::prelude::{MapPos, WorldData};
-use crate::{AllCrops, CropDefinition, GameState};
+use crate::prelude::{AllCrops, MapPos, WorldData};
+use crate::GameState;
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::{in_state, IntoSystemConfigs, Query, Res, ResMut, TextureAtlasSprite, Time};
 

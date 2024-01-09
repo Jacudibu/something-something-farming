@@ -5,8 +5,10 @@ use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::loaded_chunks::LoadedChunkData;
 use crate::prelude::tile_cursor::TileCursorPlugin;
 use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::prelude::{ChunkPos, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX, TILE_SIZE};
-use crate::{GameState, SpriteAssets};
+use crate::prelude::{
+    ChunkPos, SpriteAssets, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX, TILE_SIZE,
+};
+use crate::GameState;
 use bevy::prelude::*;
 use bevy::utils::hashbrown::HashMap;
 use bevy_ecs_tilemap::prelude::*;

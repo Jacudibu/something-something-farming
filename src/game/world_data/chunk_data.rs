@@ -1,6 +1,6 @@
 use crate::prelude::tile_data::TileData;
 use crate::prelude::CHUNK_SIZE;
-use crate::{CropDefinition, CropId};
+use crate::prelude::{CropDefinition, CropId};
 use bevy::prelude::Time;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::prelude::TilePos;

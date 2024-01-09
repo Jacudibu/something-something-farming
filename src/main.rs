@@ -1,12 +1,12 @@
 mod game;
+mod load;
 mod prelude;
 
 use crate::game::GamePlugin;
+use crate::load::LoadingPlugin;
 use crate::prelude::DebugOverlayPlugin;
 use bevy::prelude::*;
-use bevy::utils::HashMap;
 use bevy::window::PresentMode;
-use bevy_asset_loader::prelude::*;
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
@@ -26,12 +26,7 @@ fn main() {
                 }),
         )
         .add_state::<GameState>()
-        .add_loading_state(
-            LoadingState::new(GameState::Loading)
-                .continue_to_state(GameState::Playing)
-                .load_collection::<SpriteAssets>(),
-        )
-        .insert_resource(AllCrops::default())
+        .add_plugins(LoadingPlugin)
         .add_plugins(GamePlugin)
         .add_plugins(ScreenDiagnosticsPlugin::default())
         .add_plugins(ScreenFrameDiagnosticsPlugin)
@@ -41,53 +36,8 @@ fn main() {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
-enum GameState {
+pub enum GameState {
     #[default]
     Loading,
     Playing,
 }
-
-#[derive(AssetCollection, Resource)]
-struct SpriteAssets {
-    #[asset(texture_atlas(tile_size_x = 16.0, tile_size_y = 16.0, columns = 4, rows = 1))]
-    #[asset(path = "sprites/debug_plant.png")]
-    plant: Handle<TextureAtlas>,
-
-    #[asset(path = "sprites/tile_cursor.png")]
-    cursor: Handle<Image>,
-    #[asset(path = "sprites/tilled_tile.png")]
-    tilled_tiles: Handle<Image>,
-    #[asset(path = "sprites/simple_tiles.png")]
-    simple_tiles: Handle<Image>,
-}
-
-#[derive(Resource)]
-struct AllCrops {
-    definitions: HashMap<CropId, CropDefinition>,
-}
-
-impl Default for AllCrops {
-    fn default() -> Self {
-        let mut definitions = HashMap::new();
-
-        definitions.insert(
-            CropId(0),
-            CropDefinition {
-                id: CropId(0),
-                stages: 4,
-                growth_time_per_stage: 5,
-            },
-        );
-
-        Self { definitions }
-    }
-}
-
-struct CropDefinition {
-    id: CropId,
-    stages: u8,
-    growth_time_per_stage: u32,
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
-struct CropId(u32);
