@@ -1,6 +1,6 @@
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::{MapPos, WorldData};
-use crate::{CropDefinition, GameState};
+use crate::{AllCrops, CropDefinition, GameState};
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::{in_state, IntoSystemConfigs, Query, Res, ResMut, TextureAtlasSprite, Time};
 
@@ -21,7 +21,7 @@ fn update_tiles(
     mut sprites: Query<&mut TextureAtlasSprite>,
     time: Res<Time>,
     loaded_chunk_data: Res<LoadedChunks>,
-    crop_definition: Res<CropDefinition>,
+    all_crops: Res<AllCrops>,
 ) {
     // TODO: Performance Improvements
     // Step #1: Cache the next item that should be updated instead of doing this every frame
@@ -39,6 +39,7 @@ fn update_tiles(
                 .get_mut(&next.pos.tile)
                 .unwrap();
 
+            let crop_definition = all_crops.definitions.get(&crop.crop_id).unwrap();
             crop.stage += 1;
             if crop.stage < crop_definition.stages - 1 {
                 crop.next_stage_at =

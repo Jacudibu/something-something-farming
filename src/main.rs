@@ -4,6 +4,7 @@ mod prelude;
 use crate::game::GamePlugin;
 use crate::prelude::DebugOverlayPlugin;
 use bevy::prelude::*;
+use bevy::utils::HashMap;
 use bevy::window::PresentMode;
 use bevy_asset_loader::prelude::*;
 use bevy_screen_diagnostics::{
@@ -30,11 +31,7 @@ fn main() {
                 .continue_to_state(GameState::Playing)
                 .load_collection::<SpriteAssets>(),
         )
-        .insert_resource(CropDefinition {
-            id: CropId(0),
-            stages: 4,
-            growth_time_per_stage: 5,
-        })
+        .insert_resource(AllCrops::default())
         .add_plugins(GamePlugin)
         .add_plugins(ScreenDiagnosticsPlugin::default())
         .add_plugins(ScreenFrameDiagnosticsPlugin)
@@ -65,11 +62,32 @@ struct SpriteAssets {
 }
 
 #[derive(Resource)]
+struct AllCrops {
+    definitions: HashMap<CropId, CropDefinition>,
+}
+
+impl Default for AllCrops {
+    fn default() -> Self {
+        let mut definitions = HashMap::new();
+
+        definitions.insert(
+            CropId(0),
+            CropDefinition {
+                id: CropId(0),
+                stages: 4,
+                growth_time_per_stage: 5,
+            },
+        );
+
+        Self { definitions }
+    }
+}
+
 struct CropDefinition {
     id: CropId,
     stages: u8,
     growth_time_per_stage: u32,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 struct CropId(u32);
