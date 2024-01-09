@@ -30,6 +30,11 @@ fn main() {
                 .continue_to_state(GameState::Playing)
                 .load_collection::<SpriteAssets>(),
         )
+        .insert_resource(CropDefinition {
+            id: CropId(0),
+            stages: 4,
+            growth_time_per_stage: 5,
+        })
         .add_plugins(GamePlugin)
         .add_plugins(ScreenDiagnosticsPlugin::default())
         .add_plugins(ScreenFrameDiagnosticsPlugin)
@@ -58,3 +63,13 @@ struct SpriteAssets {
     #[asset(path = "sprites/simple_tiles.png")]
     simple_tiles: Handle<Image>,
 }
+
+#[derive(Resource)]
+struct CropDefinition {
+    id: CropId,
+    stages: u8,
+    growth_time_per_stage: u32,
+}
+
+#[derive(Copy, Clone, Eq, PartialEq)]
+struct CropId(u32);

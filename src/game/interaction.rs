@@ -8,6 +8,7 @@ use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::GameState;
 use crate::prelude::SpriteAssets;
 use crate::prelude::{ActiveTool, MouseCursorOverUiState, PlayerAction, WorldData};
+use crate::CropDefinition;
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
@@ -118,6 +119,7 @@ fn process_tile_interactions(
     mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
     mut loaded_chunk_data: ResMut<LoadedChunks>,
     time: Res<Time>,
+    crop_definitions: Res<CropDefinition>,
 ) {
     for event in tile_interaction_event.read() {
         match event.used_tool {
@@ -207,7 +209,9 @@ fn process_tile_interactions(
                     continue;
                 }
 
-                chunk.crops.insert(event.pos.tile, CropData::new(&time));
+                chunk
+                    .crops
+                    .insert(event.pos.tile, CropData::new(&crop_definitions, &time));
 
                 // TODO: Event - Plant Seed
                 if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {

@@ -1,5 +1,6 @@
 use crate::prelude::tile_data::TileData;
 use crate::prelude::CHUNK_SIZE;
+use crate::{CropDefinition, CropId};
 use bevy::prelude::Time;
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::prelude::TilePos;
@@ -10,14 +11,16 @@ pub struct ChunkData {
 }
 
 pub struct CropData {
+    pub crop_id: CropId,
     pub next_stage_at: Option<f32>,
     pub stage: u8,
 }
 
 impl CropData {
-    pub fn new(time: &Time) -> Self {
+    pub fn new(from: &CropDefinition, time: &Time) -> Self {
         Self {
-            next_stage_at: Some(time.elapsed_seconds() + 5.0),
+            crop_id: from.id.clone(),
+            next_stage_at: Some(time.elapsed_seconds() + from.growth_time_per_stage as f32),
             stage: 0,
         }
     }

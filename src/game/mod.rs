@@ -7,8 +7,8 @@ use crate::game::world_data::WorldDataPlugin;
 use bevy::app::{App, First, Plugin};
 use bevy::math::Vec2;
 use bevy::prelude::{
-    Camera, CursorMoved, EventReader, GamepadButtonType, GlobalTransform, IntoSystemConfigs,
-    KeyCode, MouseButton, Query, Reflect, ResMut, Resource,
+    Camera, CursorMoved, EventReader, GamepadButtonType, GlobalTransform, KeyCode, MouseButton,
+    Query, Reflect, ResMut, Resource,
 };
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
 use leafwing_input_manager::input_map::InputMap;
