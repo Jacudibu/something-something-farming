@@ -1,3 +1,4 @@
+use crate::load::AllCrops;
 use crate::prelude::chunk_data::ChunkData;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::{ActiveTool, GameState, MapPos, WorldData};
@@ -51,6 +52,7 @@ fn ui_system(
     world_data: Res<WorldData>,
     active_tool: Res<ActiveTool>,
     time: Res<Time>,
+    all_crops: Res<AllCrops>,
 ) {
     let cursor = cursor
         .get_single()
@@ -67,7 +69,7 @@ fn ui_system(
         .resizable(false)
         .fixed_pos(Pos2::new(5.0, 5.0))
         .show(contexts.ctx_mut(), |ui| {
-            ui.label(map_data_for_position(chunk, &cursor.pos, &time));
+            ui.label(map_data_for_position(chunk, &cursor.pos, &time, &all_crops));
         });
 
     egui::Window::new("Active Tool View")
@@ -79,7 +81,12 @@ fn ui_system(
         .show(contexts.ctx_mut(), |ui| ui.label(active_tool.to_string()));
 }
 
-fn map_data_for_position(chunk: &ChunkData, pos: &MapPos, time: &Time) -> String {
+fn map_data_for_position(
+    chunk: &ChunkData,
+    pos: &MapPos,
+    time: &Time,
+    all_crops: &AllCrops,
+) -> String {
     let mut lines = Vec::new();
     lines.push(format!("Chunk: {}", pos.chunk));
     lines.push(format!("Local Position: [{}, {}]", pos.tile.x, pos.tile.y));
@@ -92,7 +99,9 @@ fn map_data_for_position(chunk: &ChunkData, pos: &MapPos, time: &Time) -> String
     ));
 
     if let Some(crop) = chunk.crops.get(&pos.tile) {
-        lines.push(format!("Crop: {}\n  stage: {}", crop.crop_id.0, crop.stage));
+        let definition = all_crops.definitions.get(&crop.crop_id).unwrap();
+        lines.push(format!("Crop: {} ({})", definition.name, crop.crop_id.0));
+        lines.push(format!("  stage: {}/{}", crop.stage + 1, definition.stages));
         if let Some(next_stage) = crop.next_stage_at {
             lines.push(format!(
                 "  next: {:.1}",

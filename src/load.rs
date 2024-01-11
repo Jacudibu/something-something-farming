@@ -53,6 +53,7 @@ impl AllCrops {
             CropId(0),
             CropDefinition {
                 id: CropId(0),
+                name: String::from("Blue Debug Plant"),
                 stages: 4,
                 growth_time_per_stage: 5,
                 texture_atlas: assets.plant.clone(),
@@ -65,6 +66,7 @@ impl AllCrops {
 
 pub struct CropDefinition {
     pub id: CropId,
+    pub name: String,
     pub stages: u8,
     pub growth_time_per_stage: u32,
     pub texture_atlas: Handle<TextureAtlas>,
