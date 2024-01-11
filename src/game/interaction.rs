@@ -18,6 +18,7 @@ pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ActiveTool::Hoe)
+            .add_event::<CropDestroyedEvent>()
             .add_event::<TileInteractionEvent>()
             .add_systems(
                 Update,
@@ -33,6 +34,12 @@ impl Plugin for InteractionPlugin {
                 Update,
                 process_tile_interactions
                     .after(detect_tile_interactions)
+                    .run_if(in_state(GameState::Playing)),
+            )
+            .add_systems(
+                Update,
+                process_delete_crops
+                    .after(process_tile_interactions)
                     .run_if(in_state(GameState::Playing)),
             );
     }
@@ -63,6 +70,11 @@ fn select_active_tool(
 struct TileInteractionEvent {
     pub pos: MapPos,
     pub used_tool: ActiveTool,
+}
+
+#[derive(Event, Debug)]
+struct CropDestroyedEvent {
+    pub pos: MapPos,
 }
 
 fn detect_tile_interactions(
@@ -110,10 +122,34 @@ fn detect_tile_interactions(
     }
 }
 
+fn process_delete_crops(
+    mut commands: Commands,
+    mut world_data: ResMut<WorldData>,
+    mut loaded_chunk_data: ResMut<LoadedChunks>,
+    mut destroy_crop_events: EventReader<CropDestroyedEvent>,
+) {
+    for event in destroy_crop_events.read() {
+        let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
+
+        if let Some(_) = chunk.crops.get(&event.pos.tile) {
+            chunk.crops.remove(&event.pos.tile);
+
+            if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
+                if let Some(entity) = loaded_data.crops.remove(&event.pos.tile) {
+                    commands.entity(entity).despawn();
+                } else {
+                    warn!("Prop was not set at {:?}.", event);
+                }
+            }
+        }
+    }
+}
+
 fn process_tile_interactions(
     mut tile_interaction_event: EventReader<TileInteractionEvent>,
     mut commands: Commands,
     mut update_tile_events: EventWriter<UpdateTileEvent>,
+    mut destroy_crop_events: EventWriter<CropDestroyedEvent>,
     mut world_data: ResMut<WorldData>,
     mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
     mut loaded_chunk_data: ResMut<LoadedChunks>,
@@ -164,18 +200,8 @@ fn process_tile_interactions(
                     continue;
                 }
 
-                // TODO: Event - Remove Crop/Prop
                 if let Some(_) = chunk.crops.get(&event.pos.tile) {
-                    chunk.crops.remove(&event.pos.tile);
-
-                    if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
-                        if let Some(entity) = loaded_data.crops.remove(&event.pos.tile) {
-                            commands.entity(entity).despawn();
-                        } else {
-                            warn!("Prop was not set at {:?}.", event);
-                        }
-                    }
-
+                    destroy_crop_events.send(CropDestroyedEvent { pos: event.pos });
                     continue;
                 }
 
@@ -201,21 +227,10 @@ fn process_tile_interactions(
             ActiveTool::Scythe => {
                 let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
 
-                // TODO: Event - Harvest Crop/Prop
                 if let Some(crop) = chunk.crops.get(&event.pos.tile) {
                     if crop.stage + 1 >= all_crops.definitions.get(&crop.crop_id).unwrap().stages {
-                        chunk.crops.remove(&event.pos.tile);
-
-                        // TODO: Event - Remove Crop/Prop
-                        if let Some(loaded_data) =
-                            loaded_chunk_data.chunks.get_mut(&event.pos.chunk)
-                        {
-                            if let Some(entity) = loaded_data.crops.remove(&event.pos.tile) {
-                                commands.entity(entity).despawn();
-                            } else {
-                                warn!("Prop was not set at {:?}.", event);
-                            }
-                        }
+                        // TODO: Spawn items or add items to inventory
+                        destroy_crop_events.send(CropDestroyedEvent { pos: event.pos });
                     }
                 }
             }
