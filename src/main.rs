@@ -18,7 +18,7 @@ fn main() {
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
                     primary_window: Some(Window {
-                        title: "Something something farming".to_string(),
+                        title: "Your ad could be placed here!".to_string(),
                         present_mode: PresentMode::AutoNoVsync,
                         ..default()
                     }),
