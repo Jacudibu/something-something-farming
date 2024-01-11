@@ -1,8 +1,11 @@
+use crate::prelude::chunk_data::ChunkData;
 use crate::prelude::tile_cursor::TileCursor;
-use crate::prelude::{ActiveTool, GameState, WorldData};
+use crate::prelude::{ActiveTool, GameState, MapPos, WorldData};
 use bevy::app::{App, First, Plugin, Update};
 use bevy::log::error;
-use bevy::prelude::{in_state, IntoSystemConfigs, NextState, Query, Res, ResMut, State, States};
+use bevy::prelude::{
+    in_state, IntoSystemConfigs, NextState, Query, Res, ResMut, State, States, Time,
+};
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
@@ -47,6 +50,7 @@ fn ui_system(
     cursor: Query<&TileCursor>,
     world_data: Res<WorldData>,
     active_tool: Res<ActiveTool>,
+    time: Res<Time>,
 ) {
     let cursor = cursor
         .get_single()
@@ -58,19 +62,12 @@ fn ui_system(
         return;
     }
     let chunk = chunk.unwrap();
-    let tile = chunk.at_pos(&cursor.pos.tile);
-
     egui::Window::new(format!("{}", cursor.global_position()))
         .collapsible(false)
         .resizable(false)
         .fixed_pos(Pos2::new(5.0, 5.0))
         .show(contexts.ctx_mut(), |ui| {
-            ui.label(format!("Chunk: {}", cursor.pos.chunk));
-            ui.label(format!(
-                "Local Position: [{}, {}]",
-                cursor.pos.tile.x, cursor.pos.tile.y
-            ));
-            ui.label(format!("Tile: {:?}", tile))
+            ui.label(map_data_for_position(chunk, &cursor.pos, &time));
         });
 
     egui::Window::new("Active Tool View")
@@ -80,4 +77,29 @@ fn ui_system(
         .anchor(Align2::LEFT_BOTTOM, egui::Vec2::new(0.0, 0.0))
         .fixed_pos(Pos2::new(5.0, 5.0))
         .show(contexts.ctx_mut(), |ui| ui.label(active_tool.to_string()));
+}
+
+fn map_data_for_position(chunk: &ChunkData, pos: &MapPos, time: &Time) -> String {
+    let mut lines = Vec::new();
+    lines.push(format!("Chunk: {}", pos.chunk));
+    lines.push(format!("Local Position: [{}, {}]", pos.tile.x, pos.tile.y));
+
+    let tile = chunk.at_pos(&pos.tile);
+
+    lines.push(format!(
+        "Tile: {:?}\n  is_tilled: {}",
+        tile.ground_type, tile.is_tilled
+    ));
+
+    if let Some(crop) = chunk.crops.get(&pos.tile) {
+        lines.push(format!("Crop: {}\n  stage: {}", crop.crop_id.0, crop.stage));
+        if let Some(next_stage) = crop.next_stage_at {
+            lines.push(format!(
+                "  next: {:.1}",
+                next_stage - time.elapsed_seconds()
+            ));
+        }
+    }
+
+    lines.join("\n")
 }
