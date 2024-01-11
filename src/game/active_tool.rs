@@ -5,6 +5,7 @@ use std::fmt::{Display, Formatter};
 pub enum ActiveTool {
     Hoe,
     Pickaxe,
+    Scythe,
     Seed,
 }
 
@@ -13,6 +14,7 @@ impl Display for ActiveTool {
         match self {
             ActiveTool::Hoe => write!(f, "Hoe"),
             ActiveTool::Pickaxe => write!(f, "Pickaxe"),
+            ActiveTool::Scythe => write!(f, "Scythe"),
             ActiveTool::Seed => write!(f, "Seed"),
         }
     }

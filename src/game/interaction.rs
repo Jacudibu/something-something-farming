@@ -54,6 +54,8 @@ fn select_active_tool(
         *active_tool = ActiveTool::Pickaxe;
     } else if action_state.just_pressed(PlayerAction::SelectSeed) {
         *active_tool = ActiveTool::Seed;
+    } else if action_state.just_pressed(PlayerAction::SelectScythe) {
+        *active_tool = ActiveTool::Scythe;
     }
 }
 
@@ -194,6 +196,27 @@ fn process_tile_interactions(
                         event.pos.chunk,
                         event.pos.tile,
                     ));
+                }
+            }
+            ActiveTool::Scythe => {
+                let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
+
+                // TODO: Event - Harvest Crop/Prop
+                if let Some(crop) = chunk.crops.get(&event.pos.tile) {
+                    if crop.stage + 1 >= all_crops.definitions.get(&crop.crop_id).unwrap().stages {
+                        chunk.crops.remove(&event.pos.tile);
+
+                        // TODO: Event - Remove Crop/Prop
+                        if let Some(loaded_data) =
+                            loaded_chunk_data.chunks.get_mut(&event.pos.chunk)
+                        {
+                            if let Some(entity) = loaded_data.crops.remove(&event.pos.tile) {
+                                commands.entity(entity).despawn();
+                            } else {
+                                warn!("Prop was not set at {:?}.", event);
+                            }
+                        }
+                    }
                 }
             }
             ActiveTool::Seed => {
