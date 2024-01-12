@@ -48,7 +48,7 @@ fn update_tiles(
                 crop.next_stage_at = None;
             }
 
-            // TODO: Move that into an event
+            // TODO: Move that into an event, so we can also play sound effects and animations when necessary
             if let Some(chunk) = loaded_chunk_data.chunks.get(&next.pos.chunk) {
                 if let Some(entity) = chunk.crops.get(&next.pos.tile) {
                     if let Ok(mut bla) = sprites.get_mut(entity.clone()) {

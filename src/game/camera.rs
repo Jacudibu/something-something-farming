@@ -1,5 +1,5 @@
 use crate::game::CursorPos;
-use crate::prelude::{default_input_map, GameState, MouseCursorOverUiState, PlayerAction};
+use crate::prelude::{GameState, MouseCursorOverUiState};
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 use leafwing_input_manager::action_state::ActionState;
@@ -48,16 +48,14 @@ fn init(mut commands: Commands) {
     let mut camera = Camera2dBundle::default();
     camera.projection.scaling_mode = ScalingMode::WindowSize(2.0);
 
-    commands
-        .spawn((Name::new("Camera"), camera))
-        .insert(InputManagerBundle::<CameraAction> {
+    commands.spawn((
+        Name::new("Camera"),
+        camera,
+        InputManagerBundle::<CameraAction> {
             input_map: default_input_map_camera(),
             ..default()
-        })
-        .insert(InputManagerBundle::<PlayerAction> {
-            input_map: default_input_map(),
-            ..default()
-        });
+        },
+    ));
 }
 
 fn move_camera(

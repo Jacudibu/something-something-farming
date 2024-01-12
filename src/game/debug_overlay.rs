@@ -1,4 +1,4 @@
-use crate::game::PlayerAction;
+use crate::game::player::PlayerAction;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_egui::{egui, EguiContext};
