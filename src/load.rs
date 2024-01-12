@@ -24,6 +24,8 @@ pub struct SpriteAssets {
     pub tilled_tiles: Handle<Image>,
     #[asset(path = "sprites/simple_tiles.png")]
     pub simple_tiles: Handle<Image>,
+    #[asset(path = "sprites/debug_veggie.png")]
+    pub debug_veggie: Handle<Image>,
 }
 
 #[derive(Resource, AssetCollection)]

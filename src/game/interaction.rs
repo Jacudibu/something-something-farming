@@ -5,7 +5,9 @@ use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
-use crate::prelude::{ActiveTool, CropId, MouseCursorOverUiState, PlayerAction, WorldData};
+use crate::prelude::{
+    ActiveTool, CropId, MouseCursorOverUiState, PlayerAction, SpriteAssets, WorldData,
+};
 use crate::prelude::{AllCrops, GameState};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
@@ -19,6 +21,7 @@ impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ActiveTool::Hoe)
             .add_event::<CropDestroyedEvent>()
+            .add_event::<CropHarvestedEvent>()
             .add_event::<TileInteractionEvent>()
             .add_systems(
                 Update,
@@ -40,7 +43,15 @@ impl Plugin for InteractionPlugin {
                 Update,
                 process_delete_crops
                     .after(process_tile_interactions)
-                    .run_if(in_state(GameState::Playing)),
+                    .run_if(in_state(GameState::Playing))
+                    .run_if(on_event::<CropDestroyedEvent>()),
+            )
+            .add_systems(
+                Update,
+                process_harvested_crops
+                    .after(process_tile_interactions)
+                    .run_if(in_state(GameState::Playing))
+                    .run_if(on_event::<CropHarvestedEvent>()),
             );
     }
 }
@@ -75,6 +86,18 @@ struct TileInteractionEvent {
 #[derive(Event, Debug)]
 struct CropDestroyedEvent {
     pub pos: MapPos,
+}
+
+#[derive(Event)]
+struct CropHarvestedEvent {
+    pub pos: MapPos,
+    pub crop_id: CropId,
+}
+
+#[derive(Component)]
+struct ItemDrop {
+    pub crop_id: CropId, // This can be moved into an ItemKind enum, eventually. <3
+    pub amount: u16,
 }
 
 fn detect_tile_interactions(
@@ -145,11 +168,38 @@ fn process_delete_crops(
     }
 }
 
+fn process_harvested_crops(
+    mut commands: Commands,
+    mut harvested_crop_events: EventReader<CropHarvestedEvent>,
+    assets: Res<SpriteAssets>,
+) {
+    for event in harvested_crop_events.read() {
+        // TODO: Consider bunching up nearby same-item drops into one bigger drop.
+        // TODO: If chunk is not loaded, just add the item to whomever caused the interaction immediately if nearby
+        // TODO: (premature) Drops should probably be persisted inside the chunk they're in and get (de-)spawned accordingly, otherwise 1000+ drops somewhere in the middle of nowhere might cause performance issues?
+        // Also, if an NPC with Inventory walks through that chunk (maybe a bit further away from players than chunk loading distance so they won't notice as easily), they automagically pick it up?
+
+        commands.spawn((
+            Name::new("Drop"),
+            SpriteBundle {
+                transform: Transform::from_translation(event.pos.world_pos(100.0)),
+                texture: assets.debug_veggie.clone(),
+                ..default()
+            },
+            ItemDrop {
+                crop_id: event.crop_id,
+                amount: 1,
+            },
+        ));
+    }
+}
+
 fn process_tile_interactions(
     mut tile_interaction_event: EventReader<TileInteractionEvent>,
     mut commands: Commands,
     mut update_tile_events: EventWriter<UpdateTileEvent>,
     mut destroy_crop_events: EventWriter<CropDestroyedEvent>,
+    mut harvest_crop_events: EventWriter<CropHarvestedEvent>,
     mut world_data: ResMut<WorldData>,
     mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
     mut loaded_chunk_data: ResMut<LoadedChunks>,
@@ -229,7 +279,10 @@ fn process_tile_interactions(
 
                 if let Some(crop) = chunk.crops.get(&event.pos.tile) {
                     if crop.stage + 1 >= all_crops.definitions.get(&crop.crop_id).unwrap().stages {
-                        // TODO: Spawn items or add items to inventory
+                        harvest_crop_events.send(CropHarvestedEvent {
+                            pos: event.pos,
+                            crop_id: crop.crop_id,
+                        });
                         destroy_crop_events.send(CropDestroyedEvent { pos: event.pos });
                     }
                 }
