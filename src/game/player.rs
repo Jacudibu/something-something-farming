@@ -1,3 +1,4 @@
+use crate::game::drops::ItemMagnet;
 use crate::load::SpriteAssets;
 use crate::prelude::camera::CameraFocus;
 use crate::prelude::LAYER_PLAYER;
@@ -25,7 +26,7 @@ impl Plugin for PlayerPlugin {
 }
 
 #[derive(Component)]
-struct ControlledByPlayer {}
+pub struct ControlledByPlayer {}
 
 const PLAYER_SPEED: f32 = 100.0;
 
@@ -43,6 +44,7 @@ fn initialize_player(mut commands: Commands, assets: Res<SpriteAssets>) {
             ..default()
         },
         CameraFocus {},
+        ItemMagnet {},
     ));
 }
 

@@ -1,4 +1,5 @@
 use crate::game::camera::CameraPlugin;
+use crate::game::drops::ItemPickupPlugin;
 use crate::game::interaction::InteractionPlugin;
 use crate::game::tile_updater::TileUpdaterPlugin;
 use crate::game::tilemap::GameMapPlugin;
@@ -35,6 +36,7 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
             .add_plugins(InputManagerPlugin::<PlayerAction>::default())
+            .add_plugins(ItemPickupPlugin)
             .add_plugins(PlayerPlugin)
             .add_plugins(WorldDataPlugin)
             .add_plugins(GameMapPlugin)
