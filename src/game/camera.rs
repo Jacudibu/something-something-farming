@@ -1,5 +1,6 @@
 use crate::game::CursorPos;
 use crate::prelude::{GameState, MouseCursorOverUiState};
+use bevy::ecs::query::QuerySingleError;
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 use leafwing_input_manager::action_state::ActionState;
@@ -60,54 +61,62 @@ fn init(mut commands: Commands) {
 
 fn move_camera(
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera2d>>,
+    camera_focus: Query<&Transform, (With<CameraFocus>, Without<Camera2d>)>,
+    mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera2d>>,
     mut cursor_pos: ResMut<CursorPos>,
 ) {
-    let (mut transform, action_state) = query.single_mut();
-    let mut dir;
-    if action_state.pressed(CameraAction::Move) {
-        dir = action_state
-            .clamped_axis_pair(CameraAction::Move)
-            .unwrap()
-            .xy()
-            .extend(0.0);
-    } else {
-        dir = Vec3::ZERO;
-    }
-
-    if action_state.pressed(CameraAction::Up) {
-        dir.y += 1.0;
-    }
-    if action_state.pressed(CameraAction::Down) {
-        dir.y -= 1.0;
-    }
-    if action_state.pressed(CameraAction::Right) {
-        dir.x += 1.0;
-    }
-    if action_state.pressed(CameraAction::Left) {
-        dir.x -= 1.0;
-    }
-
-    let speed = {
-        if action_state.pressed(CameraAction::Superspeed) {
-            SPEED * SUPERSPEED_MULTIPLIER
-        } else {
-            SPEED
-        }
-    };
-    let delta = {
-        if dir.length() > 1.0 {
-            if let Some(dir) = dir.try_normalize() {
-                dir * speed * time.delta_seconds()
+    let (mut camera_transform, action_state) = camera.single_mut();
+    let delta = match camera_focus.get_single() {
+        Ok(camera_focus) => camera_focus.translation - camera_transform.translation,
+        Err(QuerySingleError::NoEntities(_)) => {
+            let mut dir;
+            if action_state.pressed(CameraAction::Move) {
+                dir = action_state
+                    .clamped_axis_pair(CameraAction::Move)
+                    .unwrap()
+                    .xy()
+                    .extend(0.0);
             } else {
-                Vec3::ZERO
+                dir = Vec3::ZERO;
             }
-        } else {
-            dir * speed * time.delta_seconds()
+
+            if action_state.pressed(CameraAction::Up) {
+                dir.y += 1.0;
+            }
+            if action_state.pressed(CameraAction::Down) {
+                dir.y -= 1.0;
+            }
+            if action_state.pressed(CameraAction::Right) {
+                dir.x += 1.0;
+            }
+            if action_state.pressed(CameraAction::Left) {
+                dir.x -= 1.0;
+            }
+
+            let speed = {
+                if action_state.pressed(CameraAction::Superspeed) {
+                    SPEED * SUPERSPEED_MULTIPLIER
+                } else {
+                    SPEED
+                }
+            };
+            if dir.length() > 1.0 {
+                if let Some(dir) = dir.try_normalize() {
+                    dir * speed * time.delta_seconds()
+                } else {
+                    Vec3::ZERO
+                }
+            } else {
+                dir * speed * time.delta_seconds()
+            }
+        }
+        Err(QuerySingleError::MultipleEntities(e)) => {
+            error!("Multiple Entities with CameraFocus component: {}", e);
+            Vec3::ZERO
         }
     };
 
-    transform.translation += delta;
+    camera_transform.translation += delta;
     cursor_pos.world += delta.truncate();
 }
 

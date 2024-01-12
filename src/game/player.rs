@@ -1,14 +1,12 @@
 use crate::load::SpriteAssets;
-use crate::prelude::tile_cursor::TileCursor;
-use crate::prelude::{ChunkPos, MapPos};
+use crate::prelude::camera::CameraFocus;
 use crate::GameState;
 use bevy::app::{App, Plugin, Update};
 use bevy::core::Name;
 use bevy::math::Vec3;
 use bevy::prelude::{
-    default, in_state, Color, Commands, Component, GamepadButtonType, IntoSystemConfigs, KeyCode,
-    MouseButton, OnEnter, Query, Reflect, Res, Sprite, SpriteBundle, Time, Transform, Visibility,
-    With,
+    default, in_state, Commands, Component, GamepadButtonType, IntoSystemConfigs, KeyCode,
+    MouseButton, OnEnter, Query, Reflect, Res, SpriteBundle, Time, Transform, With,
 };
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
@@ -28,7 +26,7 @@ impl Plugin for PlayerPlugin {
 #[derive(Component)]
 struct ControlledByPlayer {}
 
-const PLAYER_SPEED: f32 = 50.0;
+const PLAYER_SPEED: f32 = 100.0;
 
 fn initialize_player(mut commands: Commands, assets: Res<SpriteAssets>) {
     commands.spawn((
@@ -43,6 +41,7 @@ fn initialize_player(mut commands: Commands, assets: Res<SpriteAssets>) {
             input_map: default_input_map(),
             ..default()
         },
+        CameraFocus {},
     ));
 }
 
