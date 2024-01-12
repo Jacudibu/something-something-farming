@@ -1,5 +1,6 @@
 use crate::load::SpriteAssets;
 use crate::prelude::camera::CameraFocus;
+use crate::prelude::LAYER_PLAYER;
 use crate::GameState;
 use bevy::app::{App, Plugin, Update};
 use bevy::core::Name;
@@ -33,7 +34,7 @@ fn initialize_player(mut commands: Commands, assets: Res<SpriteAssets>) {
         Name::new("Player"),
         SpriteBundle {
             texture: assets.debug_character.clone(),
-            transform: Transform::from_xyz(0.0, 0.0, 5.0),
+            transform: Transform::from_xyz(0.0, 0.0, LAYER_PLAYER),
             ..default()
         },
         ControlledByPlayer {},

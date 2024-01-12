@@ -7,7 +7,10 @@ use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
-use crate::prelude::{ActiveTool, CropId, MouseCursorOverUiState, SpriteAssets, WorldData};
+use crate::prelude::{
+    ActiveTool, CropId, MouseCursorOverUiState, SpriteAssets, WorldData, LAYER_CROPS,
+    LAYER_ITEM_DROPS,
+};
 use crate::prelude::{AllCrops, GameState};
 use bevy::prelude::*;
 use bevy_ecs_tilemap::map::TilemapId;
@@ -176,7 +179,7 @@ fn process_harvested_crops(
         commands.spawn((
             Name::new("Drop"),
             SpriteBundle {
-                transform: Transform::from_translation(event.pos.world_pos(100.0)),
+                transform: Transform::from_translation(event.pos.world_pos(LAYER_ITEM_DROPS)),
                 texture: assets.debug_veggie.clone(),
                 ..default()
             },
@@ -302,7 +305,7 @@ fn process_tile_interactions(
                                 texture_atlas: crop_definition.texture_atlas.clone(),
                                 sprite: TextureAtlasSprite::new(0),
                                 transform: Transform::from_translation(
-                                    event.pos.pos_inside_chunk(100.0),
+                                    event.pos.pos_inside_chunk(LAYER_CROPS),
                                 ),
                                 ..default()
                             },

@@ -26,6 +26,10 @@ pub mod world_data;
 pub const TILE_SIZE: f32 = 16.0;
 pub const CHUNK_SIZE: usize = 32;
 
+pub const LAYER_PLAYER: f32 = 100.0;
+pub const LAYER_CROPS: f32 = 50.0;
+pub const LAYER_ITEM_DROPS: f32 = 150.0;
+
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
