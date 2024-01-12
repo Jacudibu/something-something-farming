@@ -1,3 +1,4 @@
+use crate::game::drops::ItemDrop;
 use crate::game::map_pos::MapPos;
 use crate::prelude::chunk_data::CropData;
 use crate::prelude::helpers::determine_texture_index;
@@ -94,12 +95,6 @@ struct CropHarvestedEvent {
     pub crop_id: CropId,
 }
 
-#[derive(Component)]
-struct ItemDrop {
-    pub crop_id: CropId, // This can be moved into an ItemKind enum, eventually. <3
-    pub amount: u16,
-}
-
 fn detect_tile_interactions(
     active_tool: Res<ActiveTool>,
     action_state: Query<&ActionState<PlayerAction>>,
@@ -186,10 +181,7 @@ fn process_harvested_crops(
                 texture: assets.debug_veggie.clone(),
                 ..default()
             },
-            ItemDrop {
-                crop_id: event.crop_id,
-                amount: 1,
-            },
+            ItemDrop::from_crop(event.crop_id, 1),
         ));
     }
 }

@@ -20,6 +20,7 @@ use leafwing_input_manager::Actionlike;
 pub mod active_tool;
 pub mod camera;
 pub mod debug_overlay;
+mod drops;
 pub mod interaction;
 pub mod map_pos;
 pub mod tile_updater;
