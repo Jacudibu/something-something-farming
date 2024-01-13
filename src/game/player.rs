@@ -102,11 +102,11 @@ pub enum PlayerAction {
     Left,
     Right,
     Interact,
-    SelectHoe,
-    SelectPickaxe,
-    SelectScythe,
-    SelectSeed1,
-    SelectSeed2,
+    Hotbar1,
+    Hotbar2,
+    Hotbar3,
+    Hotbar4,
+    Hotbar5,
     ToggleDebugOverlay,
 }
 
@@ -128,11 +128,11 @@ pub fn default_input_map() -> InputMap<PlayerAction> {
 
     input_map.insert(MouseButton::Left, PlayerAction::Interact);
 
-    input_map.insert(KeyCode::Key1, PlayerAction::SelectHoe);
-    input_map.insert(KeyCode::Key2, PlayerAction::SelectPickaxe);
-    input_map.insert(KeyCode::Key3, PlayerAction::SelectScythe);
-    input_map.insert(KeyCode::Key4, PlayerAction::SelectSeed1);
-    input_map.insert(KeyCode::Key5, PlayerAction::SelectSeed2);
+    input_map.insert(KeyCode::Key1, PlayerAction::Hotbar1);
+    input_map.insert(KeyCode::Key2, PlayerAction::Hotbar2);
+    input_map.insert(KeyCode::Key3, PlayerAction::Hotbar3);
+    input_map.insert(KeyCode::Key4, PlayerAction::Hotbar4);
+    input_map.insert(KeyCode::Key5, PlayerAction::Hotbar5);
     input_map.insert(KeyCode::F2, PlayerAction::ToggleDebugOverlay);
 
     input_map.insert(KeyCode::Up, PlayerAction::Up);

@@ -69,20 +69,20 @@ fn select_active_tool(
         return;
     }
     let action_state = action_state.unwrap();
-    if action_state.just_pressed(PlayerAction::SelectHoe) {
+    if action_state.just_pressed(PlayerAction::Hotbar1) {
         *active_tool = ActiveTool::Hoe;
-    } else if action_state.just_pressed(PlayerAction::SelectPickaxe) {
+    } else if action_state.just_pressed(PlayerAction::Hotbar2) {
         *active_tool = ActiveTool::Pickaxe;
-    } else if action_state.just_pressed(PlayerAction::SelectSeed1) {
+    } else if action_state.just_pressed(PlayerAction::Hotbar3) {
+        *active_tool = ActiveTool::Scythe;
+    } else if action_state.just_pressed(PlayerAction::Hotbar4) {
         *active_tool = ActiveTool::Item {
             id: ItemId::Crop { crop_id: CropId(0) },
         };
-    } else if action_state.just_pressed(PlayerAction::SelectSeed2) {
+    } else if action_state.just_pressed(PlayerAction::Hotbar5) {
         *active_tool = ActiveTool::Item {
             id: ItemId::Crop { crop_id: CropId(1) },
         };
-    } else if action_state.just_pressed(PlayerAction::SelectScythe) {
-        *active_tool = ActiveTool::Scythe;
     }
 }
 
