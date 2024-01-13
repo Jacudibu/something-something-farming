@@ -24,17 +24,23 @@ pub struct SpriteAssets {
     pub tilled_tiles: Handle<Image>,
     #[asset(path = "sprites/simple_tiles.png")]
     pub simple_tiles: Handle<Image>,
-    #[asset(path = "sprites/debug_veggie.png")]
-    pub debug_veggie: Handle<Image>,
     #[asset(path = "sprites/debug_character.png")]
     pub debug_character: Handle<Image>,
 }
 
 #[derive(Resource, AssetCollection)]
-struct HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually {
+pub struct HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually {
     #[asset(texture_atlas(tile_size_x = 16.0, tile_size_y = 16.0, columns = 4, rows = 1))]
-    #[asset(path = "sprites/debug_plant.png")]
-    pub plant: Handle<TextureAtlas>,
+    #[asset(path = "sprites/blue_debug_plant.png")]
+    pub blue_debug_plant: Handle<TextureAtlas>,
+    #[asset(path = "sprites/blue_debug_veggie.png")]
+    pub blue_debug_veggie: Handle<Image>,
+
+    #[asset(texture_atlas(tile_size_x = 16.0, tile_size_y = 16.0, columns = 4, rows = 1))]
+    #[asset(path = "sprites/red_debug_plant.png")]
+    pub red_debug_plant: Handle<TextureAtlas>,
+    #[asset(path = "sprites/red_debug_veggie.png")]
+    pub red_debug_veggie: Handle<Image>,
 }
 
 fn insert_crop_resource(world: &mut World) {
@@ -60,7 +66,19 @@ impl AllCrops {
                 name: String::from("Blue Debug Plant"),
                 stages: 4,
                 growth_time_per_stage: 5,
-                texture_atlas: assets.plant.clone(),
+                texture_atlas: assets.blue_debug_plant.clone(),
+                harvested_sprite: assets.blue_debug_veggie.clone(),
+            },
+        );
+        definitions.insert(
+            CropId(1),
+            CropDefinition {
+                id: CropId(1),
+                name: String::from("Red Debug Plant"),
+                stages: 4,
+                growth_time_per_stage: 5,
+                texture_atlas: assets.red_debug_plant.clone(),
+                harvested_sprite: assets.red_debug_veggie.clone(),
             },
         );
 
@@ -74,6 +92,7 @@ pub struct CropDefinition {
     pub stages: u8,
     pub growth_time_per_stage: u32,
     pub texture_atlas: Handle<TextureAtlas>,
+    pub harvested_sprite: Handle<Image>,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]

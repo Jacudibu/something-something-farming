@@ -170,7 +170,7 @@ fn process_delete_crops(
 fn process_harvested_crops(
     mut commands: Commands,
     mut harvested_crop_events: EventReader<CropHarvestedEvent>,
-    assets: Res<SpriteAssets>,
+    all_crops: Res<AllCrops>,
 ) {
     for event in harvested_crop_events.read() {
         // TODO: Consider bunching up nearby same-item drops into one bigger drop.
@@ -178,15 +178,19 @@ fn process_harvested_crops(
         // TODO: (premature) Drops should probably be persisted inside the chunk they're in and get (de-)spawned accordingly, otherwise 1000+ drops somewhere in the middle of nowhere might cause performance issues?
         // Also, if an NPC with Inventory walks through that chunk (maybe a bit further away from players than chunk loading distance so they won't notice as easily), they automagically pick it up?
 
-        commands.spawn((
-            Name::new("Drop"),
-            SpriteBundle {
-                transform: Transform::from_translation(event.pos.world_pos(LAYER_ITEM_DROPS)),
-                texture: assets.debug_veggie.clone(),
-                ..default()
-            },
-            ItemDrop::from_crop(event.crop_id, 1),
-        ));
+        if let Some(crop) = all_crops.definitions.get(&event.crop_id) {
+            commands.spawn((
+                Name::new("Drop"),
+                SpriteBundle {
+                    transform: Transform::from_translation(event.pos.world_pos(LAYER_ITEM_DROPS)),
+                    texture: crop.harvested_sprite.clone(),
+                    ..default()
+                },
+                ItemDrop::from_crop(event.crop_id, 1),
+            ));
+        } else {
+            error!("Unable to find crop with id {}", event.crop_id.0)
+        }
     }
 }
 
