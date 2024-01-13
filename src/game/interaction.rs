@@ -1,4 +1,4 @@
-use crate::game::drops::ItemDrop;
+use crate::game::drops::{ItemDrop, ItemId};
 use crate::game::map_pos::MapPos;
 use crate::game::player::PlayerAction;
 use crate::prelude::chunk_data::CropData;
@@ -74,7 +74,9 @@ fn select_active_tool(
     } else if action_state.just_pressed(PlayerAction::SelectPickaxe) {
         *active_tool = ActiveTool::Pickaxe;
     } else if action_state.just_pressed(PlayerAction::SelectSeed) {
-        *active_tool = ActiveTool::Seed;
+        *active_tool = ActiveTool::Item {
+            id: ItemId::Crop { crop_id: CropId(0) },
+        };
     } else if action_state.just_pressed(PlayerAction::SelectScythe) {
         *active_tool = ActiveTool::Scythe;
     }
@@ -281,41 +283,43 @@ fn process_tile_interactions(
                     }
                 }
             }
-            ActiveTool::Seed => {
-                let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
-                if !chunk.at_pos(&event.pos.tile).is_tilled {
-                    continue;
+            ActiveTool::Item { id } => match id {
+                ItemId::Crop { crop_id } => {
+                    let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
+                    if !chunk.at_pos(&event.pos.tile).is_tilled {
+                        continue;
+                    }
+
+                    if chunk.crops.get(&event.pos.tile).is_some() {
+                        continue;
+                    }
+
+                    let crop_definition = all_crops.definitions.get(&crop_id).unwrap();
+                    chunk
+                        .crops
+                        .insert(event.pos.tile, CropData::new(&crop_definition, &time));
+
+                    // TODO: Event - Plant Seed
+                    if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
+                        let entity = commands
+                            .spawn((
+                                Name::new("Plant"),
+                                SpriteSheetBundle {
+                                    texture_atlas: crop_definition.texture_atlas.clone(),
+                                    sprite: TextureAtlasSprite::new(0),
+                                    transform: Transform::from_translation(
+                                        event.pos.pos_inside_chunk(LAYER_CROPS),
+                                    ),
+                                    ..default()
+                                },
+                            ))
+                            .set_parent(loaded_data.ground_tilemap)
+                            .id();
+
+                        loaded_data.crops.insert(event.pos.tile, entity);
+                    }
                 }
-
-                if chunk.crops.get(&event.pos.tile).is_some() {
-                    continue;
-                }
-
-                let crop_definition = all_crops.definitions.get(&CropId(0)).unwrap();
-                chunk
-                    .crops
-                    .insert(event.pos.tile, CropData::new(&crop_definition, &time));
-
-                // TODO: Event - Plant Seed
-                if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
-                    let entity = commands
-                        .spawn((
-                            Name::new("Plant"),
-                            SpriteSheetBundle {
-                                texture_atlas: crop_definition.texture_atlas.clone(),
-                                sprite: TextureAtlasSprite::new(0),
-                                transform: Transform::from_translation(
-                                    event.pos.pos_inside_chunk(LAYER_CROPS),
-                                ),
-                                ..default()
-                            },
-                        ))
-                        .set_parent(loaded_data.ground_tilemap)
-                        .id();
-
-                    loaded_data.crops.insert(event.pos.tile, entity);
-                }
-            }
+            },
         }
     }
 }

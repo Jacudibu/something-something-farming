@@ -45,7 +45,7 @@ impl Default for ItemMagnet {
     }
 }
 
-#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 pub enum ItemId {
     Crop { crop_id: CropId },
 }

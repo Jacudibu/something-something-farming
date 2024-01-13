@@ -76,5 +76,5 @@ pub struct CropDefinition {
     pub texture_atlas: Handle<TextureAtlas>,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct CropId(pub u32);

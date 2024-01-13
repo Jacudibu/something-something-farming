@@ -1,3 +1,4 @@
+use crate::game::drops::ItemId;
 use bevy::prelude::Resource;
 use std::fmt::{Display, Formatter};
 
@@ -6,7 +7,7 @@ pub enum ActiveTool {
     Hoe,
     Pickaxe,
     Scythe,
-    Seed,
+    Item { id: ItemId },
 }
 
 impl Display for ActiveTool {
@@ -15,7 +16,9 @@ impl Display for ActiveTool {
             ActiveTool::Hoe => write!(f, "Hoe"),
             ActiveTool::Pickaxe => write!(f, "Pickaxe"),
             ActiveTool::Scythe => write!(f, "Scythe"),
-            ActiveTool::Seed => write!(f, "Seed"),
+            ActiveTool::Item { id } => match id {
+                ItemId::Crop { crop_id } => write!(f, "Crop (ID {})", crop_id.0),
+            },
         }
     }
 }
