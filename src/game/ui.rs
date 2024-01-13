@@ -1,11 +1,11 @@
 use crate::load::AllCrops;
 use crate::prelude::chunk_data::ChunkData;
 use crate::prelude::tile_cursor::TileCursor;
-use crate::prelude::{ActiveTool, GameState, MapPos, WorldData};
+use crate::prelude::{ActiveTool, GameState, Inventory, MapPos, WorldData};
 use bevy::app::{App, First, Plugin, Update};
 use bevy::log::error;
 use bevy::prelude::{
-    in_state, IntoSystemConfigs, NextState, Query, Res, ResMut, State, States, Time,
+    in_state, IntoSystemConfigs, Name, NextState, Query, Res, ResMut, State, States, Time,
 };
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
@@ -53,6 +53,7 @@ fn ui_system(
     active_tool: Res<ActiveTool>,
     time: Res<Time>,
     all_crops: Res<AllCrops>,
+    inventories: Query<(&Name, &Inventory)>,
 ) {
     let cursor = cursor
         .get_single()
@@ -79,6 +80,28 @@ fn ui_system(
         .anchor(Align2::LEFT_BOTTOM, egui::Vec2::new(0.0, 0.0))
         .fixed_pos(Pos2::new(5.0, 5.0))
         .show(contexts.ctx_mut(), |ui| ui.label(active_tool.to_string()));
+
+    if !inventories.is_empty() {
+        egui::Window::new("Inventories")
+            .title_bar(true)
+            .collapsible(true)
+            .resizable(false)
+            .anchor(Align2::RIGHT_TOP, egui::Vec2::new(0.0, 0.0))
+            .fixed_pos(Pos2::new(5.0, 5.0))
+            .show(contexts.ctx_mut(), |ui| {
+                for (name, inventory) in inventories.iter() {
+                    ui.collapsing(name.to_string(), |content| {
+                        if inventory.is_empty() {
+                            content.label("Empty!");
+                        } else {
+                            for (id, amount) in inventory.into_iter() {
+                                content.label(format!("{}: {}", id.item_name(&all_crops), amount));
+                            }
+                        }
+                    });
+                }
+            });
+    }
 }
 
 fn map_data_for_position(

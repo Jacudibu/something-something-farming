@@ -1,7 +1,7 @@
 use crate::game::drops::ItemMagnet;
 use crate::load::SpriteAssets;
 use crate::prelude::camera::CameraFocus;
-use crate::prelude::LAYER_PLAYER;
+use crate::prelude::{Inventory, LAYER_PLAYER};
 use crate::GameState;
 use bevy::app::{App, Plugin, Update};
 use bevy::core::Name;
@@ -45,6 +45,7 @@ fn initialize_player(mut commands: Commands, assets: Res<SpriteAssets>) {
         },
         CameraFocus {},
         ItemMagnet {},
+        Inventory::default(),
     ));
 }
 
