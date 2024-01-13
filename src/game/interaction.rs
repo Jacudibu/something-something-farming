@@ -73,9 +73,13 @@ fn select_active_tool(
         *active_tool = ActiveTool::Hoe;
     } else if action_state.just_pressed(PlayerAction::SelectPickaxe) {
         *active_tool = ActiveTool::Pickaxe;
-    } else if action_state.just_pressed(PlayerAction::SelectSeed) {
+    } else if action_state.just_pressed(PlayerAction::SelectSeed1) {
         *active_tool = ActiveTool::Item {
             id: ItemId::Crop { crop_id: CropId(0) },
+        };
+    } else if action_state.just_pressed(PlayerAction::SelectSeed2) {
+        *active_tool = ActiveTool::Item {
+            id: ItemId::Crop { crop_id: CropId(1) },
         };
     } else if action_state.just_pressed(PlayerAction::SelectScythe) {
         *active_tool = ActiveTool::Scythe;

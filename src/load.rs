@@ -76,7 +76,7 @@ impl AllCrops {
                 id: CropId(1),
                 name: String::from("Red Debug Plant"),
                 stages: 4,
-                growth_time_per_stage: 5,
+                growth_time_per_stage: 1,
                 texture_atlas: assets.red_debug_plant.clone(),
                 harvested_sprite: assets.red_debug_veggie.clone(),
             },
