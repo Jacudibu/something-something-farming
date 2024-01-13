@@ -44,7 +44,7 @@ fn initialize_player(mut commands: Commands, assets: Res<SpriteAssets>) {
             ..default()
         },
         CameraFocus {},
-        ItemMagnet {},
+        ItemMagnet::default(),
         Inventory::default(),
     ));
 }

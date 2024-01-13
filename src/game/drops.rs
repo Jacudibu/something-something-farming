@@ -4,12 +4,12 @@ use crate::GameState;
 use bevy::log::error;
 use bevy::prelude::{
     in_state, on_event, App, Commands, Component, Entity, Event, EventReader, EventWriter,
-    IntoSystemConfigs, Plugin, Query, Res, Time, Transform, Update, With, Without,
+    IntoSystemConfigs, Plugin, Query, Res, Time, Transform, Update, Without,
 };
 
 const PICKUP_DISTANCE: f32 = 5.0;
-const MAGNET_DISTANCE: f32 = 50.0;
-const MAGNET_SPEED: f32 = 150.0;
+const DEFAULT_MAGNET_DISTANCE: f32 = 40.0;
+const DEFAULT_MAGNET_SPEED: f32 = 200.0;
 
 pub struct ItemPickupPlugin;
 impl Plugin for ItemPickupPlugin {
@@ -17,7 +17,7 @@ impl Plugin for ItemPickupPlugin {
         app.add_event::<PickupItemDropEvent>().add_systems(
             Update,
             (
-                item_pickup_detection.run_if(in_state(GameState::Playing)),
+                item_magnet_and_pickups.run_if(in_state(GameState::Playing)),
                 add_item_pickups_to_inventory.run_if(on_event::<PickupItemDropEvent>()),
             ),
         );
@@ -31,7 +31,19 @@ pub struct ItemDrop {
 }
 
 #[derive(Component)]
-pub struct ItemMagnet {}
+pub struct ItemMagnet {
+    distance: f32,
+    speed: f32,
+}
+
+impl Default for ItemMagnet {
+    fn default() -> Self {
+        Self {
+            distance: DEFAULT_MAGNET_DISTANCE,
+            speed: DEFAULT_MAGNET_SPEED,
+        }
+    }
+}
 
 #[derive(Eq, PartialEq, Hash, Copy, Clone)]
 pub enum ItemId {
@@ -68,11 +80,11 @@ fn add_item_pickups_to_inventory(
     }
 }
 
-fn item_pickup_detection(
+fn item_magnet_and_pickups(
     mut commands: Commands,
     mut drops: Query<(Entity, &ItemDrop, &mut Transform), Without<ItemMagnet>>,
     mut pickup_events: EventWriter<PickupItemDropEvent>,
-    targets: Query<(Entity, &Transform), With<ItemMagnet>>,
+    targets: Query<(Entity, &Transform, &ItemMagnet)>,
     time: Res<Time>,
 ) {
     for (entity, drop, mut drop_transform) in drops.iter_mut() {
@@ -87,7 +99,7 @@ fn item_pickup_detection(
                 )
         });
 
-        if let Some((target_entity, target_transform)) = target {
+        if let Some((target_entity, target_transform, magnet)) = target {
             let delta = target_transform.translation - drop_transform.translation;
             let distance = delta.truncate().length();
             if distance < PICKUP_DISTANCE {
@@ -96,9 +108,18 @@ fn item_pickup_detection(
                     entity: target_entity,
                 });
                 commands.entity(entity).despawn();
-            } else if distance < MAGNET_DISTANCE {
+            } else if distance < magnet.distance {
                 let dir = delta.truncate().normalize();
-                let movement = time.delta_seconds() * MAGNET_SPEED * dir;
+                let speed = {
+                    let percentage = (magnet.distance - distance) / magnet.distance;
+                    let speed = magnet.speed * percentage.powf(1.5);
+                    if speed < magnet.speed * 0.1 {
+                        magnet.speed * 0.1
+                    } else {
+                        speed
+                    }
+                };
+                let movement = time.delta_seconds() * speed * dir;
 
                 drop_transform.translation.x += movement.x;
                 drop_transform.translation.y += movement.y;
