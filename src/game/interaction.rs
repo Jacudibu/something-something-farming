@@ -81,9 +81,9 @@ fn select_active_tool(
             tool_id: ToolId::Scythe,
         });
     } else if action_state.just_pressed(PlayerAction::Hotbar4) {
-        active_tool.item = Some(ItemId::Crop { crop_id: CropId(0) });
+        active_tool.item = Some(ItemId::Seed { crop_id: CropId(0) });
     } else if action_state.just_pressed(PlayerAction::Hotbar5) {
-        active_tool.item = Some(ItemId::Crop { crop_id: CropId(1) });
+        active_tool.item = Some(ItemId::Seed { crop_id: CropId(1) });
     }
 }
 
@@ -215,7 +215,10 @@ fn process_tile_interactions(
         match event.used_item {
             Some(item) => {
                 match item {
-                    ItemId::Crop { crop_id } => {
+                    ItemId::Crop { .. } => {
+                        // ignore. Might wanna eat or give the item to entities on that tile in the future.
+                    }
+                    ItemId::Seed { crop_id } => {
                         let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
                         if !chunk.at_pos(&event.pos.tile).is_tilled {
                             continue;
