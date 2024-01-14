@@ -1,4 +1,4 @@
-use crate::game::drops::ItemId;
+use crate::prelude::item_id::ItemId;
 use bevy::prelude::Component;
 use bevy::utils::{hashbrown, HashMap};
 

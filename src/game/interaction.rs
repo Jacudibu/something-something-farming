@@ -1,15 +1,15 @@
-use crate::game::drops::{ItemDrop, ItemId};
+use crate::game::drops::ItemDrop;
 use crate::game::map_pos::MapPos;
 use crate::game::player::PlayerAction;
 use crate::prelude::chunk_data::CropData;
 use crate::prelude::helpers::determine_texture_index;
+use crate::prelude::item_id::{CropId, ItemId};
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::{
-    ActiveTool, CropId, MouseCursorOverUiState, SpriteAssets, WorldData, LAYER_CROPS,
-    LAYER_ITEM_DROPS,
+    ActiveTool, MouseCursorOverUiState, WorldData, LAYER_CROPS, LAYER_ITEM_DROPS,
 };
 use crate::prelude::{AllCrops, GameState};
 use bevy::prelude::*;
@@ -292,6 +292,9 @@ fn process_tile_interactions(
                 }
             }
             ActiveTool::Item { id } => match id {
+                ItemId::Tool { tool_id } => {
+                    todo!()
+                }
                 ItemId::Crop { crop_id } => {
                     let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
                     if !chunk.at_pos(&event.pos.tile).is_tilled {

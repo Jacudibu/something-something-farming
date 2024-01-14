@@ -1,3 +1,4 @@
+use crate::game::item_id::CropId;
 use crate::GameState;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
@@ -94,6 +95,3 @@ pub struct CropDefinition {
     pub texture_atlas: Handle<TextureAtlas>,
     pub harvested_sprite: Handle<Image>,
 }
-
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
-pub struct CropId(pub u32);

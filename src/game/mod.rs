@@ -18,6 +18,7 @@ pub mod debug_overlay;
 mod drops;
 pub mod interaction;
 pub(crate) mod inventory;
+pub mod item_id;
 pub mod map_pos;
 pub mod player;
 pub mod tile_updater;

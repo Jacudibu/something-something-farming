@@ -1,4 +1,4 @@
-use crate::game::drops::ItemId;
+use crate::game::item_id::ItemId;
 use bevy::prelude::Resource;
 use std::fmt::{Display, Formatter};
 
@@ -18,6 +18,7 @@ impl Display for ActiveTool {
             ActiveTool::Scythe => write!(f, "Scythe"),
             ActiveTool::Item { id } => match id {
                 ItemId::Crop { crop_id } => write!(f, "Crop (ID {})", crop_id.0),
+                ItemId::Tool { tool_id } => tool_id.fmt(f),
             },
         }
     }

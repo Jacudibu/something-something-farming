@@ -1,5 +1,5 @@
-use crate::load::CropId;
-use crate::prelude::{AllCrops, Inventory};
+use crate::game::item_id::{CropId, ItemId};
+use crate::prelude::Inventory;
 use crate::GameState;
 use bevy::log::error;
 use bevy::prelude::{
@@ -41,19 +41,6 @@ impl Default for ItemMagnet {
         Self {
             distance: DEFAULT_MAGNET_DISTANCE,
             speed: DEFAULT_MAGNET_SPEED,
-        }
-    }
-}
-
-#[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
-pub enum ItemId {
-    Crop { crop_id: CropId },
-}
-
-impl ItemId {
-    pub fn item_name(&self, all_crops: &AllCrops) -> String {
-        match self {
-            ItemId::Crop { crop_id } => all_crops.definitions[crop_id].name.clone(),
         }
     }
 }
