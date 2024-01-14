@@ -7,13 +7,14 @@ use crate::load::LoadingPlugin;
 use crate::prelude::DebugOverlayPlugin;
 use bevy::prelude::*;
 use bevy::window::PresentMode;
+use bevy_kira_audio::AudioPlugin;
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
 
 fn main() {
     App::new()
-        .add_plugins(
+        .add_plugins((
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
                 .set(WindowPlugin {
@@ -24,7 +25,8 @@ fn main() {
                     }),
                     ..default()
                 }),
-        )
+            AudioPlugin,
+        ))
         .add_state::<GameState>()
         .add_plugins(LoadingPlugin)
         .add_plugins(GamePlugin)

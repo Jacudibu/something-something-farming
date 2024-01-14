@@ -1,11 +1,12 @@
 use crate::game::item_id::{CropId, ItemId};
-use crate::prelude::Inventory;
+use crate::prelude::{DebugSounds, Inventory};
 use crate::GameState;
 use bevy::log::error;
 use bevy::prelude::{
     in_state, on_event, App, Commands, Component, Entity, Event, EventReader, EventWriter,
     IntoSystemConfigs, Plugin, Query, Res, Time, Transform, Update, Without,
 };
+use bevy_kira_audio::{Audio, AudioControl};
 
 const PICKUP_DISTANCE: f32 = 5.0;
 const DEFAULT_MAGNET_DISTANCE: f32 = 40.0;
@@ -19,6 +20,7 @@ impl Plugin for ItemPickupPlugin {
             (
                 item_magnet_and_pickups.run_if(in_state(GameState::Playing)),
                 add_item_pickups_to_inventory.run_if(on_event::<PickupItemDropEvent>()),
+                play_pickup_sound.run_if(on_event::<PickupItemDropEvent>()),
             ),
         );
     }
@@ -64,6 +66,16 @@ fn add_item_pickups_to_inventory(
                 event.entity
             )
         }
+    }
+}
+
+fn play_pickup_sound(
+    mut events: EventReader<PickupItemDropEvent>,
+    sounds: Res<DebugSounds>,
+    audio: Res<Audio>,
+) {
+    if events.read().len() > 0 {
+        audio.play(sounds.plink.clone());
     }
 }
 

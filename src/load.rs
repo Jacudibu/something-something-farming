@@ -3,6 +3,7 @@ use crate::GameState;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_asset_loader::prelude::*;
+use bevy_kira_audio::AudioSource;
 
 pub struct LoadingPlugin;
 impl Plugin for LoadingPlugin {
@@ -11,6 +12,7 @@ impl Plugin for LoadingPlugin {
             LoadingState::new(GameState::Loading)
                 .continue_to_state(GameState::Playing)
                 .load_collection::<SpriteAssets>()
+                .load_collection::<DebugSounds>()
                 .load_collection::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>(),
         )
             .add_systems(OnExit(GameState::Loading), insert_crop_resource);
@@ -27,6 +29,12 @@ pub struct SpriteAssets {
     pub simple_tiles: Handle<Image>,
     #[asset(path = "sprites/debug_character.png")]
     pub debug_character: Handle<Image>,
+}
+
+#[derive(Resource, AssetCollection)]
+pub struct DebugSounds {
+    #[asset(path = "sounds/plink.ogg")]
+    pub plink: Handle<AudioSource>,
 }
 
 #[derive(Resource, AssetCollection)]
