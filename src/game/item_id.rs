@@ -27,6 +27,15 @@ pub enum ItemId {
     Tool { tool_id: ToolId },
 }
 
+impl Display for ItemId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ItemId::Crop { crop_id } => write!(f, "Crop (ID {})", crop_id.0),
+            ItemId::Tool { tool_id } => tool_id.fmt(f),
+        }
+    }
+}
+
 impl ItemId {
     pub fn item_name(&self, all_crops: &AllCrops) -> String {
         match self {

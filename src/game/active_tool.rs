@@ -1,25 +1,24 @@
 use crate::game::item_id::ItemId;
 use bevy::prelude::Resource;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Resource, Copy, Clone, Debug)]
-pub enum ActiveTool {
-    Hoe,
-    Pickaxe,
-    Scythe,
-    Item { id: ItemId },
+pub struct ActiveTool {
+    pub item: Option<ItemId>,
 }
 
 impl Display for ActiveTool {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ActiveTool::Hoe => write!(f, "Hoe"),
-            ActiveTool::Pickaxe => write!(f, "Pickaxe"),
-            ActiveTool::Scythe => write!(f, "Scythe"),
-            ActiveTool::Item { id } => match id {
-                ItemId::Crop { crop_id } => write!(f, "Crop (ID {})", crop_id.0),
-                ItemId::Tool { tool_id } => tool_id.fmt(f),
-            },
+        if let Some(item) = self.item {
+            std::fmt::Display::fmt(&item, f)
+        } else {
+            write!(f, "None")
         }
+    }
+}
+
+impl Default for ActiveTool {
+    fn default() -> Self {
+        Self { item: None }
     }
 }

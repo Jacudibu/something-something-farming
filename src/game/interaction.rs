@@ -9,7 +9,7 @@ use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::{
-    ActiveTool, MouseCursorOverUiState, WorldData, LAYER_CROPS, LAYER_ITEM_DROPS,
+    ActiveTool, MouseCursorOverUiState, ToolId, WorldData, LAYER_CROPS, LAYER_ITEM_DROPS,
 };
 use crate::prelude::{AllCrops, GameState};
 use bevy::prelude::*;
@@ -17,12 +17,11 @@ use bevy_ecs_tilemap::map::TilemapId;
 use bevy_ecs_tilemap::prelude::TileBundle;
 use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
 use leafwing_input_manager::action_state::ActionState;
-use std::ops::Deref;
 
 pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ActiveTool::Hoe)
+        app.insert_resource(ActiveTool::default())
             .add_event::<CropDestroyedEvent>()
             .add_event::<CropHarvestedEvent>()
             .add_event::<TileInteractionEvent>()
@@ -70,26 +69,28 @@ fn select_active_tool(
     }
     let action_state = action_state.unwrap();
     if action_state.just_pressed(PlayerAction::Hotbar1) {
-        *active_tool = ActiveTool::Hoe;
+        active_tool.item = Some(ItemId::Tool {
+            tool_id: ToolId::Hoe,
+        });
     } else if action_state.just_pressed(PlayerAction::Hotbar2) {
-        *active_tool = ActiveTool::Pickaxe;
+        active_tool.item = Some(ItemId::Tool {
+            tool_id: ToolId::Pickaxe,
+        });
     } else if action_state.just_pressed(PlayerAction::Hotbar3) {
-        *active_tool = ActiveTool::Scythe;
+        active_tool.item = Some(ItemId::Tool {
+            tool_id: ToolId::Scythe,
+        });
     } else if action_state.just_pressed(PlayerAction::Hotbar4) {
-        *active_tool = ActiveTool::Item {
-            id: ItemId::Crop { crop_id: CropId(0) },
-        };
+        active_tool.item = Some(ItemId::Crop { crop_id: CropId(0) });
     } else if action_state.just_pressed(PlayerAction::Hotbar5) {
-        *active_tool = ActiveTool::Item {
-            id: ItemId::Crop { crop_id: CropId(1) },
-        };
+        active_tool.item = Some(ItemId::Crop { crop_id: CropId(1) });
     }
 }
 
 #[derive(Event, Debug)]
 struct TileInteractionEvent {
     pub pos: MapPos,
-    pub used_tool: ActiveTool,
+    pub used_item: Option<ItemId>,
 }
 
 #[derive(Event, Debug)]
@@ -143,7 +144,7 @@ fn detect_tile_interactions(
         // in case we ever regularly happening AoE interaction events, it batch_send might be more performant
         tile_interaction_events.send(TileInteractionEvent {
             pos: cursor.pos.clone(),
-            used_tool: active_tool.deref().clone(),
+            used_item: active_tool.item.clone(),
         });
     }
 }
@@ -211,126 +212,138 @@ fn process_tile_interactions(
     all_crops: Res<AllCrops>,
 ) {
     for event in tile_interaction_event.read() {
-        match event.used_tool {
-            ActiveTool::Hoe => {
-                let world_data = &mut *world_data;
-                let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
-                if chunk.at_pos(&event.pos.tile).is_tilled {
-                    continue;
-                }
+        match event.used_item {
+            Some(item) => {
+                match item {
+                    ItemId::Crop { crop_id } => {
+                        let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
+                        if !chunk.at_pos(&event.pos.tile).is_tilled {
+                            continue;
+                        }
 
-                chunk.set_at_pos(&event.pos.tile, true);
+                        if chunk.crops.get(&event.pos.tile).is_some() {
+                            continue;
+                        }
 
-                // TODO: Event - Place Floor tile
-                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&event.pos.chunk) {
-                    let mut floor_tilemap_storage =
-                        object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
+                        let crop_definition = all_crops.definitions.get(&crop_id).unwrap();
+                        chunk
+                            .crops
+                            .insert(event.pos.tile, CropData::new(&crop_definition, &time));
 
-                    let tilled_tile = commands
-                        .spawn(TileBundle {
-                            position: event.pos.tile.clone(),
-                            tilemap_id: TilemapId(loaded_data.floor_tilemap),
-                            texture_index: determine_texture_index(
-                                &event.pos.tile,
-                                &event.pos.chunk,
-                                &world_data,
-                            ),
-                            ..Default::default()
-                        })
-                        .id();
-                    commands
-                        .entity(loaded_data.floor_tilemap)
-                        .add_child(tilled_tile);
-                    floor_tilemap_storage.set(&event.pos.tile, tilled_tile);
-                    update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
-                        event.pos.chunk,
-                        event.pos.tile,
-                    ));
+                        // TODO: Event - Plant Seed
+                        if let Some(loaded_data) =
+                            loaded_chunk_data.chunks.get_mut(&event.pos.chunk)
+                        {
+                            let entity = commands
+                                .spawn((
+                                    Name::new("Plant"),
+                                    SpriteSheetBundle {
+                                        texture_atlas: crop_definition.texture_atlas.clone(),
+                                        sprite: TextureAtlasSprite::new(0),
+                                        transform: Transform::from_translation(
+                                            event.pos.pos_inside_chunk(LAYER_CROPS),
+                                        ),
+                                        ..default()
+                                    },
+                                ))
+                                .set_parent(loaded_data.ground_tilemap)
+                                .id();
+
+                            loaded_data.crops.insert(event.pos.tile, entity);
+                        }
+                    }
+                    ItemId::Tool { tool_id } => match tool_id {
+                        ToolId::Hoe => {
+                            let world_data = &mut *world_data;
+                            let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
+                            if chunk.at_pos(&event.pos.tile).is_tilled {
+                                continue;
+                            }
+
+                            chunk.set_at_pos(&event.pos.tile, true);
+
+                            // TODO: Event - Place Floor tile
+                            if let Some(loaded_data) =
+                                loaded_chunk_data.chunks.get(&event.pos.chunk)
+                            {
+                                let mut floor_tilemap_storage =
+                                    object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
+
+                                let tilled_tile = commands
+                                    .spawn(TileBundle {
+                                        position: event.pos.tile.clone(),
+                                        tilemap_id: TilemapId(loaded_data.floor_tilemap),
+                                        texture_index: determine_texture_index(
+                                            &event.pos.tile,
+                                            &event.pos.chunk,
+                                            &world_data,
+                                        ),
+                                        ..Default::default()
+                                    })
+                                    .id();
+                                commands
+                                    .entity(loaded_data.floor_tilemap)
+                                    .add_child(tilled_tile);
+                                floor_tilemap_storage.set(&event.pos.tile, tilled_tile);
+                                update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
+                                    event.pos.chunk,
+                                    event.pos.tile,
+                                ));
+                            }
+                        }
+                        ToolId::Pickaxe => {
+                            let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
+                            if !chunk.at_pos(&event.pos.tile).is_tilled {
+                                continue;
+                            }
+
+                            if let Some(_) = chunk.crops.get(&event.pos.tile) {
+                                destroy_crop_events.send(CropDestroyedEvent { pos: event.pos });
+                                continue;
+                            }
+
+                            // TODO: Event - Remove tilled tile
+                            chunk.set_at_pos(&event.pos.tile, false);
+                            if let Some(loaded_data) =
+                                loaded_chunk_data.chunks.get(&event.pos.chunk)
+                            {
+                                let mut floor_tilemap_storage =
+                                    object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
+
+                                if let Some(entity) = floor_tilemap_storage.get(&event.pos.tile) {
+                                    floor_tilemap_storage.remove(&event.pos.tile);
+                                    commands.entity(entity).despawn();
+                                } else {
+                                    warn!("Entity was not set at {:?}.", event);
+                                }
+
+                                update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
+                                    event.pos.chunk,
+                                    event.pos.tile,
+                                ));
+                            }
+                        }
+                        ToolId::Scythe => {
+                            let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
+
+                            if let Some(crop) = chunk.crops.get(&event.pos.tile) {
+                                if crop.stage + 1
+                                    >= all_crops.definitions.get(&crop.crop_id).unwrap().stages
+                                {
+                                    harvest_crop_events.send(CropHarvestedEvent {
+                                        pos: event.pos,
+                                        crop_id: crop.crop_id,
+                                    });
+                                    destroy_crop_events.send(CropDestroyedEvent { pos: event.pos });
+                                }
+                            }
+                        }
+                    },
                 }
             }
-            ActiveTool::Pickaxe => {
-                let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
-                if !chunk.at_pos(&event.pos.tile).is_tilled {
-                    continue;
-                }
-
-                if let Some(_) = chunk.crops.get(&event.pos.tile) {
-                    destroy_crop_events.send(CropDestroyedEvent { pos: event.pos });
-                    continue;
-                }
-
-                // TODO: Event - Remove tilled tile
-                chunk.set_at_pos(&event.pos.tile, false);
-                if let Some(loaded_data) = loaded_chunk_data.chunks.get(&event.pos.chunk) {
-                    let mut floor_tilemap_storage =
-                        object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
-
-                    if let Some(entity) = floor_tilemap_storage.get(&event.pos.tile) {
-                        floor_tilemap_storage.remove(&event.pos.tile);
-                        commands.entity(entity).despawn();
-                    } else {
-                        warn!("Entity was not set at {:?}.", event);
-                    }
-
-                    update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
-                        event.pos.chunk,
-                        event.pos.tile,
-                    ));
-                }
+            None => {
+                // Do nothing for now.
             }
-            ActiveTool::Scythe => {
-                let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
-
-                if let Some(crop) = chunk.crops.get(&event.pos.tile) {
-                    if crop.stage + 1 >= all_crops.definitions.get(&crop.crop_id).unwrap().stages {
-                        harvest_crop_events.send(CropHarvestedEvent {
-                            pos: event.pos,
-                            crop_id: crop.crop_id,
-                        });
-                        destroy_crop_events.send(CropDestroyedEvent { pos: event.pos });
-                    }
-                }
-            }
-            ActiveTool::Item { id } => match id {
-                ItemId::Tool { tool_id } => {
-                    todo!()
-                }
-                ItemId::Crop { crop_id } => {
-                    let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
-                    if !chunk.at_pos(&event.pos.tile).is_tilled {
-                        continue;
-                    }
-
-                    if chunk.crops.get(&event.pos.tile).is_some() {
-                        continue;
-                    }
-
-                    let crop_definition = all_crops.definitions.get(&crop_id).unwrap();
-                    chunk
-                        .crops
-                        .insert(event.pos.tile, CropData::new(&crop_definition, &time));
-
-                    // TODO: Event - Plant Seed
-                    if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
-                        let entity = commands
-                            .spawn((
-                                Name::new("Plant"),
-                                SpriteSheetBundle {
-                                    texture_atlas: crop_definition.texture_atlas.clone(),
-                                    sprite: TextureAtlasSprite::new(0),
-                                    transform: Transform::from_translation(
-                                        event.pos.pos_inside_chunk(LAYER_CROPS),
-                                    ),
-                                    ..default()
-                                },
-                            ))
-                            .set_parent(loaded_data.ground_tilemap)
-                            .id();
-
-                        loaded_data.crops.insert(event.pos.tile, entity);
-                    }
-                }
-            },
         }
     }
 }
