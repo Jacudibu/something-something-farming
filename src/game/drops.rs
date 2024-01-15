@@ -7,6 +7,7 @@ use bevy::prelude::{
     IntoSystemConfigs, Plugin, Query, Res, Time, Transform, Update, Without,
 };
 use bevy_kira_audio::{Audio, AudioControl};
+use rand::Rng;
 
 const PICKUP_DISTANCE: f32 = 5.0;
 const DEFAULT_MAGNET_DISTANCE: f32 = 40.0;
@@ -75,7 +76,11 @@ fn play_pickup_sound(
     audio: Res<Audio>,
 ) {
     if events.read().len() > 0 {
-        audio.play(sounds.plink.clone());
+        let mut random = rand::thread_rng();
+        let playback_rate = random.gen_range(0.9..1.1);
+        audio
+            .play(sounds.plink.clone())
+            .with_playback_rate(playback_rate);
     }
 }
 

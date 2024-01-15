@@ -3460,6 +3460,7 @@ dependencies = [
  "bevy_kira_audio",
  "bevy_screen_diagnostics",
  "leafwing-input-manager",
+ "rand",
 ]
 
 [[package]]
