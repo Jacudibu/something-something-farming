@@ -1,6 +1,6 @@
 use crate::game::item_id::{CropId, ItemId};
 use crate::prelude::{DebugSounds, Inventory};
-use crate::GameState;
+use crate::{GameState, SoundEffectsSetting};
 use bevy::log::error;
 use bevy::prelude::{
     in_state, on_event, App, Commands, Component, Entity, Event, EventReader, EventWriter,
@@ -21,7 +21,9 @@ impl Plugin for ItemPickupPlugin {
             (
                 item_magnet_and_pickups.run_if(in_state(GameState::Playing)),
                 add_item_pickups_to_inventory.run_if(on_event::<PickupItemDropEvent>()),
-                play_pickup_sound.run_if(on_event::<PickupItemDropEvent>()),
+                play_pickup_sound
+                    .run_if(in_state(SoundEffectsSetting::On))
+                    .run_if(on_event::<PickupItemDropEvent>()),
             ),
         );
     }

@@ -28,6 +28,7 @@ fn main() {
             AudioPlugin,
         ))
         .add_state::<GameState>()
+        .add_state::<SoundEffectsSetting>()
         .add_plugins(LoadingPlugin)
         .add_plugins(GamePlugin)
         .add_plugins(ScreenDiagnosticsPlugin::default())
@@ -42,4 +43,11 @@ pub enum GameState {
     #[default]
     Loading,
     Playing,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Hash, Default, States)]
+pub enum SoundEffectsSetting {
+    #[default]
+    On,
+    Off,
 }
