@@ -9,7 +9,8 @@ use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::{
-    ActiveTool, MouseCursorOverUiState, ToolId, WorldData, LAYER_CROPS, LAYER_ITEM_DROPS,
+    ActiveTool, MouseCursorOverUiState, SimulationTime, ToolId, WorldData, LAYER_CROPS,
+    LAYER_ITEM_DROPS,
 };
 use crate::prelude::{AllCrops, GameState};
 use bevy::prelude::*;
@@ -208,7 +209,7 @@ fn process_tile_interactions(
     mut world_data: ResMut<WorldData>,
     mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
     mut loaded_chunk_data: ResMut<LoadedChunks>,
-    time: Res<Time>,
+    simulation_time: Res<SimulationTime>,
     all_crops: Res<AllCrops>,
 ) {
     for event in tile_interaction_event.read() {
@@ -229,9 +230,10 @@ fn process_tile_interactions(
                         }
 
                         let crop_definition = all_crops.definitions.get(&crop_id).unwrap();
-                        chunk
-                            .crops
-                            .insert(event.pos.tile, CropData::new(&crop_definition, &time));
+                        chunk.crops.insert(
+                            event.pos.tile,
+                            CropData::new(&crop_definition, &simulation_time),
+                        );
 
                         // TODO: Event - Plant Seed
                         if let Some(loaded_data) =

@@ -1,8 +1,8 @@
 use crate::prelude::loaded_chunks::LoadedChunks;
-use crate::prelude::{AllCrops, MapPos, WorldData};
+use crate::prelude::{AllCrops, MapPos, SimulationTime, WorldData};
 use crate::GameState;
 use bevy::app::{App, Plugin, Update};
-use bevy::prelude::{in_state, IntoSystemConfigs, Query, Res, ResMut, TextureAtlasSprite, Time};
+use bevy::prelude::{in_state, IntoSystemConfigs, Query, Res, ResMut, TextureAtlasSprite};
 
 pub struct TileUpdaterPlugin;
 impl Plugin for TileUpdaterPlugin {
@@ -19,7 +19,7 @@ struct NextItemToUpdate {
 fn update_tiles(
     mut world_data: ResMut<WorldData>,
     mut sprites: Query<&mut TextureAtlasSprite>,
-    time: Res<Time>,
+    simulation_time: Res<SimulationTime>,
     loaded_chunk_data: Res<LoadedChunks>,
     all_crops: Res<AllCrops>,
 ) {
@@ -29,7 +29,7 @@ fn update_tiles(
     // Step #2: Collect all items which request an update in an ordered list, listen to events to add & remove them as needed
 
     if let Some(next) = find_next_tile_to_update(&world_data) {
-        if next.update_at < time.elapsed_seconds() {
+        if next.update_at < simulation_time.elapsed_seconds() {
             // TODO: Update
             let crop = world_data
                 .chunks
@@ -43,7 +43,7 @@ fn update_tiles(
             crop.stage += 1;
             if crop.stage < crop_definition.stages - 1 {
                 crop.next_stage_at =
-                    Some(time.elapsed_seconds() + crop_definition.growth_time_per_stage as f32);
+                    Some(simulation_time.elapsed_seconds() + crop_definition.growth_time_per_stage as f32);
             } else {
                 crop.next_stage_at = None;
             }

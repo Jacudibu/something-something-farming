@@ -1,7 +1,7 @@
 use crate::load::AllCrops;
 use crate::prelude::chunk_data::ChunkData;
 use crate::prelude::tile_cursor::TileCursor;
-use crate::prelude::{ActiveTool, GameState, Inventory, MapPos, WorldData};
+use crate::prelude::{ActiveTool, GameState, Inventory, MapPos, SimulationTime, WorldData};
 use bevy::app::{App, First, Plugin, Update};
 use bevy::log::error;
 use bevy::prelude::{
@@ -51,7 +51,7 @@ fn ui_system(
     cursor: Query<&TileCursor>,
     world_data: Res<WorldData>,
     active_tool: Res<ActiveTool>,
-    time: Res<Time>,
+    simulation_time: Res<SimulationTime>,
     all_crops: Res<AllCrops>,
     inventories: Query<(&Name, &Inventory)>,
 ) {
@@ -70,7 +70,12 @@ fn ui_system(
         .resizable(false)
         .fixed_pos(Pos2::new(5.0, 5.0))
         .show(contexts.ctx_mut(), |ui| {
-            ui.label(map_data_for_position(chunk, &cursor.pos, &time, &all_crops));
+            ui.label(map_data_for_position(
+                chunk,
+                &cursor.pos,
+                &simulation_time,
+                &all_crops,
+            ));
         });
 
     egui::Window::new("Active Tool View")
@@ -107,7 +112,7 @@ fn ui_system(
 fn map_data_for_position(
     chunk: &ChunkData,
     pos: &MapPos,
-    time: &Time,
+    simulation_time: &SimulationTime,
     all_crops: &AllCrops,
 ) -> String {
     let mut lines = Vec::new();
@@ -128,7 +133,7 @@ fn map_data_for_position(
         if let Some(next_stage) = crop.next_stage_at {
             lines.push(format!(
                 "  next: {:.1}",
-                next_stage - time.elapsed_seconds()
+                next_stage - simulation_time.elapsed_seconds()
             ));
         }
     }

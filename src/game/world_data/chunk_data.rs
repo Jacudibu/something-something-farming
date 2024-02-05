@@ -1,8 +1,7 @@
 use crate::game::item_id::CropId;
 use crate::prelude::tile_data::TileData;
-use crate::prelude::CropDefinition;
 use crate::prelude::CHUNK_SIZE;
-use bevy::prelude::Time;
+use crate::prelude::{CropDefinition, SimulationTime};
 use bevy::utils::HashMap;
 use bevy_ecs_tilemap::prelude::TilePos;
 
@@ -18,10 +17,12 @@ pub struct CropData {
 }
 
 impl CropData {
-    pub fn new(from: &CropDefinition, time: &Time) -> Self {
+    pub fn new(from: &CropDefinition, simulation_time: &SimulationTime) -> Self {
         Self {
             crop_id: from.id.clone(),
-            next_stage_at: Some(time.elapsed_seconds() + from.growth_time_per_stage as f32),
+            next_stage_at: Some(
+                simulation_time.elapsed_seconds() + from.growth_time_per_stage as f32,
+            ),
             stage: 0,
         }
     }
