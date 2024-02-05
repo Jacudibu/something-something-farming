@@ -11,6 +11,7 @@ use bevy::math::Vec2;
 use bevy::prelude::{Camera, CursorMoved, EventReader, GlobalTransform, Query, ResMut, Resource};
 use leafwing_input_manager::plugin::InputManagerPlugin;
 use player::PlayerAction;
+use crate::prelude::simulation_time::SimulationTimePlugin;
 
 pub mod active_tool;
 pub mod camera;
@@ -21,6 +22,7 @@ pub(crate) mod inventory;
 pub mod item_id;
 pub mod map_pos;
 pub mod player;
+pub mod simulation_time;
 pub mod tile_updater;
 pub mod tilemap;
 pub mod ui;
@@ -38,6 +40,7 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CursorPos>()
             .add_plugins(InputManagerPlugin::<PlayerAction>::default())
+            .add_plugins(SimulationTimePlugin)
             .add_plugins(ItemPickupPlugin)
             .add_plugins(PlayerPlugin)
             .add_plugins(WorldDataPlugin)
