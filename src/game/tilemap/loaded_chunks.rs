@@ -1,3 +1,4 @@
+use crate::game::CHUNK_SIZE;
 use crate::prelude::ChunkPos;
 use bevy::prelude::{App, Entity, Plugin, Resource};
 use bevy::utils::HashMap;
@@ -21,4 +22,5 @@ pub struct LoadedChunkData {
     pub ground_tilemap: Entity,
     pub floor_tilemap: Entity,
     pub crops: HashMap<TilePos, Entity>,
+    pub tiles: [Option<Entity>; CHUNK_SIZE * CHUNK_SIZE],
 }

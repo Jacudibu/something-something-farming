@@ -114,17 +114,31 @@ fn spawn_chunk(
         .get(&chunk_pos)
         .expect(&format!("World data should exists for chunk {}", chunk_pos));
 
+    let mut tiles: [Option<Entity>; CHUNK_SIZE * CHUNK_SIZE] = [None; CHUNK_SIZE * CHUNK_SIZE];
+
+    let chunk_parent = commands
+        .spawn((
+            get_chunk_name(chunk_pos, TilemapLayer::Floor),
+            SpatialBundle::default(),
+        ))
+        .id();
+
     for x in 0..CHUNK_SIZE {
         for z in 0..CHUNK_SIZE {
-            commands.spawn((
-                PbrBundle {
-                    mesh: tile_mesh.clone(),
-                    material: tile_material.clone(),
-                    transform: get_tile_transform(&chunk_pos, x as f32, z as f32),
-                    ..default()
-                },
-                NotShadowCaster,
-            ));
+            let entity = commands
+                .spawn((
+                    PbrBundle {
+                        mesh: tile_mesh.clone(),
+                        material: tile_material.clone(),
+                        transform: get_tile_transform(&chunk_pos, x as f32, z as f32),
+                        ..default()
+                    },
+                    NotShadowCaster,
+                ))
+                .set_parent(chunk_parent)
+                .id();
+
+            tiles[x + z * CHUNK_SIZE] = Some(entity);
         }
     }
 
@@ -153,6 +167,7 @@ fn spawn_chunk(
     let loaded_chunk_data = LoadedChunkData {
         ground_tilemap,
         floor_tilemap,
+        tiles,
         crops: HashMap::new(),
     };
 
