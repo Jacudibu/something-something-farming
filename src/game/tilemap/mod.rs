@@ -64,7 +64,14 @@ fn spawn_testing_chunks(
     assets: Res<SpriteAssets>,
     world_data: Res<WorldData>,
     mut loaded_chunks: ResMut<LoadedChunks>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    // FIXME: These should be created in the loading process
+    // FIXME: Materials should use the texture from the spritesheet.
+    let tile_mesh = meshes.add(shape::Plane::from_size(1.0).into());
+    let tile_material = materials.add(Color::rgb_u8(0, 255, 0).into());
+
     for x in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
         for y in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
             spawn_chunk(
@@ -73,6 +80,8 @@ fn spawn_testing_chunks(
                 ChunkPos::new(x, y),
                 &world_data,
                 &mut loaded_chunks,
+                &tile_mesh,
+                &tile_material,
             );
         }
     }
@@ -95,12 +104,26 @@ fn spawn_chunk(
     chunk_pos: ChunkPos,
     world_data: &WorldData,
     loaded_chunks: &mut LoadedChunks,
+    tile_mesh: &Handle<Mesh>,
+    tile_material: &Handle<StandardMaterial>,
 ) {
     let chunk_data = world_data
         .chunks
         .get(&chunk_pos)
         .expect(&format!("World data should exists for chunk {}", chunk_pos));
 
+    for x in 0..CHUNK_SIZE {
+        for z in 0..CHUNK_SIZE {
+            commands.spawn(PbrBundle {
+                mesh: tile_mesh.clone(),
+                material: tile_material.clone(),
+                transform: get_tile_transform(&chunk_pos, x as f32, z as f32),
+                ..default()
+            });
+        }
+    }
+
+    // Old Stuff vvv
     let ground_tilemap = spawn_ground_layer(commands, assets, chunk_pos, chunk_data);
 
     let floor_tilemap = commands
@@ -185,4 +208,12 @@ fn get_tilemap_transform(chunk_pos: ChunkPos, layer: TilemapLayer) -> Transform 
         chunk_pos.y as f32 * CHUNK_SIZE as f32 * TILEMAP_TILE_SIZE.y,
         layer.into(),
     ))
+}
+
+fn get_tile_transform(chunk_pos: &ChunkPos, x: f32, z: f32) -> Transform {
+    Transform::from_xyz(
+        x + chunk_pos.x as f32 * CHUNK_SIZE as f32,
+        0.0,
+        z + chunk_pos.y as f32 * CHUNK_SIZE as f32,
+    )
 }
