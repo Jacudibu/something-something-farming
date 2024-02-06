@@ -1,7 +1,7 @@
 use crate::game::drops::ItemMagnet;
 use crate::load::SpriteAssets;
 use crate::prelude::camera::CameraFocus;
-use crate::prelude::{Inventory, LAYER_PLAYER, SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER};
+use crate::prelude::{Inventory, SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER};
 use crate::GameState;
 use bevy::app::{App, Plugin, Update};
 use bevy::core::Name;
@@ -30,7 +30,7 @@ impl Plugin for PlayerPlugin {
 #[derive(Component)]
 pub struct ControlledByPlayer {}
 
-const PLAYER_SPEED: f32 = 100.0;
+const PLAYER_SPEED: f32 = 10.0;
 
 fn initialize_player(
     mut commands: Commands,
@@ -76,10 +76,10 @@ fn move_player(
     }
 
     if action_state.pressed(PlayerAction::Up) {
-        dir.y += 1.0;
+        dir.z -= 1.0;
     }
     if action_state.pressed(PlayerAction::Down) {
-        dir.y -= 1.0;
+        dir.z += 1.0;
     }
     if action_state.pressed(PlayerAction::Right) {
         dir.x += 1.0;
