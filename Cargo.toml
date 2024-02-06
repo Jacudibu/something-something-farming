@@ -39,7 +39,7 @@ bevy = { version = "0.12.1", default-features = false, features = [
     "default_font",
     "webgl2",
 ]}
-bevy_asset_loader = { version = "0.19.1", features = ["2d"] }
+bevy_asset_loader = { version = "0.19.1", features = ["2d", "3d"] }
 bevy_basic_camera = { git = "https://github.com/DGriffin91/bevy_basic_camera" }
 bevy_ecs_tilemap = "0.12"
 bevy_egui = "0.24.0"

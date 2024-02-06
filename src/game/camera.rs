@@ -51,16 +51,31 @@ fn init(mut commands: Commands) {
     // FIXME: Once we figure things out, Global Lights should be spawned in their own plugin
     commands.spawn((
         Name::new("Directional Light"),
-        DirectionalLightBundle { ..default() },
+        DirectionalLightBundle {
+            directional_light: DirectionalLight {
+                shadows_enabled: true,
+                ..default()
+            },
+            transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, 5.7, 0.3, 0.0)),
+            ..default()
+        },
     ));
 
     commands.spawn((
         Name::new("Camera"),
         Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 7.0, -7.0).looking_at(Vec3::ZERO, Vec3::Y),
+            transform: Transform::from_xyz(0.0, 7.0, 7.0).looking_at(Vec3::ZERO, Vec3::Y),
+            // projection: Projection::Orthographic(OrthographicProjection {
+            //     scale: 2.0,
+            //     scaling_mode: ScalingMode::WindowSize(32.0),
+            //     ..default()
+            // }),
             ..default()
         },
-        CameraController::default(),
+        CameraController {
+            orbit_mode: true,
+            ..default()
+        },
         InputManagerBundle::<CameraAction> {
             input_map: default_input_map_camera(),
             ..default()

@@ -13,6 +13,7 @@ impl Plugin for LoadingPlugin {
                 .continue_to_state(GameState::Playing)
                 .load_collection::<SpriteAssets>()
                 .load_collection::<DebugSounds>()
+                .load_collection::<DebugMaterials>()
                 .load_collection::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>(),
         )
             .add_systems(OnExit(GameState::Loading), insert_crop_resource);
@@ -29,6 +30,13 @@ pub struct SpriteAssets {
     pub simple_tiles: Handle<Image>,
     #[asset(path = "sprites/debug_character.png")]
     pub debug_character: Handle<Image>,
+}
+
+#[derive(Resource, AssetCollection)]
+pub struct DebugMaterials {
+    #[asset(standard_material)]
+    #[asset(path = "sprites/single_tile.png")]
+    pub single_tile: Handle<StandardMaterial>,
 }
 
 #[derive(Resource, AssetCollection)]

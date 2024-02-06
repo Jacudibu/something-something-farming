@@ -6,9 +6,11 @@ use crate::prelude::loaded_chunks::LoadedChunkData;
 use crate::prelude::tile_cursor::TileCursorPlugin;
 use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
 use crate::prelude::{
-    ChunkPos, SpriteAssets, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX, TILE_SIZE,
+    ChunkPos, DebugMaterials, SpriteAssets, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX,
+    TILE_SIZE,
 };
 use crate::GameState;
+use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 use bevy::utils::hashbrown::HashMap;
 use bevy_ecs_tilemap::prelude::*;
@@ -65,12 +67,12 @@ fn spawn_testing_chunks(
     world_data: Res<WorldData>,
     mut loaded_chunks: ResMut<LoadedChunks>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    materials: Res<DebugMaterials>,
 ) {
     // FIXME: These should be created in the loading process
     // FIXME: Materials should use the texture from the spritesheet.
     let tile_mesh = meshes.add(shape::Plane::from_size(1.0).into());
-    let tile_material = materials.add(Color::rgb_u8(0, 255, 0).into());
+    let tile_material = materials.single_tile.clone();
 
     for x in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
         for y in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
@@ -114,12 +116,15 @@ fn spawn_chunk(
 
     for x in 0..CHUNK_SIZE {
         for z in 0..CHUNK_SIZE {
-            commands.spawn(PbrBundle {
-                mesh: tile_mesh.clone(),
-                material: tile_material.clone(),
-                transform: get_tile_transform(&chunk_pos, x as f32, z as f32),
-                ..default()
-            });
+            commands.spawn((
+                PbrBundle {
+                    mesh: tile_mesh.clone(),
+                    material: tile_material.clone(),
+                    transform: get_tile_transform(&chunk_pos, x as f32, z as f32),
+                    ..default()
+                },
+                NotShadowCaster,
+            ));
         }
     }
 
