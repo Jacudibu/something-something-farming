@@ -19,8 +19,6 @@ pub struct LoadedChunks {
 }
 
 pub struct LoadedChunkData {
-    pub ground_tilemap: Entity,
-    pub floor_tilemap: Entity,
     pub chunk_parent: Entity,
     pub tiles: [Option<Entity>; CHUNK_SIZE * CHUNK_SIZE],
     pub crops: HashMap<TilePos, Entity>,

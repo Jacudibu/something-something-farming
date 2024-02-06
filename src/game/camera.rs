@@ -1,6 +1,7 @@
 use crate::game::CursorPos;
 use crate::prelude::{GameState, MouseCursorOverUiState, TileRaycastSet};
 use bevy::ecs::query::QuerySingleError;
+use bevy::pbr::CascadeShadowConfigBuilder;
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 use bevy_basic_camera::{CameraController, CameraControllerPlugin};
@@ -57,6 +58,13 @@ fn init(mut commands: Commands) {
                 shadows_enabled: true,
                 ..default()
             },
+            // TODO: Figure out some good looking values
+            cascade_shadow_config: CascadeShadowConfigBuilder {
+                first_cascade_far_bound: 20.0,
+                minimum_distance: 1.0,
+                ..default()
+            }
+            .build(),
             transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, 5.7, 0.3, 0.0)),
             ..default()
         },
@@ -66,11 +74,11 @@ fn init(mut commands: Commands) {
         Name::new("Camera"),
         Camera3dBundle {
             transform: Transform::from_xyz(0.0, 7.0, 7.0).looking_at(Vec3::ZERO, Vec3::Y),
-            // projection: Projection::Orthographic(OrthographicProjection {
-            //     scale: 2.0,
-            //     scaling_mode: ScalingMode::WindowSize(32.0),
-            //     ..default()
-            // }),
+            projection: Projection::Orthographic(OrthographicProjection {
+                scale: 1.0,
+                scaling_mode: ScalingMode::WindowSize(60.0),
+                ..default()
+            }),
             ..default()
         },
         CameraController {

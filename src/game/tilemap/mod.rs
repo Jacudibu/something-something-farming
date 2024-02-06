@@ -84,7 +84,6 @@ fn spawn_testing_chunks(
         for y in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
             spawn_chunk(
                 &mut commands,
-                &assets,
                 ChunkPos::new(x, y),
                 &world_data,
                 &mut loaded_chunks,
@@ -105,8 +104,7 @@ fn get_chunk_name(chunk_pos: ChunkPos) -> Name {
 
 fn despawn_chunk(mut commands: Commands, loaded_chunks: &mut LoadedChunks, chunk_pos: ChunkPos) {
     if let Some(chunk) = loaded_chunks.chunks.remove(&chunk_pos) {
-        commands.entity(chunk.floor_tilemap).despawn_recursive();
-        commands.entity(chunk.ground_tilemap).despawn_recursive();
+        commands.entity(chunk.chunk_parent).despawn_recursive();
     }
 }
 
@@ -118,7 +116,6 @@ pub struct TilePos3D {
 
 fn spawn_chunk(
     commands: &mut Commands,
-    assets: &SpriteAssets,
     chunk_pos: ChunkPos,
     world_data: &WorldData,
     loaded_chunks: &mut LoadedChunks,
@@ -169,93 +166,13 @@ fn spawn_chunk(
         }
     }
 
-    // Old Stuff vvv
-    let ground_tilemap = spawn_ground_layer(commands, assets, chunk_pos, chunk_data);
-
-    let floor_tilemap = commands
-        .spawn((
-            old_get_chunk_name(chunk_pos, TilemapLayer::Floor),
-            TilemapLayer::Floor,
-            ChunkIdentifier {
-                position: chunk_pos,
-            },
-            TilemapBundle {
-                grid_size: TILEMAP_TILE_SIZE.into(),
-                size: TILEMAP_SIZE,
-                texture: TilemapTexture::Single(assets.tilled_tiles.clone()),
-                tile_size: TILEMAP_TILE_SIZE,
-                transform: get_tilemap_transform(chunk_pos, TilemapLayer::Floor),
-                storage: TileStorage::empty(TILEMAP_SIZE),
-                ..Default::default()
-            },
-        ))
-        .id();
-
     let loaded_chunk_data = LoadedChunkData {
-        ground_tilemap,
-        floor_tilemap,
         chunk_parent,
         tiles,
         crops: HashMap::new(),
     };
 
     loaded_chunks.chunks.insert(chunk_pos, loaded_chunk_data);
-}
-
-fn spawn_ground_layer(
-    commands: &mut Commands,
-    assets: &SpriteAssets,
-    chunk_pos: ChunkPos,
-    chunk: &ChunkData,
-) -> Entity {
-    let tilemap_entity = commands
-        .spawn((
-            old_get_chunk_name(chunk_pos, TilemapLayer::Ground),
-            TilemapLayer::Ground,
-            ChunkIdentifier {
-                position: chunk_pos,
-            },
-            GroundLayer {},
-        ))
-        .id();
-    let mut tile_storage = TileStorage::empty(TILEMAP_SIZE);
-
-    for x in 0..CHUNK_SIZE as u32 {
-        for y in 0..CHUNK_SIZE as u32 {
-            let tile_pos = TilePos { x, y };
-            let ground_type = &chunk.at(x, y).ground_type;
-            let tile_entity = commands
-                .spawn(TileBundle {
-                    position: tile_pos,
-                    tilemap_id: TilemapId(tilemap_entity),
-                    texture_index: ground_type.texture_index(),
-                    ..Default::default()
-                })
-                .id();
-            commands.entity(tilemap_entity).add_child(tile_entity);
-            tile_storage.set(&tile_pos, tile_entity);
-        }
-    }
-
-    commands.entity(tilemap_entity).insert(TilemapBundle {
-        grid_size: TILEMAP_TILE_SIZE.into(),
-        size: TILEMAP_SIZE,
-        storage: tile_storage,
-        texture: TilemapTexture::Single(assets.simple_tiles.clone()),
-        tile_size: TILEMAP_TILE_SIZE,
-        transform: get_tilemap_transform(chunk_pos, TilemapLayer::Ground),
-        ..Default::default()
-    });
-
-    tilemap_entity
-}
-
-fn get_tilemap_transform(chunk_pos: ChunkPos, layer: TilemapLayer) -> Transform {
-    Transform::from_translation(Vec3::new(
-        chunk_pos.x as f32 * CHUNK_SIZE as f32 * TILEMAP_TILE_SIZE.x,
-        chunk_pos.y as f32 * CHUNK_SIZE as f32 * TILEMAP_TILE_SIZE.y,
-        layer.into(),
-    ))
 }
 
 fn get_chunk_transform(chunk_pos: &ChunkPos) -> Transform {
