@@ -30,7 +30,7 @@ impl Plugin for PlayerPlugin {
 #[derive(Component)]
 pub struct ControlledByPlayer {}
 
-const PLAYER_SPEED: f32 = 10.0;
+const PLAYER_SPEED: f32 = 1.0;
 
 fn initialize_player(
     mut commands: Commands,

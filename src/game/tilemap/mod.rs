@@ -49,7 +49,6 @@ impl Plugin for GameMapPlugin {
             ..Default::default()
         })
         .add_plugins(DeferredRaycastingPlugin::<TileRaycastSet>::default())
-        .insert_resource(RaycastPluginState::<TileRaycastSet>::default().with_debug_cursor())
         .add_plugins(TilemapPlugin)
         .add_plugins(TileCursorPlugin)
         .add_plugins(UpdateTileEventPlugin)

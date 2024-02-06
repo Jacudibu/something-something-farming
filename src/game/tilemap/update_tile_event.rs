@@ -1,17 +1,13 @@
 use crate::game::tilemap::helpers::{below_of, left_of, right_of, top_of};
 use crate::load::DebugMaterials;
-use crate::prelude::chunk_identifier::ChunkIdentifier;
-use crate::prelude::helpers::determine_texture_index;
 use crate::prelude::loaded_chunks::LoadedChunks;
-use crate::prelude::tilemap_layer::GroundLayer;
-use crate::prelude::GameState;
 use crate::prelude::{ChunkPos, WorldData};
+use crate::prelude::{GameState, TilePos3D};
 use bevy::app::{App, Plugin, Update};
 use bevy::prelude::{
-    in_state, Event, EventReader, Handle, IntoSystemConfigs, Mesh, Query, Res, StandardMaterial,
-    With, Without,
+    in_state, Event, EventReader, Handle, IntoSystemConfigs, Query, Res, StandardMaterial, With,
 };
-use bevy_ecs_tilemap::prelude::{TilePos, TileStorage, TileTextureIndex};
+use bevy_ecs_tilemap::prelude::TilePos;
 
 pub struct UpdateTileEventPlugin;
 impl Plugin for UpdateTileEventPlugin {
@@ -52,7 +48,7 @@ fn update_tiles(
     mut events: EventReader<UpdateTileEvent>,
     world_data: Res<WorldData>,
     loaded_chunks: Res<LoadedChunks>,
-    mut tiles: Query<&mut Handle<StandardMaterial>, With<Handle<Mesh>>>,
+    mut tiles: Query<&mut Handle<StandardMaterial>, With<TilePos3D>>,
     debug_materials: Res<DebugMaterials>,
 ) {
     for event in events.read() {
