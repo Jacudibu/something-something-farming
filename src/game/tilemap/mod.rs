@@ -14,6 +14,8 @@ use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 use bevy::utils::hashbrown::HashMap;
 use bevy_ecs_tilemap::prelude::*;
+use bevy_mod_raycast::deferred::DeferredRaycastingPlugin;
+use bevy_mod_raycast::prelude::{RaycastMesh, RaycastPluginState};
 
 pub(crate) mod chunk_identifier;
 pub(crate) mod helpers;
@@ -36,6 +38,9 @@ const RENDER_CHUNK_SIZE: UVec2 = UVec2 {
     y: CHUNK_SIZE as u32 * 2,
 };
 
+#[derive(Reflect)]
+pub struct TileRaycastSet;
+
 pub struct GameMapPlugin;
 impl Plugin for GameMapPlugin {
     fn build(&self, app: &mut App) {
@@ -43,6 +48,8 @@ impl Plugin for GameMapPlugin {
             render_chunk_size: RENDER_CHUNK_SIZE,
             ..Default::default()
         })
+        .add_plugins(DeferredRaycastingPlugin::<TileRaycastSet>::default())
+        .insert_resource(RaycastPluginState::<TileRaycastSet>::default().with_debug_cursor())
         .add_plugins(TilemapPlugin)
         .add_plugins(TileCursorPlugin)
         .add_plugins(UpdateTileEventPlugin)
@@ -100,6 +107,12 @@ fn despawn_chunk(mut commands: Commands, loaded_chunks: &mut LoadedChunks, chunk
     }
 }
 
+#[derive(Component, Debug)]
+pub struct TilePos3D {
+    x: u32,
+    y: u32,
+}
+
 fn spawn_chunk(
     commands: &mut Commands,
     assets: &SpriteAssets,
@@ -133,7 +146,12 @@ fn spawn_chunk(
                         transform: get_tile_transform(&chunk_pos, x as f32, z as f32),
                         ..default()
                     },
+                    TilePos3D {
+                        x: x as u32,
+                        y: z as u32,
+                    },
                     NotShadowCaster,
+                    RaycastMesh::<TileRaycastSet>::default(),
                 ))
                 .set_parent(chunk_parent)
                 .id();

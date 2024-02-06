@@ -47,6 +47,7 @@ bevy-inspector-egui = "0.22.1"
 bevy_kira_audio = "0.18.0"
 bevy_screen_diagnostics = "0.4.0"
 bevy_sprite3d = "2.7.0"
+bevy_mod_raycast = "0.16.0"
 leafwing-input-manager = "0.11.2"
 rand = "0.8.5"
 

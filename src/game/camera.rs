@@ -1,9 +1,10 @@
 use crate::game::CursorPos;
-use crate::prelude::{GameState, MouseCursorOverUiState};
+use crate::prelude::{GameState, MouseCursorOverUiState, TileRaycastSet};
 use bevy::ecs::query::QuerySingleError;
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 use bevy_basic_camera::{CameraController, CameraControllerPlugin};
+use bevy_mod_raycast::prelude::RaycastSource;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
 use leafwing_input_manager::buttonlike::MouseWheelDirection;
@@ -76,6 +77,7 @@ fn init(mut commands: Commands) {
             orbit_mode: true,
             ..default()
         },
+        RaycastSource::<TileRaycastSet>::new_cursor(),
         InputManagerBundle::<CameraAction> {
             input_map: default_input_map_camera(),
             ..default()

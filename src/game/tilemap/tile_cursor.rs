@@ -1,18 +1,16 @@
-use crate::game::tilemap::tile_pos_to_world_pos;
-use crate::prelude::chunk_identifier::ChunkIdentifier;
-use crate::prelude::tilemap_layer::GroundLayer;
-use crate::prelude::SpriteAssets;
-use crate::prelude::{ChunkPos, CursorPos, MapPos, CHUNK_SIZE};
+use crate::prelude::{ChunkPos, MapPos, TilePos3D, CHUNK_SIZE};
+use crate::prelude::{SpriteAssets, TileRaycastSet};
 use crate::GameState;
 use bevy::app::{App, First, Plugin};
 use bevy::core::Name;
-use bevy::math::{IVec2, Vec2, Vec4};
+use bevy::math::IVec2;
 use bevy::prelude::{
-    default, in_state, Color, Commands, Component, IntoSystemConfigs, OnEnter, Query, Res, Sprite,
-    SpriteBundle, Transform, Vec4Swizzles, Visibility, With, Without,
+    default, error, in_state, info, Color, Commands, Component, IntoSystemConfigs, OnEnter, Query,
+    Res, Sprite, SpriteBundle, Transform, Visibility, With, Without,
 };
-use bevy_ecs_tilemap::map::{TilemapGridSize, TilemapSize, TilemapType};
-use bevy_ecs_tilemap::prelude::{TilePos, TileStorage};
+use bevy_ecs_tilemap::map::TilemapSize;
+use bevy_ecs_tilemap::prelude::TilePos;
+use bevy_mod_raycast::prelude::{RaycastMesh, RaycastSource};
 
 pub struct TileCursorPlugin;
 impl Plugin for TileCursorPlugin {
@@ -61,18 +59,8 @@ fn initialize_cursor(mut commands: Commands, assets: Res<SpriteAssets>) {
 }
 
 fn update_tile_cursor(
-    cursor_pos: Res<CursorPos>,
-    tilemap_q: Query<
-        (
-            &TilemapSize,
-            &TilemapGridSize,
-            &TilemapType,
-            &TileStorage,
-            &Transform,
-            &ChunkIdentifier,
-        ),
-        With<GroundLayer>,
-    >,
+    tile_ray: Query<&RaycastSource<TileRaycastSet>>,
+    ray_targets: Query<&TilePos3D, With<RaycastMesh<TileRaycastSet>>>,
     mut tile_cursor_q: Query<
         (&mut Transform, &mut Visibility, &mut TileCursor),
         Without<TilemapSize>,
@@ -84,31 +72,26 @@ fn update_tile_cursor(
         *visibility = Visibility::Hidden;
     }
 
-    let cursor_pos: Vec4 = Vec4::from((cursor_pos.world, 0.0, 1.0));
-    for (map_size, grid_size, map_type, tile_storage, map_transform, chunk_identifier) in
-        tilemap_q.iter()
-    {
-        // We need to make sure that the cursor's world position is correct relative to the map
-        // due to any map transformation.
-        let cursor_pos_relative_to_tilemap: Vec2 = {
-            let cursor_in_map_pos = map_transform.compute_matrix().inverse() * cursor_pos;
-            cursor_in_map_pos.xy()
-        };
-        // Once we have a world position we can transform it into a possible tile position.
-        if let Some(tile_pos) = TilePos::from_world_pos(
-            &cursor_pos_relative_to_tilemap,
-            map_size,
-            grid_size,
-            map_type,
-        ) {
-            if tile_storage.get(&tile_pos).is_some() {
-                for (mut transform, mut visibility, mut cursor) in tile_cursor_q.iter_mut() {
-                    transform.translation =
-                        tile_pos_to_world_pos(&tile_pos, &chunk_identifier.position, 100.0);
-                    *visibility = Visibility::Visible;
-                    cursor.pos.tile = tile_pos.clone();
-                    cursor.pos.chunk = chunk_identifier.position.clone();
+    for source in tile_ray.iter() {
+        if let Some(intersections) = source.get_intersections() {
+            for (entity, data) in intersections {
+                match ray_targets.get(entity.clone()) {
+                    Ok(tile_pos) => {
+                        info!("Hit! {:?}", tile_pos);
+                        // FIXME: Actually visualize cursor in 3D
+                        for (_transform, mut visibility, mut cursor) in tile_cursor_q.iter_mut() {
+                            *visibility = Visibility::Visible;
+                            cursor.pos.tile = TilePos::new(tile_pos.x, tile_pos.y);
+
+                            // FIXME: Figure out chunk position. Maybe our TilePos3D is just a MapPos after all? Could also grab as a component from parent entity to avoid duplicate data.
+                            cursor.pos.chunk = ChunkPos::new(0, 0);
+                        }
+                    }
+                    Err(e) => {
+                        error!("Unexpected error when raycasting for tile cursor: {}", e)
+                    }
                 }
+                info!("Hit!");
             }
         }
     }
