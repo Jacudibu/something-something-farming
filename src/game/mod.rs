@@ -5,13 +5,13 @@ use crate::game::tile_updater::TileUpdaterPlugin;
 use crate::game::tilemap::GameMapPlugin;
 use crate::game::ui::UiPlugin;
 use crate::game::world_data::WorldDataPlugin;
+use crate::prelude::simulation_time::SimulationTimePlugin;
 use crate::prelude::PlayerPlugin;
 use bevy::app::{App, First, Plugin};
 use bevy::math::Vec2;
 use bevy::prelude::{Camera, CursorMoved, EventReader, GlobalTransform, Query, ResMut, Resource};
 use leafwing_input_manager::plugin::InputManagerPlugin;
 use player::PlayerAction;
-use crate::prelude::simulation_time::SimulationTimePlugin;
 
 pub mod active_tool;
 pub mod camera;
@@ -34,6 +34,9 @@ pub const CHUNK_SIZE: usize = 32;
 pub const LAYER_PLAYER: f32 = 100.0;
 pub const LAYER_CROPS: f32 = 50.0;
 pub const LAYER_ITEM_DROPS: f32 = 150.0;
+
+pub const SPRITE_PIXELS_PER_METER: f32 = 32.0;
+pub const SPRITE_DEFAULT_PIVOT: Option<Vec2> = Some(Vec2::new(0.5, 0.0));
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {

@@ -5,7 +5,7 @@ use crate::prelude::{ActiveTool, GameState, Inventory, MapPos, SimulationTime, W
 use bevy::app::{App, First, Plugin, Update};
 use bevy::log::error;
 use bevy::prelude::{
-    in_state, IntoSystemConfigs, Name, NextState, Query, Res, ResMut, State, States, Time,
+    in_state, IntoSystemConfigs, Name, NextState, Query, Res, ResMut, State, States,
 };
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};

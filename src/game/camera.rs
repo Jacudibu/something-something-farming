@@ -46,12 +46,18 @@ pub enum CameraAction {
 }
 
 fn init(mut commands: Commands) {
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scaling_mode = ScalingMode::WindowSize(2.0);
+    // FIXME: Once we figure things out, Global Lights should be spawned in their own plugin
+    commands.spawn((
+        Name::new("Directional Light"),
+        DirectionalLightBundle { ..default() },
+    ));
 
     commands.spawn((
         Name::new("Camera"),
-        camera,
+        Camera3dBundle {
+            transform: Transform::from_xyz(0.0, 0.0, 5.0),
+            ..default()
+        },
         InputManagerBundle::<CameraAction> {
             input_map: default_input_map_camera(),
             ..default()
@@ -61,10 +67,12 @@ fn init(mut commands: Commands) {
 
 fn move_camera(
     time: Res<Time>,
-    camera_focus: Query<&Transform, (With<CameraFocus>, Without<Camera2d>)>,
-    mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera2d>>,
+    camera_focus: Query<&Transform, (With<CameraFocus>, Without<Camera>)>,
+    mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera>>,
     mut cursor_pos: ResMut<CursorPos>,
 ) {
+    // FIXME: Adjust for 3d
+    return;
     let (mut camera_transform, action_state) = camera.single_mut();
     let delta = match camera_focus.get_single() {
         Ok(camera_focus) => camera_focus.translation - camera_transform.translation,
@@ -131,10 +139,13 @@ fn zoom_camera(
             &ActionState<CameraAction>,
             &GlobalTransform,
         ),
-        With<Camera2d>,
+        With<Camera>,
     >,
     mut cursor_pos: ResMut<CursorPos>,
 ) {
+    // FIXME: Change the camera's transform instead
+    return;
+
     let (mut projection, camera, action_state, transform) = query.single_mut();
 
     let current_scaling = match projection.scaling_mode {

@@ -11,6 +11,7 @@ use bevy_kira_audio::AudioPlugin;
 use bevy_screen_diagnostics::{
     ScreenDiagnosticsPlugin, ScreenEntityDiagnosticsPlugin, ScreenFrameDiagnosticsPlugin,
 };
+use bevy_sprite3d::Sprite3dPlugin;
 
 fn main() {
     App::new()
@@ -29,6 +30,7 @@ fn main() {
         ))
         .add_state::<GameState>()
         .add_state::<SoundEffectsSetting>()
+        .add_plugins(Sprite3dPlugin)
         .add_plugins(LoadingPlugin)
         .add_plugins(GamePlugin)
         .add_plugins(ScreenDiagnosticsPlugin::default())
