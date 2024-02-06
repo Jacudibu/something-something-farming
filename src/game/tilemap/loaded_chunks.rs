@@ -21,6 +21,19 @@ pub struct LoadedChunks {
 pub struct LoadedChunkData {
     pub ground_tilemap: Entity,
     pub floor_tilemap: Entity,
-    pub crops: HashMap<TilePos, Entity>,
+    pub chunk_parent: Entity,
     pub tiles: [Option<Entity>; CHUNK_SIZE * CHUNK_SIZE],
+    pub crops: HashMap<TilePos, Entity>,
+}
+
+impl LoadedChunkData {
+    pub fn get_tile(&self, x: u32, y: u32) -> Option<Entity> {
+        debug_assert!(
+            (x as usize) < CHUNK_SIZE && (y as usize) < CHUNK_SIZE,
+            "Invalid pos: {}, {}",
+            x,
+            y
+        );
+        self.tiles[x as usize + y as usize * CHUNK_SIZE]
+    }
 }

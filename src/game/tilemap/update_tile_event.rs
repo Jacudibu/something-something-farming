@@ -1,11 +1,16 @@
 use crate::game::tilemap::helpers::{below_of, left_of, right_of, top_of};
+use crate::load::DebugMaterials;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::helpers::determine_texture_index;
+use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::GameState;
 use crate::prelude::{ChunkPos, WorldData};
 use bevy::app::{App, Plugin, Update};
-use bevy::prelude::{in_state, Event, EventReader, IntoSystemConfigs, Query, Res, Without};
+use bevy::prelude::{
+    in_state, Event, EventReader, Handle, IntoSystemConfigs, Mesh, Query, Res, StandardMaterial,
+    With, Without,
+};
 use bevy_ecs_tilemap::prelude::{TilePos, TileStorage, TileTextureIndex};
 
 pub struct UpdateTileEventPlugin;
@@ -46,22 +51,26 @@ impl UpdateTileEvent {
 fn update_tiles(
     mut events: EventReader<UpdateTileEvent>,
     world_data: Res<WorldData>,
-    loaded_chunks: Query<(&TileStorage, &ChunkIdentifier), Without<GroundLayer>>,
-    mut tiles: Query<&mut TileTextureIndex>,
+    loaded_chunks: Res<LoadedChunks>,
+    mut tiles: Query<&mut Handle<StandardMaterial>, With<Handle<Mesh>>>,
+    debug_materials: Res<DebugMaterials>,
 ) {
     for event in events.read() {
         if let Some(chunk) = world_data.chunks.get(&event.chunk_pos) {
             let tile = chunk.at_pos(&event.tile_pos);
 
-            if tile.is_tilled {
-                if let Some((tile_storage, _)) = loaded_chunks
-                    .iter()
-                    .find(|(_, identifier)| identifier.position == event.chunk_pos)
-                {
-                    let tile_entity = tile_storage.get(&event.tile_pos).unwrap();
-                    let mut index = tiles.get_mut(tile_entity).unwrap();
-                    *index =
-                        determine_texture_index(&event.tile_pos, &event.chunk_pos, &world_data);
+            if let Some(loaded_chunk_data) = loaded_chunks.chunks.get(&event.chunk_pos) {
+                let tile_entity = loaded_chunk_data
+                    .get_tile(event.tile_pos.x, event.tile_pos.y)
+                    .unwrap();
+                let mut material = tiles.get_mut(tile_entity).unwrap();
+
+                if tile.is_tilled {
+                    // FIXME: determine which texture we wanna use, maybe use a TextureAtlas while we are at it
+                    // determine_texture_index(&event.tile_pos, &event.chunk_pos, &world_data);
+                    *material = debug_materials.single_tile_tilled.clone();
+                } else {
+                    *material = debug_materials.single_tile.clone();
                 }
             }
         }

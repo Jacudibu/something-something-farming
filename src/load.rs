@@ -37,6 +37,9 @@ pub struct DebugMaterials {
     #[asset(standard_material)]
     #[asset(path = "sprites/single_tile.png")]
     pub single_tile: Handle<StandardMaterial>,
+    #[asset(standard_material)]
+    #[asset(path = "sprites/single_tile_tilled.png")]
+    pub single_tile_tilled: Handle<StandardMaterial>,
 }
 
 #[derive(Resource, AssetCollection)]

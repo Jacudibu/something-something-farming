@@ -1,3 +1,4 @@
+use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::{ChunkPos, MapPos, TilePos3D, CHUNK_SIZE};
 use crate::prelude::{SpriteAssets, TileRaycastSet};
 use crate::GameState;
@@ -5,11 +6,12 @@ use bevy::app::{App, First, Plugin};
 use bevy::core::Name;
 use bevy::math::IVec2;
 use bevy::prelude::{
-    default, error, in_state, info, Color, Commands, Component, IntoSystemConfigs, OnEnter, Query,
-    Res, Sprite, SpriteBundle, Transform, Visibility, With, Without,
+    default, error, in_state, info, Color, Commands, Component, IntoSystemConfigs, OnEnter, Parent,
+    Query, Res, Sprite, SpriteBundle, Transform, Visibility, With, Without,
 };
 use bevy_ecs_tilemap::map::TilemapSize;
 use bevy_ecs_tilemap::prelude::TilePos;
+use bevy_ecs_tilemap::tiles::TileStorage;
 use bevy_mod_raycast::prelude::{RaycastMesh, RaycastSource};
 
 pub struct TileCursorPlugin;
@@ -60,7 +62,8 @@ fn initialize_cursor(mut commands: Commands, assets: Res<SpriteAssets>) {
 
 fn update_tile_cursor(
     tile_ray: Query<&RaycastSource<TileRaycastSet>>,
-    ray_targets: Query<&TilePos3D, With<RaycastMesh<TileRaycastSet>>>,
+    ray_targets: Query<(&TilePos3D, &Parent), With<RaycastMesh<TileRaycastSet>>>,
+    chunk_parents: Query<&ChunkIdentifier, Without<TileStorage>>,
     mut tile_cursor_q: Query<
         (&mut Transform, &mut Visibility, &mut TileCursor),
         Without<TilemapSize>,
@@ -74,24 +77,21 @@ fn update_tile_cursor(
 
     for source in tile_ray.iter() {
         if let Some(intersections) = source.get_intersections() {
-            for (entity, data) in intersections {
+            for (entity, _) in intersections {
                 match ray_targets.get(entity.clone()) {
-                    Ok(tile_pos) => {
-                        info!("Hit! {:?}", tile_pos);
+                    Ok((tile_pos, parent)) => {
                         // FIXME: Actually visualize cursor in 3D
                         for (_transform, mut visibility, mut cursor) in tile_cursor_q.iter_mut() {
                             *visibility = Visibility::Visible;
+                            let chunk_identifier = chunk_parents.get(parent.get()).unwrap();
                             cursor.pos.tile = TilePos::new(tile_pos.x, tile_pos.y);
-
-                            // FIXME: Figure out chunk position. Maybe our TilePos3D is just a MapPos after all? Could also grab as a component from parent entity to avoid duplicate data.
-                            cursor.pos.chunk = ChunkPos::new(0, 0);
+                            cursor.pos.chunk = chunk_identifier.position.clone();
                         }
                     }
                     Err(e) => {
                         error!("Unexpected error when raycasting for tile cursor: {}", e)
                     }
                 }
-                info!("Hit!");
             }
         }
     }

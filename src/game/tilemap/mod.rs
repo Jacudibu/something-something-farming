@@ -96,8 +96,12 @@ fn spawn_testing_chunks(
     }
 }
 
-fn get_chunk_name(chunk_pos: ChunkPos, layer: TilemapLayer) -> Name {
+fn old_get_chunk_name(chunk_pos: ChunkPos, layer: TilemapLayer) -> Name {
     Name::new(format!("{} | {}", chunk_pos, layer))
+}
+
+fn get_chunk_name(chunk_pos: ChunkPos) -> Name {
+    Name::new(format!("Chunk {}", chunk_pos))
 }
 
 fn despawn_chunk(mut commands: Commands, loaded_chunks: &mut LoadedChunks, chunk_pos: ChunkPos) {
@@ -131,8 +135,14 @@ fn spawn_chunk(
 
     let chunk_parent = commands
         .spawn((
-            get_chunk_name(chunk_pos, TilemapLayer::Floor),
-            SpatialBundle::default(),
+            get_chunk_name(chunk_pos),
+            ChunkIdentifier {
+                position: chunk_pos,
+            },
+            SpatialBundle {
+                transform: get_chunk_transform(&chunk_pos),
+                ..default()
+            },
         ))
         .id();
 
@@ -143,7 +153,7 @@ fn spawn_chunk(
                     PbrBundle {
                         mesh: tile_mesh.clone(),
                         material: tile_material.clone(),
-                        transform: get_tile_transform(&chunk_pos, x as f32, z as f32),
+                        transform: get_tile_transform(x as f32, z as f32),
                         ..default()
                     },
                     TilePos3D {
@@ -165,7 +175,7 @@ fn spawn_chunk(
 
     let floor_tilemap = commands
         .spawn((
-            get_chunk_name(chunk_pos, TilemapLayer::Floor),
+            old_get_chunk_name(chunk_pos, TilemapLayer::Floor),
             TilemapLayer::Floor,
             ChunkIdentifier {
                 position: chunk_pos,
@@ -185,6 +195,7 @@ fn spawn_chunk(
     let loaded_chunk_data = LoadedChunkData {
         ground_tilemap,
         floor_tilemap,
+        chunk_parent,
         tiles,
         crops: HashMap::new(),
     };
@@ -200,7 +211,7 @@ fn spawn_ground_layer(
 ) -> Entity {
     let tilemap_entity = commands
         .spawn((
-            get_chunk_name(chunk_pos, TilemapLayer::Ground),
+            old_get_chunk_name(chunk_pos, TilemapLayer::Ground),
             TilemapLayer::Ground,
             ChunkIdentifier {
                 position: chunk_pos,
@@ -248,10 +259,14 @@ fn get_tilemap_transform(chunk_pos: ChunkPos, layer: TilemapLayer) -> Transform 
     ))
 }
 
-fn get_tile_transform(chunk_pos: &ChunkPos, x: f32, z: f32) -> Transform {
+fn get_chunk_transform(chunk_pos: &ChunkPos) -> Transform {
     Transform::from_xyz(
-        x + chunk_pos.x as f32 * CHUNK_SIZE as f32,
+        chunk_pos.x as f32 * CHUNK_SIZE as f32,
         0.0,
-        z + chunk_pos.y as f32 * CHUNK_SIZE as f32,
+        chunk_pos.y as f32 * CHUNK_SIZE as f32,
     )
+}
+
+fn get_tile_transform(x: f32, z: f32) -> Transform {
+    Transform::from_xyz(x, 0.0, z)
 }
