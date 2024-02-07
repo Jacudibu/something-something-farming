@@ -1,37 +1,25 @@
-use crate::game::tilemap::loaded_chunks::{LoadedChunkPlugin, LoadedChunks};
-use crate::game::tilemap::update_tile_event::UpdateTileEventPlugin;
-use crate::prelude::chunk_data::ChunkData;
-use crate::prelude::chunk_identifier::ChunkIdentifier;
-use crate::prelude::loaded_chunks::LoadedChunkData;
-use crate::prelude::tile_cursor::TileCursorPlugin;
-use crate::prelude::tilemap_layer::{GroundLayer, TilemapLayer};
-use crate::prelude::{
-    ChunkPos, DebugMaterials, SpriteAssets, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX,
-    TILE_SIZE,
-};
-use crate::GameState;
 use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 use bevy::utils::hashbrown::HashMap;
 use bevy_ecs_tilemap::prelude::*;
 use bevy_mod_raycast::deferred::DeferredRaycastingPlugin;
-use bevy_mod_raycast::prelude::{RaycastMesh, RaycastPluginState};
+use bevy_mod_raycast::prelude::RaycastMesh;
+
+use crate::game::tilemap::loaded_chunks::{LoadedChunkPlugin, LoadedChunks};
+use crate::game::tilemap::update_tile_event::UpdateTileEventPlugin;
+use crate::prelude::chunk_identifier::ChunkIdentifier;
+use crate::prelude::loaded_chunks::LoadedChunkData;
+use crate::prelude::tile_cursor::TileCursorPlugin;
+use crate::prelude::{
+    ChunkPos, DebugMaterials, SpriteAssets, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX,
+};
+use crate::GameState;
 
 pub(crate) mod chunk_identifier;
 pub(crate) mod helpers;
 pub(crate) mod loaded_chunks;
 pub(crate) mod tile_cursor;
-pub(crate) mod tilemap_layer;
 pub(crate) mod update_tile_event;
-
-const TILEMAP_TILE_SIZE: TilemapTileSize = TilemapTileSize {
-    x: TILE_SIZE,
-    y: TILE_SIZE,
-};
-const TILEMAP_SIZE: TilemapSize = TilemapSize {
-    x: CHUNK_SIZE as u32,
-    y: CHUNK_SIZE as u32,
-};
 
 const RENDER_CHUNK_SIZE: UVec2 = UVec2 {
     x: CHUNK_SIZE as u32 * 2,
@@ -44,32 +32,17 @@ pub struct TileRaycastSet;
 pub struct GameMapPlugin;
 impl Plugin for GameMapPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(TilemapRenderSettings {
-            render_chunk_size: RENDER_CHUNK_SIZE,
-            ..Default::default()
-        })
-        .add_plugins(DeferredRaycastingPlugin::<TileRaycastSet>::default())
-        .add_plugins(TilemapPlugin)
-        .add_plugins(TileCursorPlugin)
-        .add_plugins(UpdateTileEventPlugin)
-        .add_plugins(LoadedChunkPlugin)
-        .add_systems(OnEnter(GameState::Playing), spawn_testing_chunks);
+        app.add_plugins(DeferredRaycastingPlugin::<TileRaycastSet>::default())
+            .add_plugins(TilemapPlugin)
+            .add_plugins(TileCursorPlugin)
+            .add_plugins(UpdateTileEventPlugin)
+            .add_plugins(LoadedChunkPlugin)
+            .add_systems(OnEnter(GameState::Playing), spawn_testing_chunks);
     }
-}
-
-fn tile_pos_to_world_pos(tile_pos: &TilePos, chunk_position: &ChunkPos, z: f32) -> Vec3 {
-    Vec3::new(
-        tile_pos.x as f32 * TILEMAP_TILE_SIZE.x
-            + chunk_position.x as f32 * CHUNK_SIZE as f32 * TILEMAP_TILE_SIZE.x,
-        tile_pos.y as f32 * TILEMAP_TILE_SIZE.y
-            + chunk_position.y as f32 * CHUNK_SIZE as f32 * TILEMAP_TILE_SIZE.y,
-        z,
-    )
 }
 
 fn spawn_testing_chunks(
     mut commands: Commands,
-    assets: Res<SpriteAssets>,
     world_data: Res<WorldData>,
     mut loaded_chunks: ResMut<LoadedChunks>,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -92,10 +65,6 @@ fn spawn_testing_chunks(
             );
         }
     }
-}
-
-fn old_get_chunk_name(chunk_pos: ChunkPos, layer: TilemapLayer) -> Name {
-    Name::new(format!("{} | {}", chunk_pos, layer))
 }
 
 fn get_chunk_name(chunk_pos: ChunkPos) -> Name {

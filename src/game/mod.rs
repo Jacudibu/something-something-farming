@@ -30,7 +30,6 @@ pub mod tilemap;
 pub mod ui;
 pub mod world_data;
 
-pub const TILE_SIZE: f32 = 16.0;
 pub const CHUNK_SIZE: usize = 32;
 
 pub const SPRITE_PIXELS_PER_METER: f32 = 16.0;
