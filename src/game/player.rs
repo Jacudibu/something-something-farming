@@ -1,8 +1,3 @@
-use crate::game::drops::ItemMagnet;
-use crate::load::SpriteAssets;
-use crate::prelude::camera::CameraFocus;
-use crate::prelude::{Inventory, SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER};
-use crate::GameState;
 use bevy::app::{App, Plugin, Update};
 use bevy::core::Name;
 use bevy::math::Vec3;
@@ -19,6 +14,12 @@ use leafwing_input_manager::prelude::UserInput;
 use leafwing_input_manager::user_input::InputKind;
 use leafwing_input_manager::{Actionlike, InputManagerBundle};
 
+use crate::game::drops::ItemMagnet;
+use crate::load::SpriteAssets;
+use crate::prelude::camera::CameraFocus;
+use crate::prelude::{Inventory, SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER};
+use crate::GameState;
+
 pub struct PlayerPlugin;
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
@@ -30,7 +31,7 @@ impl Plugin for PlayerPlugin {
 #[derive(Component)]
 pub struct ControlledByPlayer {}
 
-const PLAYER_SPEED: f32 = 1.0;
+const PLAYER_SPEED: f32 = 3.0;
 
 fn initialize_player(
     mut commands: Commands,

@@ -97,18 +97,13 @@ fn item_magnet_and_pickups(
     for (entity, drop, mut drop_transform) in drops.iter_mut() {
         let target = targets.iter().min_by(|a, b| {
             a.1.translation
-                .truncate()
-                .distance(drop_transform.translation.truncate())
-                .total_cmp(
-                    &b.1.translation
-                        .truncate()
-                        .distance(drop_transform.translation.truncate()),
-                )
+                .distance(drop_transform.translation)
+                .total_cmp(&b.1.translation.distance(drop_transform.translation))
         });
 
         if let Some((target_entity, target_transform, magnet)) = target {
             let delta = target_transform.translation - drop_transform.translation;
-            let distance = delta.truncate().length();
+            let distance = delta.length();
             if distance < PICKUP_DISTANCE {
                 pickup_events.send(PickupItemDropEvent {
                     drop: drop.clone(),
@@ -116,7 +111,7 @@ fn item_magnet_and_pickups(
                 });
                 commands.entity(entity).despawn();
             } else if distance < magnet.distance {
-                let dir = delta.truncate().normalize();
+                let dir = delta.normalize();
                 let speed = {
                     let percentage = (magnet.distance - distance) / magnet.distance;
                     let speed = magnet.speed * percentage.powf(1.5);
@@ -126,10 +121,7 @@ fn item_magnet_and_pickups(
                         speed
                     }
                 };
-                let movement = time.delta_seconds() * speed * dir;
-
-                drop_transform.translation.x += movement.x;
-                drop_transform.translation.y += movement.y;
+                drop_transform.translation += time.delta_seconds() * speed * dir;
             }
         }
     }

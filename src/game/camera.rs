@@ -54,6 +54,12 @@ const CAMERA_OFFSET_TO_PLAYER: Vec3 = Vec3::new(0.0, 16.0, 20.0);
 
 fn init(mut commands: Commands) {
     // FIXME: Once we figure things out, Global Lights should be spawned in their own plugin
+
+    // Simple minded ez light rotations
+    //  X    Y
+    // -1.0  1 Morning
+    // -1.2  0 Noon
+    // -1.0 -1 Evening
     commands.spawn((
         Name::new("Directional Light"),
         DirectionalLightBundle {
@@ -100,7 +106,6 @@ fn move_camera(
     time: Res<Time>,
     camera_focus: Query<&Transform, (With<CameraFocus>, Without<Camera>)>,
     mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera>>,
-    mut cursor_pos: ResMut<CursorPos>,
 ) {
     let (mut camera_transform, action_state) = camera.single_mut();
     let delta = match camera_focus.get_single() {
@@ -156,7 +161,6 @@ fn move_camera(
     };
 
     camera_transform.translation += delta;
-    cursor_pos.world += delta.truncate();
 }
 
 const MAX_ZOOM: f32 = 4.0;
