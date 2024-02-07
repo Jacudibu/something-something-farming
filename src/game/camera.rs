@@ -160,47 +160,25 @@ fn move_camera(
 }
 
 const MAX_ZOOM: f32 = 4.0;
-const MIN_ZOOM: f32 = 1.0;
+const MIN_ZOOM: f32 = 0.5;
 
-fn zoom_camera(
-    mut query: Query<
-        (
-            &mut OrthographicProjection,
-            &Camera,
-            &ActionState<CameraAction>,
-            &GlobalTransform,
-        ),
-        With<Camera>,
-    >,
-    mut cursor_pos: ResMut<CursorPos>,
-) {
-    // FIXME: Change the camera's transform instead
-    return;
+fn zoom_camera(mut query: Query<(&mut Projection, &ActionState<CameraAction>), With<Camera>>) {
+    let (projection, action_state) = query.single_mut();
 
-    let (mut projection, camera, action_state, transform) = query.single_mut();
-
-    let current_scaling = match projection.scaling_mode {
-        ScalingMode::Fixed { .. } => 1.0,
-        ScalingMode::WindowSize(x) => x,
-        ScalingMode::AutoMin { .. } => 1.0,
-        ScalingMode::AutoMax { .. } => 1.0,
-        ScalingMode::FixedVertical(_) => 1.0,
-        ScalingMode::FixedHorizontal(_) => 1.0,
+    let Projection::Orthographic(projection) = projection.into_inner() else {
+        error!("Zooming isn't yet supported for perspective cameras.");
+        return;
     };
 
-    if let Some(direction) = zoom_direction(action_state, current_scaling) {
-        projection.scaling_mode = ScalingMode::WindowSize(current_scaling + 0.25 * direction);
-
-        if let Some(pos) = camera.viewport_to_world_2d(transform, cursor_pos.screen) {
-            cursor_pos.world = pos;
-        }
+    if let Some(direction) = zoom_direction(action_state, projection.scale) {
+        projection.scale += 0.20 * direction;
     }
 }
 
 fn zoom_direction(action_state: &ActionState<CameraAction>, current_scaling: f32) -> Option<f32> {
-    if action_state.pressed(CameraAction::ZoomIn) && current_scaling < MAX_ZOOM {
+    if action_state.pressed(CameraAction::ZoomOut) && current_scaling < MAX_ZOOM {
         Some(1.0)
-    } else if action_state.pressed(CameraAction::ZoomOut) && current_scaling > MIN_ZOOM {
+    } else if action_state.pressed(CameraAction::ZoomIn) && current_scaling > MIN_ZOOM {
         Some(-1.0)
     } else {
         None
