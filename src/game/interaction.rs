@@ -1,24 +1,21 @@
+use bevy::prelude::*;
+use bevy_ecs_tilemap::tiles::TilePos;
+use bevy_sprite3d::{AtlasSprite3d, Sprite3d, Sprite3dParams};
+use leafwing_input_manager::action_state::ActionState;
+
 use crate::game::drops::ItemDrop;
 use crate::game::map_pos::MapPos;
 use crate::game::player::PlayerAction;
 use crate::prelude::chunk_data::CropData;
-use crate::prelude::helpers::determine_texture_index;
 use crate::prelude::item_id::{CropId, ItemId};
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
-use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::{
-    ActiveTool, MouseCursorOverUiState, SimulationTime, ToolId, WorldData, LAYER_CROPS,
-    LAYER_ITEM_DROPS, SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER,
+    ActiveTool, MouseCursorOverUiState, SimulationTime, ToolId, WorldData, SPRITE_DEFAULT_PIVOT,
+    SPRITE_PIXELS_PER_METER,
 };
 use crate::prelude::{AllCrops, GameState};
-use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapId;
-use bevy_ecs_tilemap::prelude::TileBundle;
-use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
-use bevy_sprite3d::{AtlasSprite3d, Sprite3dParams};
-use leafwing_input_manager::action_state::ActionState;
 
 pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
@@ -177,6 +174,7 @@ fn process_delete_crops(
 fn process_harvested_crops(
     mut commands: Commands,
     mut harvested_crop_events: EventReader<CropHarvestedEvent>,
+    mut sprite_params: Sprite3dParams,
     all_crops: Res<AllCrops>,
 ) {
     for event in harvested_crop_events.read() {
@@ -188,11 +186,14 @@ fn process_harvested_crops(
         if let Some(crop) = all_crops.definitions.get(&event.crop_id) {
             commands.spawn((
                 Name::new("Drop"),
-                SpriteBundle {
-                    transform: Transform::from_translation(event.pos.world_pos(LAYER_ITEM_DROPS)),
-                    texture: crop.harvested_sprite.clone(),
+                Sprite3d {
+                    transform: Transform::from_translation(event.pos.world_pos(0.0)),
+                    image: crop.harvested_sprite.clone(),
+                    pixels_per_metre: SPRITE_PIXELS_PER_METER,
+                    pivot: SPRITE_DEFAULT_PIVOT,
                     ..default()
-                },
+                }
+                .bundle(&mut sprite_params),
                 ItemDrop::from_crop(event.crop_id, 1),
             ));
         } else {
