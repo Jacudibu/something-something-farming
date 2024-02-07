@@ -1,9 +1,10 @@
-use crate::game::item_id::CropId;
-use crate::GameState;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::AudioSource;
+
+use crate::game::item_id::CropId;
+use crate::GameState;
 
 pub struct LoadingPlugin;
 impl Plugin for LoadingPlugin {
@@ -35,9 +36,9 @@ pub struct SpriteAssets {
 
 #[derive(Resource, AssetCollection)]
 struct DebugTexturesForMaterials {
-    #[asset(path = "textures/grass.png")]
+    #[asset(path = "textures/ground/grass.png")]
     pub grass: Handle<Image>,
-    #[asset(path = "textures/tilled.png")]
+    #[asset(path = "textures/ground/tilled.png")]
     pub tilled: Handle<Image>,
 }
 
