@@ -1,10 +1,8 @@
-use crate::game::CursorPos;
-use crate::prelude::{GameState, MouseCursorOverUiState, TileRaycastSet};
 use bevy::ecs::query::QuerySingleError;
 use bevy::pbr::CascadeShadowConfigBuilder;
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
-use bevy_basic_camera::{CameraController, CameraControllerPlugin};
+use bevy_basic_camera::CameraControllerPlugin;
 use bevy_mod_raycast::prelude::RaycastSource;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
@@ -14,6 +12,9 @@ use leafwing_input_manager::plugin::InputManagerPlugin;
 use leafwing_input_manager::prelude::UserInput;
 use leafwing_input_manager::user_input::InputKind;
 use leafwing_input_manager::{Actionlike, InputManagerBundle};
+
+use crate::game::CursorPos;
+use crate::prelude::{GameState, MouseCursorOverUiState, TileRaycastSet};
 
 const SPEED: f32 = 50.0;
 const SUPERSPEED_MULTIPLIER: f32 = 3.0;
@@ -73,16 +74,16 @@ fn init(mut commands: Commands) {
     commands.spawn((
         Name::new("Camera"),
         Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 7.0, 7.0).looking_at(Vec3::ZERO, Vec3::Y),
+            transform: Transform {
+                translation: Vec3::new(0.0, 16.0, 20.0),
+                rotation: Quat::from_rotation_x(-0.65),
+                ..default()
+            },
             projection: Projection::Orthographic(OrthographicProjection {
                 scale: 1.0,
                 scaling_mode: ScalingMode::WindowSize(60.0),
                 ..default()
             }),
-            ..default()
-        },
-        CameraController {
-            orbit_mode: true,
             ..default()
         },
         RaycastSource::<TileRaycastSet>::new_cursor(),
