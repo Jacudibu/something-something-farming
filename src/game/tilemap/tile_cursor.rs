@@ -1,16 +1,15 @@
 use bevy::app::{App, First, Plugin};
 use bevy::core::Name;
-use bevy::math::{EulerRot, IVec2, Quat};
+use bevy::math::{IVec2, Quat};
 use bevy::pbr::NotShadowCaster;
-use bevy::prelude::{
-    default, error, in_state, Commands, Component, Entity, IntoSystemConfigs, Parent, Query, Res,
-    Transform, With,
-};
+use bevy::prelude::*;
 use bevy_mod_raycast::prelude::{RaycastMesh, RaycastSource};
 use bevy_sprite3d::{Sprite3d, Sprite3dParams};
 
 use crate::prelude::chunk_identifier::ChunkIdentifier;
-use crate::prelude::{MapPos, TilePos, CHUNK_SIZE};
+use crate::prelude::{
+    MapPos, MouseCursorOverUiState, TilePos, CHUNK_SIZE, SPRITE_PIXELS_PER_METER,
+};
 use crate::prelude::{SpriteAssets, TileRaycastSet};
 use crate::GameState;
 
@@ -21,7 +20,8 @@ impl Plugin for TileCursorPlugin {
             First,
             update_tile_cursor
                 .after(crate::game::update_cursor_pos)
-                .run_if(in_state(GameState::Playing)),
+                .run_if(in_state(GameState::Playing))
+                .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
         );
     }
 }
@@ -68,6 +68,10 @@ fn update_tile_cursor(
         }
     }
 
+    if this_frame_selection.is_empty() {
+        return;
+    }
+
     let mut already_existing_cursors: Vec<MapPos> = Vec::new();
     for (entity, mut cursor) in tile_cursor_q.iter() {
         if this_frame_selection.contains(&cursor.pos) {
@@ -83,15 +87,16 @@ fn update_tile_cursor(
         } else {
             commands.spawn((
                 Name::new(format!(
-                    "Tile Cursor | {} - {}",
+                    "Tile Cursor {} > {}",
                     selected_tile.chunk, selected_tile.tile
                 )),
                 Sprite3d {
                     image: assets.cursor.clone(),
                     unlit: true,
+                    pixels_per_metre: SPRITE_PIXELS_PER_METER,
                     transform: Transform {
                         translation: selected_tile.world_pos(0.0),
-                        rotation: Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, 90.0),
+                        rotation: Quat::from_rotation_x(f32::to_radians(90.0)),
                         ..default()
                     },
                     ..default()

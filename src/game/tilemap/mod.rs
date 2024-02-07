@@ -92,7 +92,7 @@ impl TilePos {
 
 impl fmt::Display for TilePos {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}|{}", self.x, self.y)
+        write!(f, "[{}, {}]", self.x, self.y)
     }
 }
 

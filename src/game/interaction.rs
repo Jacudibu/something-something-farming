@@ -105,7 +105,7 @@ struct CropHarvestedEvent {
 fn detect_tile_interactions(
     active_tool: Res<ActiveTool>,
     action_state: Query<&ActionState<PlayerAction>>,
-    tile_cursor: Query<(&TileCursor, &Visibility)>,
+    tile_cursor: Query<&TileCursor>,
     mut previously_interacted_tile: Local<Option<TilePos>>,
     mut tile_interaction_events: EventWriter<TileInteractionEvent>,
 ) {
@@ -124,11 +124,7 @@ fn detect_tile_interactions(
         *previously_interacted_tile = None;
     }
 
-    for (cursor, visibility) in tile_cursor.iter() {
-        if visibility == Visibility::Hidden {
-            continue;
-        }
-
+    for cursor in tile_cursor.iter() {
         if let Some(previous) = *previously_interacted_tile {
             if previous == cursor.pos.tile {
                 return;
@@ -139,7 +135,7 @@ fn detect_tile_interactions(
             *previously_interacted_tile = Some(cursor.pos.tile);
         }
 
-        // in case we ever regularly happening AoE interaction events, it batch_send might be more performant
+        // TODO: in case we ever have regularly happening AoE interaction events, batch_send will be more performant
         tile_interaction_events.send(TileInteractionEvent {
             pos: cursor.pos.clone(),
             used_item: active_tool.item.clone(),
