@@ -78,7 +78,7 @@ fn spawn_testing_chunks(
     // FIXME: These should be created in the loading process
     // FIXME: Materials should use the texture from the spritesheet.
     let tile_mesh = meshes.add(shape::Plane::from_size(1.0).into());
-    let tile_material = materials.single_tile.clone();
+    let tile_material = materials.grass.clone();
 
     for x in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {
         for y in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {

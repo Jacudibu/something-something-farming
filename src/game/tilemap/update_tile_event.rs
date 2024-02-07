@@ -64,9 +64,9 @@ fn update_tiles(
                 if tile.is_tilled {
                     // FIXME: determine which texture we wanna use, maybe use a TextureAtlas while we are at it
                     // determine_texture_index(&event.tile_pos, &event.chunk_pos, &world_data);
-                    *material = debug_materials.single_tile_tilled.clone();
+                    *material = debug_materials.tilled.clone();
                 } else {
-                    *material = debug_materials.single_tile.clone();
+                    *material = debug_materials.grass.clone();
                 }
             }
         }

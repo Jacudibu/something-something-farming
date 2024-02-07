@@ -35,16 +35,16 @@ pub struct SpriteAssets {
 
 #[derive(Resource, AssetCollection)]
 struct DebugTexturesForMaterials {
-    #[asset(path = "sprites/single_tile.png")]
-    pub single_tile: Handle<Image>,
-    #[asset(path = "sprites/single_tile_tilled.png")]
-    pub single_tile_tilled: Handle<Image>,
+    #[asset(path = "textures/grass.png")]
+    pub grass: Handle<Image>,
+    #[asset(path = "textures/tilled.png")]
+    pub tilled: Handle<Image>,
 }
 
 #[derive(Resource, AssetCollection)]
 pub struct DebugMaterials {
-    pub single_tile: Handle<StandardMaterial>,
-    pub single_tile_tilled: Handle<StandardMaterial>,
+    pub grass: Handle<StandardMaterial>,
+    pub tilled: Handle<StandardMaterial>,
 }
 
 impl FromWorld for DebugMaterials {
@@ -59,13 +59,13 @@ impl FromWorld for DebugMaterials {
             .expect("Failed to get Assets<StandardMaterial>");
 
         DebugMaterials {
-            single_tile: standard_materials.add(StandardMaterial {
-                base_color_texture: Some(debug_textures.single_tile.clone()),
+            grass: standard_materials.add(StandardMaterial {
+                base_color_texture: Some(debug_textures.grass.clone()),
                 reflectance: 0.0,
                 ..default()
             }),
-            single_tile_tilled: standard_materials.add(StandardMaterial {
-                base_color_texture: Some(debug_textures.single_tile_tilled.clone()),
+            tilled: standard_materials.add(StandardMaterial {
+                base_color_texture: Some(debug_textures.tilled.clone()),
                 reflectance: 0.0,
                 ..default()
             }),
