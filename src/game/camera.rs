@@ -50,6 +50,8 @@ pub enum CameraAction {
     Right,
 }
 
+const CAMERA_OFFSET_TO_PLAYER: Vec3 = Vec3::new(0.0, 16.0, 20.0);
+
 fn init(mut commands: Commands) {
     // FIXME: Once we figure things out, Global Lights should be spawned in their own plugin
     commands.spawn((
@@ -75,7 +77,7 @@ fn init(mut commands: Commands) {
         Name::new("Camera"),
         Camera3dBundle {
             transform: Transform {
-                translation: Vec3::new(0.0, 16.0, 20.0),
+                translation: CAMERA_OFFSET_TO_PLAYER,
                 rotation: Quat::from_rotation_x(-0.65),
                 ..default()
             },
@@ -100,11 +102,11 @@ fn move_camera(
     mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera>>,
     mut cursor_pos: ResMut<CursorPos>,
 ) {
-    // FIXME: Adjust for 3d
-    return;
     let (mut camera_transform, action_state) = camera.single_mut();
     let delta = match camera_focus.get_single() {
-        Ok(camera_focus) => camera_focus.translation - camera_transform.translation,
+        Ok(camera_focus) => {
+            camera_focus.translation - camera_transform.translation + CAMERA_OFFSET_TO_PLAYER
+        }
         Err(QuerySingleError::NoEntities(_)) => {
             let mut dir;
             if action_state.pressed(CameraAction::Move) {
@@ -118,10 +120,10 @@ fn move_camera(
             }
 
             if action_state.pressed(CameraAction::Up) {
-                dir.y += 1.0;
+                dir.z -= 1.0;
             }
             if action_state.pressed(CameraAction::Down) {
-                dir.y -= 1.0;
+                dir.z += 1.0;
             }
             if action_state.pressed(CameraAction::Right) {
                 dir.x += 1.0;
