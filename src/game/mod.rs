@@ -35,7 +35,7 @@ pub const LAYER_PLAYER: f32 = 100.0;
 pub const LAYER_CROPS: f32 = 50.0;
 pub const LAYER_ITEM_DROPS: f32 = 150.0;
 
-pub const SPRITE_PIXELS_PER_METER: f32 = 32.0;
+pub const SPRITE_PIXELS_PER_METER: f32 = 16.0;
 pub const SPRITE_DEFAULT_PIVOT: Option<Vec2> = Some(Vec2::new(0.5, 0.0));
 
 pub struct GamePlugin;

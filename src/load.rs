@@ -13,8 +13,9 @@ impl Plugin for LoadingPlugin {
                 .continue_to_state(GameState::Playing)
                 .load_collection::<SpriteAssets>()
                 .load_collection::<DebugSounds>()
-                .load_collection::<DebugMaterials>()
-                .load_collection::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>(),
+                .load_collection::<DebugTexturesForMaterials>()
+                .load_collection::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>()
+                .init_resource::<DebugMaterials>(),
         )
             .add_systems(OnExit(GameState::Loading), insert_crop_resource);
     }
@@ -33,13 +34,43 @@ pub struct SpriteAssets {
 }
 
 #[derive(Resource, AssetCollection)]
-pub struct DebugMaterials {
-    #[asset(standard_material)]
+struct DebugTexturesForMaterials {
     #[asset(path = "sprites/single_tile.png")]
-    pub single_tile: Handle<StandardMaterial>,
-    #[asset(standard_material)]
+    pub single_tile: Handle<Image>,
     #[asset(path = "sprites/single_tile_tilled.png")]
+    pub single_tile_tilled: Handle<Image>,
+}
+
+#[derive(Resource, AssetCollection)]
+pub struct DebugMaterials {
+    pub single_tile: Handle<StandardMaterial>,
     pub single_tile_tilled: Handle<StandardMaterial>,
+}
+
+impl FromWorld for DebugMaterials {
+    fn from_world(world: &mut World) -> Self {
+        let cell = world.cell();
+        let debug_textures = cell
+            .get_resource::<DebugTexturesForMaterials>()
+            .expect("Failed to get DebugTexturesForMaterials");
+
+        let mut standard_materials = cell
+            .get_resource_mut::<Assets<StandardMaterial>>()
+            .expect("Failed to get Assets<StandardMaterial>");
+
+        DebugMaterials {
+            single_tile: standard_materials.add(StandardMaterial {
+                base_color_texture: Some(debug_textures.single_tile.clone()),
+                reflectance: 0.0,
+                ..default()
+            }),
+            single_tile_tilled: standard_materials.add(StandardMaterial {
+                base_color_texture: Some(debug_textures.single_tile_tilled.clone()),
+                reflectance: 0.0,
+                ..default()
+            }),
+        }
+    }
 }
 
 #[derive(Resource, AssetCollection)]

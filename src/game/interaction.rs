@@ -247,7 +247,8 @@ fn process_tile_interactions(
                                         atlas: crop_definition.texture_atlas.clone(),
                                         index: 0,
                                         transform: Transform::from_translation(
-                                            event.pos.pos_inside_chunk(0.0),
+                                            event.pos.pos_inside_chunk(0.0)
+                                                - Vec3::new(0.0, 0.0, -0.1),
                                         ),
                                         pixels_per_metre: SPRITE_PIXELS_PER_METER,
                                         pivot: SPRITE_DEFAULT_PIVOT,
