@@ -1,8 +1,9 @@
-use crate::game::CursorPos;
-use crate::prelude::{GameState, MouseCursorOverUiState};
 use bevy::ecs::query::QuerySingleError;
+use bevy::pbr::CascadeShadowConfigBuilder;
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
+use bevy_basic_camera::CameraControllerPlugin;
+use bevy_mod_raycast::prelude::RaycastSource;
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
 use leafwing_input_manager::buttonlike::MouseWheelDirection;
@@ -12,6 +13,9 @@ use leafwing_input_manager::prelude::UserInput;
 use leafwing_input_manager::user_input::InputKind;
 use leafwing_input_manager::{Actionlike, InputManagerBundle};
 
+use crate::game::CursorPos;
+use crate::prelude::{GameState, MouseCursorOverUiState, TileRaycastSet};
+
 const SPEED: f32 = 50.0;
 const SUPERSPEED_MULTIPLIER: f32 = 3.0;
 
@@ -19,6 +23,7 @@ pub struct CameraPlugin;
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<CameraAction>::default())
+            .add_plugins(CameraControllerPlugin)
             .add_systems(Startup, init)
             .add_systems(
                 Update,
@@ -45,13 +50,45 @@ pub enum CameraAction {
     Right,
 }
 
+const CAMERA_OFFSET_TO_PLAYER: Vec3 = Vec3::new(0.0, 16.0, 20.0);
+
 fn init(mut commands: Commands) {
-    let mut camera = Camera2dBundle::default();
-    camera.projection.scaling_mode = ScalingMode::WindowSize(2.0);
+    // FIXME: Once we figure things out, Global Lights should be spawned in their own plugin
+    commands.spawn((
+        Name::new("Directional Light"),
+        DirectionalLightBundle {
+            directional_light: DirectionalLight {
+                shadows_enabled: true,
+                ..default()
+            },
+            // TODO: Figure out some good looking values
+            cascade_shadow_config: CascadeShadowConfigBuilder {
+                first_cascade_far_bound: 20.0,
+                minimum_distance: 1.0,
+                ..default()
+            }
+            .build(),
+            transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, 5.7, 0.3, 0.0)),
+            ..default()
+        },
+    ));
 
     commands.spawn((
         Name::new("Camera"),
-        camera,
+        Camera3dBundle {
+            transform: Transform {
+                translation: CAMERA_OFFSET_TO_PLAYER,
+                rotation: Quat::from_rotation_x(-0.65),
+                ..default()
+            },
+            projection: Projection::Orthographic(OrthographicProjection {
+                scale: 1.0,
+                scaling_mode: ScalingMode::WindowSize(60.0),
+                ..default()
+            }),
+            ..default()
+        },
+        RaycastSource::<TileRaycastSet>::new_cursor(),
         InputManagerBundle::<CameraAction> {
             input_map: default_input_map_camera(),
             ..default()
@@ -61,13 +98,15 @@ fn init(mut commands: Commands) {
 
 fn move_camera(
     time: Res<Time>,
-    camera_focus: Query<&Transform, (With<CameraFocus>, Without<Camera2d>)>,
-    mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera2d>>,
+    camera_focus: Query<&Transform, (With<CameraFocus>, Without<Camera>)>,
+    mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera>>,
     mut cursor_pos: ResMut<CursorPos>,
 ) {
     let (mut camera_transform, action_state) = camera.single_mut();
     let delta = match camera_focus.get_single() {
-        Ok(camera_focus) => camera_focus.translation - camera_transform.translation,
+        Ok(camera_focus) => {
+            camera_focus.translation - camera_transform.translation + CAMERA_OFFSET_TO_PLAYER
+        }
         Err(QuerySingleError::NoEntities(_)) => {
             let mut dir;
             if action_state.pressed(CameraAction::Move) {
@@ -81,10 +120,10 @@ fn move_camera(
             }
 
             if action_state.pressed(CameraAction::Up) {
-                dir.y += 1.0;
+                dir.z -= 1.0;
             }
             if action_state.pressed(CameraAction::Down) {
-                dir.y -= 1.0;
+                dir.z += 1.0;
             }
             if action_state.pressed(CameraAction::Right) {
                 dir.x += 1.0;
@@ -121,44 +160,25 @@ fn move_camera(
 }
 
 const MAX_ZOOM: f32 = 4.0;
-const MIN_ZOOM: f32 = 1.0;
+const MIN_ZOOM: f32 = 0.5;
 
-fn zoom_camera(
-    mut query: Query<
-        (
-            &mut OrthographicProjection,
-            &Camera,
-            &ActionState<CameraAction>,
-            &GlobalTransform,
-        ),
-        With<Camera2d>,
-    >,
-    mut cursor_pos: ResMut<CursorPos>,
-) {
-    let (mut projection, camera, action_state, transform) = query.single_mut();
+fn zoom_camera(mut query: Query<(&mut Projection, &ActionState<CameraAction>), With<Camera>>) {
+    let (projection, action_state) = query.single_mut();
 
-    let current_scaling = match projection.scaling_mode {
-        ScalingMode::Fixed { .. } => 1.0,
-        ScalingMode::WindowSize(x) => x,
-        ScalingMode::AutoMin { .. } => 1.0,
-        ScalingMode::AutoMax { .. } => 1.0,
-        ScalingMode::FixedVertical(_) => 1.0,
-        ScalingMode::FixedHorizontal(_) => 1.0,
+    let Projection::Orthographic(projection) = projection.into_inner() else {
+        error!("Zooming isn't yet supported for perspective cameras.");
+        return;
     };
 
-    if let Some(direction) = zoom_direction(action_state, current_scaling) {
-        projection.scaling_mode = ScalingMode::WindowSize(current_scaling + 0.25 * direction);
-
-        if let Some(pos) = camera.viewport_to_world_2d(transform, cursor_pos.screen) {
-            cursor_pos.world = pos;
-        }
+    if let Some(direction) = zoom_direction(action_state, projection.scale) {
+        projection.scale += 0.20 * direction;
     }
 }
 
 fn zoom_direction(action_state: &ActionState<CameraAction>, current_scaling: f32) -> Option<f32> {
-    if action_state.pressed(CameraAction::ZoomIn) && current_scaling < MAX_ZOOM {
+    if action_state.pressed(CameraAction::ZoomOut) && current_scaling < MAX_ZOOM {
         Some(1.0)
-    } else if action_state.pressed(CameraAction::ZoomOut) && current_scaling > MIN_ZOOM {
+    } else if action_state.pressed(CameraAction::ZoomIn) && current_scaling > MIN_ZOOM {
         Some(-1.0)
     } else {
         None

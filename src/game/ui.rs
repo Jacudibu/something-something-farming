@@ -1,14 +1,15 @@
+use bevy::app::{App, First, Plugin, Update};
+use bevy::log::error;
+use bevy::prelude::{
+    in_state, IntoSystemConfigs, Name, NextState, Query, Res, ResMut, State, States,
+};
+use bevy_egui::egui::{Align2, Pos2};
+use bevy_egui::{egui, EguiContexts, EguiPlugin};
+
 use crate::load::AllCrops;
 use crate::prelude::chunk_data::ChunkData;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::{ActiveTool, GameState, Inventory, MapPos, SimulationTime, WorldData};
-use bevy::app::{App, First, Plugin, Update};
-use bevy::log::error;
-use bevy::prelude::{
-    in_state, IntoSystemConfigs, Name, NextState, Query, Res, ResMut, State, States, Time,
-};
-use bevy_egui::egui::{Align2, Pos2};
-use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
@@ -55,28 +56,26 @@ fn ui_system(
     all_crops: Res<AllCrops>,
     inventories: Query<(&Name, &Inventory)>,
 ) {
-    let cursor = cursor
-        .get_single()
-        .expect("Multiselection isn't yet supported by debug ui");
-
-    let chunk = world_data.chunks.get(&cursor.pos.chunk);
-    if chunk.is_none() {
-        error!("Chunk at {} did not exist!", cursor.pos.chunk);
-        return;
+    if let Ok(cursor) = cursor.get_single() {
+        let chunk = world_data.chunks.get(&cursor.pos.chunk);
+        if chunk.is_none() {
+            error!("Chunk at {} did not exist!", cursor.pos.chunk);
+            return;
+        }
+        let chunk = chunk.unwrap();
+        egui::Window::new(format!("{}", cursor.global_position()))
+            .collapsible(false)
+            .resizable(false)
+            .fixed_pos(Pos2::new(5.0, 5.0))
+            .show(contexts.ctx_mut(), |ui| {
+                ui.label(map_data_for_position(
+                    chunk,
+                    &cursor.pos,
+                    &simulation_time,
+                    &all_crops,
+                ));
+            });
     }
-    let chunk = chunk.unwrap();
-    egui::Window::new(format!("{}", cursor.global_position()))
-        .collapsible(false)
-        .resizable(false)
-        .fixed_pos(Pos2::new(5.0, 5.0))
-        .show(contexts.ctx_mut(), |ui| {
-            ui.label(map_data_for_position(
-                chunk,
-                &cursor.pos,
-                &simulation_time,
-                &all_crops,
-            ));
-        });
 
     egui::Window::new("Active Tool View")
         .title_bar(false)

@@ -1,8 +1,10 @@
+use bevy::app::{App, Plugin, Update};
+use bevy::prelude::{in_state, IntoSystemConfigs, Query, Res, ResMut};
+use bevy_sprite3d::AtlasSprite3dComponent;
+
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::{AllCrops, MapPos, SimulationTime, WorldData};
 use crate::GameState;
-use bevy::app::{App, Plugin, Update};
-use bevy::prelude::{in_state, IntoSystemConfigs, Query, Res, ResMut, TextureAtlasSprite};
 
 pub struct TileUpdaterPlugin;
 impl Plugin for TileUpdaterPlugin {
@@ -18,7 +20,7 @@ struct NextItemToUpdate {
 
 fn update_tiles(
     mut world_data: ResMut<WorldData>,
-    mut sprites: Query<&mut TextureAtlasSprite>,
+    mut sprites: Query<&mut AtlasSprite3dComponent>,
     simulation_time: Res<SimulationTime>,
     loaded_chunk_data: Res<LoadedChunks>,
     all_crops: Res<AllCrops>,
@@ -42,8 +44,10 @@ fn update_tiles(
             let crop_definition = all_crops.definitions.get(&crop.crop_id).unwrap();
             crop.stage += 1;
             if crop.stage < crop_definition.stages - 1 {
-                crop.next_stage_at =
-                    Some(simulation_time.elapsed_seconds() + crop_definition.growth_time_per_stage as f32);
+                crop.next_stage_at = Some(
+                    simulation_time.elapsed_seconds()
+                        + crop_definition.growth_time_per_stage as f32,
+                );
             } else {
                 crop.next_stage_at = None;
             }

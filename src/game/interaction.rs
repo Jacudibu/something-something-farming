@@ -1,23 +1,20 @@
+use bevy::prelude::*;
+use bevy_sprite3d::{AtlasSprite3d, Sprite3d, Sprite3dParams};
+use leafwing_input_manager::action_state::ActionState;
+
 use crate::game::drops::ItemDrop;
 use crate::game::map_pos::MapPos;
 use crate::game::player::PlayerAction;
 use crate::prelude::chunk_data::CropData;
-use crate::prelude::helpers::determine_texture_index;
 use crate::prelude::item_id::{CropId, ItemId};
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
-use crate::prelude::tilemap_layer::GroundLayer;
 use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::{
-    ActiveTool, MouseCursorOverUiState, SimulationTime, ToolId, WorldData, LAYER_CROPS,
-    LAYER_ITEM_DROPS,
+    ActiveTool, MouseCursorOverUiState, SimulationTime, TilePos, ToolId, WorldData,
+    SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER,
 };
 use crate::prelude::{AllCrops, GameState};
-use bevy::prelude::*;
-use bevy_ecs_tilemap::map::TilemapId;
-use bevy_ecs_tilemap::prelude::TileBundle;
-use bevy_ecs_tilemap::tiles::{TilePos, TileStorage};
-use leafwing_input_manager::action_state::ActionState;
 
 pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
@@ -108,7 +105,7 @@ struct CropHarvestedEvent {
 fn detect_tile_interactions(
     active_tool: Res<ActiveTool>,
     action_state: Query<&ActionState<PlayerAction>>,
-    tile_cursor: Query<(&TileCursor, &Visibility)>,
+    tile_cursor: Query<&TileCursor>,
     mut previously_interacted_tile: Local<Option<TilePos>>,
     mut tile_interaction_events: EventWriter<TileInteractionEvent>,
 ) {
@@ -127,11 +124,7 @@ fn detect_tile_interactions(
         *previously_interacted_tile = None;
     }
 
-    for (cursor, visibility) in tile_cursor.iter() {
-        if visibility == Visibility::Hidden {
-            continue;
-        }
-
+    for cursor in tile_cursor.iter() {
         if let Some(previous) = *previously_interacted_tile {
             if previous == cursor.pos.tile {
                 return;
@@ -142,7 +135,7 @@ fn detect_tile_interactions(
             *previously_interacted_tile = Some(cursor.pos.tile);
         }
 
-        // in case we ever regularly happening AoE interaction events, it batch_send might be more performant
+        // TODO: in case we ever have regularly happening AoE interaction events, batch_send will be more performant
         tile_interaction_events.send(TileInteractionEvent {
             pos: cursor.pos.clone(),
             used_item: active_tool.item.clone(),
@@ -176,6 +169,7 @@ fn process_delete_crops(
 fn process_harvested_crops(
     mut commands: Commands,
     mut harvested_crop_events: EventReader<CropHarvestedEvent>,
+    mut sprite_params: Sprite3dParams,
     all_crops: Res<AllCrops>,
 ) {
     for event in harvested_crop_events.read() {
@@ -187,11 +181,14 @@ fn process_harvested_crops(
         if let Some(crop) = all_crops.definitions.get(&event.crop_id) {
             commands.spawn((
                 Name::new("Drop"),
-                SpriteBundle {
-                    transform: Transform::from_translation(event.pos.world_pos(LAYER_ITEM_DROPS)),
-                    texture: crop.harvested_sprite.clone(),
+                Sprite3d {
+                    transform: Transform::from_translation(event.pos.world_pos(0.0)),
+                    image: crop.harvested_sprite.clone(),
+                    pixels_per_metre: SPRITE_PIXELS_PER_METER,
+                    pivot: SPRITE_DEFAULT_PIVOT,
                     ..default()
-                },
+                }
+                .bundle(&mut sprite_params),
                 ItemDrop::from_crop(event.crop_id, 1),
             ));
         } else {
@@ -207,10 +204,10 @@ fn process_tile_interactions(
     mut destroy_crop_events: EventWriter<CropDestroyedEvent>,
     mut harvest_crop_events: EventWriter<CropHarvestedEvent>,
     mut world_data: ResMut<WorldData>,
-    mut object_chunks: Query<&mut TileStorage, Without<GroundLayer>>,
     mut loaded_chunk_data: ResMut<LoadedChunks>,
     simulation_time: Res<SimulationTime>,
     all_crops: Res<AllCrops>,
+    mut sprite_params: Sprite3dParams,
 ) {
     for event in tile_interaction_event.read() {
         match event.used_item {
@@ -242,16 +239,20 @@ fn process_tile_interactions(
                             let entity = commands
                                 .spawn((
                                     Name::new("Plant"),
-                                    SpriteSheetBundle {
-                                        texture_atlas: crop_definition.texture_atlas.clone(),
-                                        sprite: TextureAtlasSprite::new(0),
+                                    AtlasSprite3d {
+                                        atlas: crop_definition.texture_atlas.clone(),
+                                        index: 0,
                                         transform: Transform::from_translation(
-                                            event.pos.pos_inside_chunk(LAYER_CROPS),
+                                            event.pos.pos_inside_chunk(0.0)
+                                                - Vec3::new(0.0, 0.0, -0.1),
                                         ),
+                                        pixels_per_metre: SPRITE_PIXELS_PER_METER,
+                                        pivot: SPRITE_DEFAULT_PIVOT,
                                         ..default()
-                                    },
+                                    }
+                                    .bundle(&mut sprite_params),
                                 ))
-                                .set_parent(loaded_data.ground_tilemap)
+                                .set_parent(loaded_data.chunk_parent)
                                 .id();
 
                             loaded_data.crops.insert(event.pos.tile, entity);
@@ -268,28 +269,9 @@ fn process_tile_interactions(
                             chunk.set_at_pos(&event.pos.tile, true);
 
                             // TODO: Event - Place Floor tile
-                            if let Some(loaded_data) =
-                                loaded_chunk_data.chunks.get(&event.pos.chunk)
-                            {
-                                let mut floor_tilemap_storage =
-                                    object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
-
-                                let tilled_tile = commands
-                                    .spawn(TileBundle {
-                                        position: event.pos.tile.clone(),
-                                        tilemap_id: TilemapId(loaded_data.floor_tilemap),
-                                        texture_index: determine_texture_index(
-                                            &event.pos.tile,
-                                            &event.pos.chunk,
-                                            &world_data,
-                                        ),
-                                        ..Default::default()
-                                    })
-                                    .id();
-                                commands
-                                    .entity(loaded_data.floor_tilemap)
-                                    .add_child(tilled_tile);
-                                floor_tilemap_storage.set(&event.pos.tile, tilled_tile);
+                            if loaded_chunk_data.chunks.contains_key(&event.pos.chunk) {
+                                update_tile_events
+                                    .send(UpdateTileEvent::new(event.pos.chunk, event.pos.tile));
                                 update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
                                     event.pos.chunk,
                                     event.pos.tile,
@@ -309,19 +291,9 @@ fn process_tile_interactions(
 
                             // TODO: Event - Remove tilled tile
                             chunk.set_at_pos(&event.pos.tile, false);
-                            if let Some(loaded_data) =
-                                loaded_chunk_data.chunks.get(&event.pos.chunk)
-                            {
-                                let mut floor_tilemap_storage =
-                                    object_chunks.get_mut(loaded_data.floor_tilemap).unwrap();
-
-                                if let Some(entity) = floor_tilemap_storage.get(&event.pos.tile) {
-                                    floor_tilemap_storage.remove(&event.pos.tile);
-                                    commands.entity(entity).despawn();
-                                } else {
-                                    warn!("Entity was not set at {:?}.", event);
-                                }
-
+                            if loaded_chunk_data.chunks.contains_key(&event.pos.chunk) {
+                                update_tile_events
+                                    .send(UpdateTileEvent::new(event.pos.chunk, event.pos.tile));
                                 update_tile_events.send_batch(UpdateTileEvent::surrounding_tiles(
                                     event.pos.chunk,
                                     event.pos.tile,

@@ -1,15 +1,17 @@
 use crate::game::drops::ItemMagnet;
 use crate::load::SpriteAssets;
 use crate::prelude::camera::CameraFocus;
-use crate::prelude::{Inventory, LAYER_PLAYER};
+use crate::prelude::{Inventory, SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER};
 use crate::GameState;
 use bevy::app::{App, Plugin, Update};
 use bevy::core::Name;
 use bevy::math::Vec3;
+use bevy::pbr::AlphaMode;
 use bevy::prelude::{
     default, in_state, Commands, Component, GamepadButtonType, IntoSystemConfigs, KeyCode,
-    MouseButton, OnEnter, Query, Reflect, Res, SpriteBundle, Time, Transform, With,
+    MouseButton, OnEnter, Query, Reflect, Res, Time, Transform, With,
 };
+use bevy_sprite3d::{Sprite3d, Sprite3dParams};
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::axislike::{DeadZoneShape, DualAxis};
 use leafwing_input_manager::input_map::InputMap;
@@ -28,16 +30,24 @@ impl Plugin for PlayerPlugin {
 #[derive(Component)]
 pub struct ControlledByPlayer {}
 
-const PLAYER_SPEED: f32 = 100.0;
+const PLAYER_SPEED: f32 = 1.0;
 
-fn initialize_player(mut commands: Commands, assets: Res<SpriteAssets>) {
+fn initialize_player(
+    mut commands: Commands,
+    mut sprite_params: Sprite3dParams,
+    assets: Res<SpriteAssets>,
+) {
     commands.spawn((
         Name::new("Player"),
-        SpriteBundle {
-            texture: assets.debug_character.clone(),
-            transform: Transform::from_xyz(0.0, 0.0, LAYER_PLAYER),
+        Sprite3d {
+            image: assets.debug_character.clone(),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            pivot: SPRITE_DEFAULT_PIVOT,
+            alpha_mode: AlphaMode::Blend,
+            pixels_per_metre: SPRITE_PIXELS_PER_METER,
             ..default()
-        },
+        }
+        .bundle(&mut sprite_params),
         ControlledByPlayer {},
         InputManagerBundle::<PlayerAction> {
             input_map: default_input_map(),
@@ -66,10 +76,10 @@ fn move_player(
     }
 
     if action_state.pressed(PlayerAction::Up) {
-        dir.y += 1.0;
+        dir.z -= 1.0;
     }
     if action_state.pressed(PlayerAction::Down) {
-        dir.y -= 1.0;
+        dir.z += 1.0;
     }
     if action_state.pressed(PlayerAction::Right) {
         dir.x += 1.0;

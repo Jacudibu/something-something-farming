@@ -1,6 +1,3 @@
-use crate::game::item_id::{CropId, ItemId};
-use crate::prelude::{DebugSounds, Inventory};
-use crate::{GameState, SoundEffectsSetting};
 use bevy::log::error;
 use bevy::prelude::{
     in_state, on_event, App, Commands, Component, Entity, Event, EventReader, EventWriter,
@@ -9,9 +6,13 @@ use bevy::prelude::{
 use bevy_kira_audio::{Audio, AudioControl};
 use rand::Rng;
 
-const PICKUP_DISTANCE: f32 = 5.0;
-const DEFAULT_MAGNET_DISTANCE: f32 = 40.0;
-const DEFAULT_MAGNET_SPEED: f32 = 200.0;
+use crate::game::item_id::{CropId, ItemId};
+use crate::prelude::{DebugSounds, Inventory};
+use crate::{GameState, SoundEffectsSetting};
+
+const PICKUP_DISTANCE: f32 = 0.1;
+const DEFAULT_MAGNET_DISTANCE: f32 = 1.5;
+const DEFAULT_MAGNET_SPEED: f32 = 2.5;
 
 pub struct ItemPickupPlugin;
 impl Plugin for ItemPickupPlugin {

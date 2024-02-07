@@ -1,9 +1,10 @@
-use crate::game::item_id::CropId;
-use crate::GameState;
 use bevy::prelude::*;
 use bevy::utils::HashMap;
 use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::AudioSource;
+
+use crate::game::item_id::CropId;
+use crate::GameState;
 
 pub struct LoadingPlugin;
 impl Plugin for LoadingPlugin {
@@ -13,7 +14,9 @@ impl Plugin for LoadingPlugin {
                 .continue_to_state(GameState::Playing)
                 .load_collection::<SpriteAssets>()
                 .load_collection::<DebugSounds>()
-                .load_collection::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>(),
+                .load_collection::<DebugTexturesForMaterials>()
+                .load_collection::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>()
+                .init_resource::<DebugMaterials>(),
         )
             .add_systems(OnExit(GameState::Loading), insert_crop_resource);
     }
@@ -29,6 +32,46 @@ pub struct SpriteAssets {
     pub simple_tiles: Handle<Image>,
     #[asset(path = "sprites/debug_character.png")]
     pub debug_character: Handle<Image>,
+}
+
+#[derive(Resource, AssetCollection)]
+struct DebugTexturesForMaterials {
+    #[asset(path = "textures/ground/grass.png")]
+    pub grass: Handle<Image>,
+    #[asset(path = "textures/ground/tilled.png")]
+    pub tilled: Handle<Image>,
+}
+
+#[derive(Resource, AssetCollection)]
+pub struct DebugMaterials {
+    pub grass: Handle<StandardMaterial>,
+    pub tilled: Handle<StandardMaterial>,
+}
+
+impl FromWorld for DebugMaterials {
+    fn from_world(world: &mut World) -> Self {
+        let cell = world.cell();
+        let debug_textures = cell
+            .get_resource::<DebugTexturesForMaterials>()
+            .expect("Failed to get DebugTexturesForMaterials");
+
+        let mut standard_materials = cell
+            .get_resource_mut::<Assets<StandardMaterial>>()
+            .expect("Failed to get Assets<StandardMaterial>");
+
+        DebugMaterials {
+            grass: standard_materials.add(StandardMaterial {
+                base_color_texture: Some(debug_textures.grass.clone()),
+                reflectance: 0.0,
+                ..default()
+            }),
+            tilled: standard_materials.add(StandardMaterial {
+                base_color_texture: Some(debug_textures.tilled.clone()),
+                reflectance: 0.0,
+                ..default()
+            }),
+        }
+    }
 }
 
 #[derive(Resource, AssetCollection)]
