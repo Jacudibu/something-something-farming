@@ -1,9 +1,9 @@
+use bevy::utils::HashMap;
+
 use crate::game::item_id::CropId;
 use crate::prelude::tile_data::TileData;
-use crate::prelude::CHUNK_SIZE;
 use crate::prelude::{CropDefinition, SimulationTime};
-use bevy::utils::HashMap;
-use bevy_ecs_tilemap::prelude::TilePos;
+use crate::prelude::{TilePos, CHUNK_SIZE};
 
 pub struct ChunkData {
     pub tiles: [TileData; CHUNK_SIZE * CHUNK_SIZE],

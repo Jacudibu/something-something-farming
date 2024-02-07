@@ -3,15 +3,12 @@ use bevy::core::Name;
 use bevy::math::IVec2;
 use bevy::prelude::{
     default, error, in_state, Color, Commands, Component, IntoSystemConfigs, OnEnter, Parent,
-    Query, Res, Sprite, SpriteBundle, Transform, Visibility, With, Without,
+    Query, Res, Sprite, SpriteBundle, Transform, Visibility, With,
 };
-use bevy_ecs_tilemap::map::TilemapSize;
-use bevy_ecs_tilemap::prelude::TilePos;
-use bevy_ecs_tilemap::tiles::TileStorage;
 use bevy_mod_raycast::prelude::{RaycastMesh, RaycastSource};
 
 use crate::prelude::chunk_identifier::ChunkIdentifier;
-use crate::prelude::{ChunkPos, MapPos, TilePos3D, CHUNK_SIZE};
+use crate::prelude::{ChunkPos, MapPos, TilePos, CHUNK_SIZE};
 use crate::prelude::{SpriteAssets, TileRaycastSet};
 use crate::GameState;
 
@@ -63,12 +60,9 @@ fn initialize_cursor(mut commands: Commands, assets: Res<SpriteAssets>) {
 
 fn update_tile_cursor(
     tile_ray: Query<&RaycastSource<TileRaycastSet>>,
-    ray_targets: Query<(&TilePos3D, &Parent), With<RaycastMesh<TileRaycastSet>>>,
-    chunk_parents: Query<&ChunkIdentifier, Without<TileStorage>>,
-    mut tile_cursor_q: Query<
-        (&mut Transform, &mut Visibility, &mut TileCursor),
-        Without<TilemapSize>,
-    >,
+    ray_targets: Query<(&TilePos, &Parent), With<RaycastMesh<TileRaycastSet>>>,
+    chunk_parents: Query<&ChunkIdentifier>,
+    mut tile_cursor_q: Query<(&mut Transform, &mut Visibility, &mut TileCursor)>,
 ) {
     // Un-highlight any previously highlighted tile labels.
     // TODO: Remove/Add cursors after detecting which tiles are selected this frame.

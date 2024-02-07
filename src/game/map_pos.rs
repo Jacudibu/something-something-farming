@@ -1,8 +1,7 @@
 use bevy::math::Vec3;
-use bevy_ecs_tilemap::prelude::TilePos;
 
 use crate::game::CHUNK_SIZE;
-use crate::prelude::ChunkPos;
+use crate::prelude::{ChunkPos, TilePos};
 
 #[derive(Debug, Copy, Clone)]
 pub struct MapPos {

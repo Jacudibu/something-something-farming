@@ -1,6 +1,5 @@
 use crate::game::CHUNK_SIZE;
-use crate::prelude::{ChunkPos, WorldData};
-use bevy_ecs_tilemap::prelude::{TilePos, TileTextureIndex};
+use crate::prelude::{ChunkPos, TilePos, WorldData};
 
 pub fn left_of(chunk_pos: &ChunkPos, tile_pos: &TilePos) -> (ChunkPos, TilePos) {
     if tile_pos.x == 0 {
@@ -54,7 +53,7 @@ pub fn determine_texture_index(
     pos: &TilePos,
     chunk_pos: &ChunkPos,
     world_data: &WorldData,
-) -> TileTextureIndex {
+) -> usize {
     let chunk = world_data.chunks.get(chunk_pos).unwrap();
     let up = if pos.y < CHUNK_SIZE as u32 - 1 {
         chunk.at(pos.x, pos.y + 1).is_tilled
@@ -109,51 +108,51 @@ pub fn determine_texture_index(
         if down {
             if left {
                 if right {
-                    TileTextureIndex(10)
+                    10
                 } else {
-                    TileTextureIndex(11)
+                    11
                 }
             } else if right {
-                TileTextureIndex(9)
+                9
             } else {
-                TileTextureIndex(8)
+                8
             }
         } else if left {
             if right {
-                TileTextureIndex(14)
+                14
             } else {
-                TileTextureIndex(15)
+                15
             }
         } else {
             if right {
-                TileTextureIndex(13)
+                13
             } else {
-                TileTextureIndex(12)
+                12
             }
         }
     } else if down {
         if left {
             if right {
-                TileTextureIndex(6)
+                6
             } else {
-                TileTextureIndex(7)
+                7
             }
         } else if right {
-            TileTextureIndex(5)
+            5
         } else {
-            TileTextureIndex(4)
+            4
         }
     } else if left {
         if right {
-            TileTextureIndex(2)
+            2
         } else {
-            TileTextureIndex(3)
+            3
         }
     } else {
         if right {
-            TileTextureIndex(1)
+            1
         } else {
-            TileTextureIndex(0)
+            0
         }
     }
 }

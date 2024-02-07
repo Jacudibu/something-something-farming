@@ -41,7 +41,6 @@ bevy = { version = "0.12.1", default-features = false, features = [
 ]}
 bevy_asset_loader = { version = "0.19.1", features = ["2d", "3d"] }
 bevy_basic_camera = { git = "https://github.com/DGriffin91/bevy_basic_camera" }
-bevy_ecs_tilemap = "0.12"
 bevy_egui = "0.24.0"
 bevy-inspector-egui = "0.22.1"
 bevy_kira_audio = "0.18.0"
@@ -50,6 +49,3 @@ bevy_sprite3d = "2.7.0"
 bevy_mod_raycast = "0.16.0"
 leafwing-input-manager = "0.11.2"
 rand = "0.8.5"
-
-[patch.crates-io]
-bevy_ecs_tilemap = { git = "https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main" }

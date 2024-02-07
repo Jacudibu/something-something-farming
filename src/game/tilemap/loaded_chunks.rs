@@ -1,8 +1,8 @@
-use crate::game::CHUNK_SIZE;
-use crate::prelude::ChunkPos;
 use bevy::prelude::{App, Entity, Plugin, Resource};
 use bevy::utils::HashMap;
-use bevy_ecs_tilemap::tiles::TilePos;
+
+use crate::game::CHUNK_SIZE;
+use crate::prelude::{ChunkPos, TilePos};
 
 pub struct LoadedChunkPlugin;
 impl Plugin for LoadedChunkPlugin {
