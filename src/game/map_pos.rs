@@ -3,7 +3,7 @@ use bevy::math::Vec3;
 use crate::game::CHUNK_SIZE;
 use crate::prelude::{ChunkPos, TilePos};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct MapPos {
     pub chunk: ChunkPos,
     pub tile: TilePos,

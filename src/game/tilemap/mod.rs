@@ -1,3 +1,6 @@
+use std::fmt;
+use std::fmt::Formatter;
+
 use bevy::pbr::NotShadowCaster;
 use bevy::prelude::*;
 use bevy::utils::hashbrown::HashMap;
@@ -84,6 +87,12 @@ pub struct TilePos {
 impl TilePos {
     pub fn new(x: u32, y: u32) -> Self {
         TilePos { x, y }
+    }
+}
+
+impl fmt::Display for TilePos {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}|{}", self.x, self.y)
     }
 }
 
