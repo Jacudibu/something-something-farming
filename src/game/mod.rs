@@ -8,6 +8,7 @@ use player::PlayerAction;
 use crate::game::camera::CameraPlugin;
 use crate::game::drops::ItemPickupPlugin;
 use crate::game::interaction::InteractionPlugin;
+use crate::game::light::LightPlugin;
 use crate::game::tile_updater::TileUpdaterPlugin;
 use crate::game::tilemap::GameMapPlugin;
 use crate::game::ui::UiPlugin;
@@ -22,6 +23,7 @@ mod drops;
 pub mod interaction;
 pub(crate) mod inventory;
 pub mod item_id;
+mod light;
 pub mod map_pos;
 pub mod player;
 pub mod simulation_time;
@@ -46,6 +48,7 @@ impl Plugin for GamePlugin {
             .add_plugins(WorldDataPlugin)
             .add_plugins(GameMapPlugin)
             .add_plugins(CameraPlugin)
+            .add_plugins(LightPlugin)
             .add_plugins(InteractionPlugin)
             .add_plugins(UiPlugin)
             .add_plugins(TileUpdaterPlugin)

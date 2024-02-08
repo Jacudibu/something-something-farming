@@ -1,5 +1,4 @@
 use bevy::ecs::query::QuerySingleError;
-use bevy::pbr::CascadeShadowConfigBuilder;
 use bevy::prelude::*;
 use bevy::render::camera::ScalingMode;
 use bevy_basic_camera::CameraControllerPlugin;
@@ -13,7 +12,6 @@ use leafwing_input_manager::prelude::UserInput;
 use leafwing_input_manager::user_input::InputKind;
 use leafwing_input_manager::{Actionlike, InputManagerBundle};
 
-use crate::game::CursorPos;
 use crate::prelude::{GameState, MouseCursorOverUiState, TileRaycastSet};
 
 const SPEED: f32 = 50.0;
@@ -53,32 +51,6 @@ pub enum CameraAction {
 const CAMERA_OFFSET_TO_PLAYER: Vec3 = Vec3::new(0.0, 16.0, 20.0);
 
 fn init(mut commands: Commands) {
-    // FIXME: Once we figure things out, Global Lights should be spawned in their own plugin
-
-    // Simple minded ez light rotations
-    //  X    Y
-    // -1.0  1 Morning
-    // -1.2  0 Noon
-    // -1.0 -1 Evening
-    commands.spawn((
-        Name::new("Directional Light"),
-        DirectionalLightBundle {
-            directional_light: DirectionalLight {
-                shadows_enabled: true,
-                ..default()
-            },
-            // TODO: Figure out some good looking values
-            cascade_shadow_config: CascadeShadowConfigBuilder {
-                first_cascade_far_bound: 20.0,
-                minimum_distance: 1.0,
-                ..default()
-            }
-            .build(),
-            transform: Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, 5.7, 0.3, 0.0)),
-            ..default()
-        },
-    ));
-
     commands.spawn((
         Name::new("Camera"),
         Camera3dBundle {
