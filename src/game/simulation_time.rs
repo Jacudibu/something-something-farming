@@ -95,9 +95,9 @@ impl SimulationDate {
         remaining_seconds -= minute * SECONDS_PER_MINUTE;
 
         SimulationDate {
-            year: year as u32,
-            month: month as u8,
-            day: day as u8,
+            year: 1 + year as u32,
+            month: 1 + month as u8,
+            day: 1 + day as u8,
             hour: hour as u8,
             minute: minute as u8,
             second: remaining_seconds as u8,

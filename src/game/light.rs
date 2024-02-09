@@ -52,6 +52,7 @@ fn update_sun_rotation(
     };
 
     // TODO: Change color depending on t.
+    // TODO: Factor in Solstice & Equinox at month start
 
     let t =
         1.0 - (simulation_date.hour as f32 / 24.0 + simulation_date.minute as f32 / (60.0 * 24.0));

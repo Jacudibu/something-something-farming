@@ -9,7 +9,9 @@ use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use crate::load::AllCrops;
 use crate::prelude::chunk_data::ChunkData;
 use crate::prelude::tile_cursor::TileCursor;
-use crate::prelude::{ActiveTool, GameState, Inventory, MapPos, SimulationTime, WorldData};
+use crate::prelude::{
+    ActiveTool, GameState, Inventory, MapPos, SimulationDate, SimulationTime, WorldData,
+};
 
 pub struct UiPlugin;
 impl Plugin for UiPlugin {
@@ -53,6 +55,7 @@ fn ui_system(
     world_data: Res<WorldData>,
     active_tool: Res<ActiveTool>,
     simulation_time: Res<SimulationTime>,
+    simulation_date: Res<SimulationDate>,
     all_crops: Res<AllCrops>,
     inventories: Query<(&Name, &Inventory)>,
 ) {
@@ -84,6 +87,23 @@ fn ui_system(
         .anchor(Align2::LEFT_BOTTOM, egui::Vec2::new(0.0, 0.0))
         .fixed_pos(Pos2::new(5.0, 5.0))
         .show(contexts.ctx_mut(), |ui| ui.label(active_tool.to_string()));
+
+    egui::Window::new("Time & Date")
+        .title_bar(false)
+        .collapsible(false)
+        .resizable(false)
+        .anchor(Align2::CENTER_TOP, egui::Vec2::new(0.0, 0.0))
+        .fixed_pos(Pos2::new(0.0, 5.0))
+        .show(contexts.ctx_mut(), |ui| {
+            ui.label(format!(
+                "{:0>2}.{:0>2} (Year {}) | {:0>2}:{:0>2}",
+                simulation_date.day,
+                simulation_date.month,
+                simulation_date.year,
+                simulation_date.hour,
+                simulation_date.minute,
+            ))
+        });
 
     if !inventories.is_empty() {
         egui::Window::new("Inventories")
