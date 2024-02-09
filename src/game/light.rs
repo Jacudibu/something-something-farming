@@ -20,7 +20,7 @@ fn init(mut commands: Commands) {
     // -1.2  0 Noon
     // -1.0 -1 Evening
     commands.spawn((
-        Name::new("Directional Light"),
+        Name::new("Sun"),
         DirectionalLightBundle {
             directional_light: DirectionalLight {
                 shadows_enabled: true,
