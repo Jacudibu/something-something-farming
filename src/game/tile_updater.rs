@@ -31,7 +31,7 @@ fn update_tiles(
     // Step #2: Collect all items which request an update in an ordered list, listen to events to add & remove them as needed
 
     if let Some(next) = find_next_tile_to_update(&world_data) {
-        if next.update_at < simulation_time.elapsed_seconds() {
+        if next.update_at < simulation_time.elapsed_seconds_f32() {
             // TODO: Update
             let crop = world_data
                 .chunks
@@ -45,7 +45,7 @@ fn update_tiles(
             crop.stage += 1;
             if crop.stage < crop_definition.stages - 1 {
                 crop.next_stage_at = Some(
-                    simulation_time.elapsed_seconds()
+                    simulation_time.elapsed_seconds_f32()
                         + crop_definition.growth_time_per_stage as f32,
                 );
             } else {

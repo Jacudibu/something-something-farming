@@ -21,7 +21,7 @@ impl CropData {
         Self {
             crop_id: from.id.clone(),
             next_stage_at: Some(
-                simulation_time.elapsed_seconds() + from.growth_time_per_stage as f32,
+                simulation_time.elapsed_seconds_f32() + from.growth_time_per_stage as f32,
             ),
             stage: 0,
         }

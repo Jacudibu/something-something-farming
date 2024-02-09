@@ -132,7 +132,7 @@ fn map_data_for_position(
         if let Some(next_stage) = crop.next_stage_at {
             lines.push(format!(
                 "  next: {:.1}",
-                next_stage - simulation_time.elapsed_seconds()
+                next_stage - simulation_time.elapsed_seconds_f32()
             ));
         }
     }
