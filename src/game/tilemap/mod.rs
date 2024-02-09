@@ -12,6 +12,7 @@ use crate::game::tilemap::update_tile_event::UpdateTileEventPlugin;
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::loaded_chunks::LoadedChunkData;
 use crate::prelude::tile_cursor::TileCursorPlugin;
+use crate::prelude::tile_grid_gizmo::TileGridGizmo;
 use crate::prelude::{
     ChunkPos, DebugMaterials, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX,
 };
@@ -21,6 +22,7 @@ pub(crate) mod chunk_identifier;
 pub(crate) mod helpers;
 pub(crate) mod loaded_chunks;
 pub(crate) mod tile_cursor;
+pub mod tile_grid_gizmo;
 pub(crate) mod update_tile_event;
 
 const RENDER_CHUNK_SIZE: UVec2 = UVec2 {
@@ -36,6 +38,7 @@ impl Plugin for GameMapPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(DeferredRaycastingPlugin::<TileRaycastSet>::default())
             .add_plugins(TileCursorPlugin)
+            .add_plugins(TileGridGizmo)
             .add_plugins(UpdateTileEventPlugin)
             .add_plugins(LoadedChunkPlugin)
             .add_systems(OnEnter(GameState::Playing), spawn_testing_chunks);

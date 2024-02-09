@@ -44,7 +44,6 @@ fn initialize_player(
             image: assets.debug_character.clone(),
             transform: Transform::from_xyz(0.0, 0.0, 0.0),
             pivot: SPRITE_DEFAULT_PIVOT,
-            alpha_mode: AlphaMode::Blend,
             pixels_per_metre: SPRITE_PIXELS_PER_METER,
             ..default()
         }
