@@ -1,12 +1,18 @@
 use std::time::Duration;
 
 use bevy::app::{App, Plugin};
-use bevy::prelude::{in_state, First, IntoSystemConfigs, Res, ResMut, Resource, States, Time};
+use bevy::ecs::reflect::ReflectResource;
+use bevy::prelude::{
+    in_state, First, IntoSystemConfigs, Reflect, Res, ResMut, Resource, States, Time,
+};
+use bevy_inspector_egui::prelude::{InspectorOptions, ReflectInspectorOptions};
 
 pub struct SimulationTimePlugin;
 impl Plugin for SimulationTimePlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(SimulationTime::default())
+            .register_type::<SimulationTime>()
+            .insert_resource(SimulationDate::default())
             .add_state::<SimulationState>()
             .add_systems(First, update.run_if(in_state(SimulationState::Running)));
     }
@@ -19,26 +25,32 @@ enum SimulationState {
     Paused,
 }
 
-fn update(mut simulation: ResMut<SimulationTime>, time: Res<Time>) {
-    simulation.advance(time.delta());
+fn update(
+    mut simulation_time: ResMut<SimulationTime>,
+    mut date: ResMut<SimulationDate>,
+    real_time: Res<Time>,
+) {
+    simulation_time.advance(real_time.delta());
+    *date = SimulationDate::from_time(&simulation_time);
 }
 
-#[derive(Resource)]
+#[derive(Resource, Reflect, InspectorOptions)]
+#[reflect(Resource, InspectorOptions)]
 pub struct SimulationTime {
-    date: SimulationDate,
     elapsed: Duration,
     delta: Duration,
     delta_seconds: f32,
     scale: f32,
 }
 
+#[derive(Resource)]
 pub struct SimulationDate {
-    year: u32,
-    month: u8,
-    day: u8,
-    hour: u8,
-    minute: u8,
-    second: u8,
+    pub year: u32,
+    pub month: u8,
+    pub day: u8,
+    pub hour: u8,
+    pub minute: u8,
+    pub second: u8,
 }
 
 impl Default for SimulationDate {
@@ -56,6 +68,7 @@ impl Default for SimulationDate {
 
 const DAYS_PER_MONTH: u64 = 28;
 const MONTHS_PER_YEAR: u64 = 4;
+const START_OFFSET: u64 = SECONDS_PER_HOUR * 8;
 
 const SECONDS_PER_MINUTE: u64 = 60;
 const SECONDS_PER_HOUR: u64 = SECONDS_PER_MINUTE * 60;
@@ -65,7 +78,7 @@ const SECONDS_PER_YEAR: u64 = SECONDS_PER_MONTH * MONTHS_PER_YEAR;
 
 impl SimulationDate {
     fn from_time(time: &SimulationTime) -> Self {
-        let mut remaining_seconds = time.elapsed.as_secs();
+        let mut remaining_seconds = time.elapsed.as_secs() + START_OFFSET;
         let year = remaining_seconds / SECONDS_PER_YEAR;
         remaining_seconds -= year * SECONDS_PER_YEAR;
 
@@ -99,7 +112,6 @@ impl Default for SimulationTime {
             elapsed: Duration::ZERO,
             delta_seconds: 0.0,
             scale: 1.0,
-            date: SimulationDate::default(),
         }
     }
 }
@@ -110,8 +122,6 @@ impl SimulationTime {
         self.delta_seconds = delta.as_secs_f32();
 
         self.elapsed += self.delta;
-
-        self.date = SimulationDate::from_time(&self);
     }
 
     #[inline]
