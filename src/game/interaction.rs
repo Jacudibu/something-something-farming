@@ -5,14 +5,15 @@ use leafwing_input_manager::action_state::ActionState;
 use crate::game::drops::ItemDrop;
 use crate::game::map_pos::MapPos;
 use crate::game::player::PlayerAction;
+use crate::game::walls::build_wall;
 use crate::prelude::chunk_data::CropData;
 use crate::prelude::item_id::{CropId, ItemId};
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::{
-    ActiveTool, MouseCursorOverUiState, SimulationTime, TilePos, ToolId, WorldData,
-    SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER,
+    ActiveTool, DebugMaterials, DebugMeshes, MouseCursorOverUiState, SimulationTime, TilePos,
+    ToolId, WorldData, SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER,
 };
 use crate::prelude::{AllCrops, GameState};
 
@@ -210,11 +211,27 @@ fn process_tile_interactions(
     simulation_time: Res<SimulationTime>,
     all_crops: Res<AllCrops>,
     mut sprite_params: Sprite3dParams,
+    debug_materials: Res<DebugMaterials>,
+    debug_meshes: Res<DebugMeshes>,
 ) {
     for event in tile_interaction_event.read() {
         match event.used_tool {
             ActiveTool::None => {}
-            ActiveTool::Wall => {}
+            ActiveTool::Wall => {
+                // TODO: Drag Planning
+                // TODO: -> Cancel Button
+
+                // TODO: Persist in world_data
+                // TODO: Determine edge location
+                // TODO: Spawn Mesh
+                // TODO: Event - Plant Seed
+                // TODO: Move this in an event
+                if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
+                    if let Some(tile) = loaded_data.get_tile(event.pos.tile.x, event.pos.tile.y) {
+                        build_wall(&mut commands, tile, &debug_meshes, &debug_materials);
+                    }
+                }
+            }
             ActiveTool::Item(item) => {
                 match item {
                     ItemId::Crop { .. } => {

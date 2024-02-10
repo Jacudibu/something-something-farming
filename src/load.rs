@@ -16,7 +16,8 @@ impl Plugin for LoadingPlugin {
                 .load_collection::<DebugSounds>()
                 .load_collection::<DebugTexturesForMaterials>()
                 .load_collection::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>()
-                .init_resource::<DebugMaterials>(),
+                .init_resource::<DebugMaterials>()
+                .init_resource::<DebugMeshes>(),
         )
             .add_systems(OnExit(GameState::Loading), insert_crop_resource);
     }
@@ -43,9 +44,34 @@ struct DebugTexturesForMaterials {
 }
 
 #[derive(Resource, AssetCollection)]
+pub struct DebugMeshes {
+    pub tile: Handle<Mesh>,
+    pub wall: Handle<Mesh>,
+    pub wall_top: Handle<Mesh>,
+    pub wall_side: Handle<Mesh>,
+}
+
+impl FromWorld for DebugMeshes {
+    fn from_world(world: &mut World) -> Self {
+        let cell = world.cell();
+        let mut mesh_assets = cell
+            .get_resource_mut::<Assets<Mesh>>()
+            .expect("Failed to get Assets<Mesh>");
+
+        DebugMeshes {
+            tile: mesh_assets.add(shape::Plane::from_size(1.0).into()),
+            wall: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 2.0)).into()),
+            wall_top: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 0.1)).into()),
+            wall_side: mesh_assets.add(shape::Quad::new(Vec2::new(0.1, 2.0)).into()),
+        }
+    }
+}
+
+#[derive(Resource, AssetCollection)]
 pub struct DebugMaterials {
     pub grass: Handle<StandardMaterial>,
     pub tilled: Handle<StandardMaterial>,
+    pub wall: Handle<StandardMaterial>,
 }
 
 impl FromWorld for DebugMaterials {
@@ -68,6 +94,12 @@ impl FromWorld for DebugMaterials {
             tilled: standard_materials.add(StandardMaterial {
                 base_color_texture: Some(debug_textures.tilled.clone()),
                 reflectance: 0.0,
+                ..default()
+            }),
+            wall: standard_materials.add(StandardMaterial {
+                base_color: Color::rgb(0.8, 0.8, 0.8),
+                reflectance: 0.3,
+                perceptual_roughness: 0.7,
                 ..default()
             }),
         }

@@ -14,7 +14,7 @@ use crate::prelude::loaded_chunks::LoadedChunkData;
 use crate::prelude::tile_cursor::TileCursorPlugin;
 use crate::prelude::tile_grid_gizmo::TileGridGizmo;
 use crate::prelude::{
-    ChunkPos, DebugMaterials, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX,
+    ChunkPos, DebugMaterials, DebugMeshes, WorldData, CHUNK_SIZE, DEBUG_WORLD_SIZE_MIN_AND_MAX,
 };
 use crate::GameState;
 
@@ -49,12 +49,12 @@ fn spawn_testing_chunks(
     mut commands: Commands,
     world_data: Res<WorldData>,
     mut loaded_chunks: ResMut<LoadedChunks>,
-    mut meshes: ResMut<Assets<Mesh>>,
+    meshes: Res<DebugMeshes>,
     materials: Res<DebugMaterials>,
 ) {
     // FIXME: These should be created in the loading process
     // FIXME: Materials should use the texture from the spritesheet.
-    let tile_mesh = meshes.add(shape::Plane::from_size(1.0).into());
+    let tile_mesh = meshes.tile.clone();
     let tile_material = materials.grass.clone();
 
     for x in -DEBUG_WORLD_SIZE_MIN_AND_MAX..DEBUG_WORLD_SIZE_MIN_AND_MAX {

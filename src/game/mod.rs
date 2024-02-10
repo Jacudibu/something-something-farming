@@ -30,6 +30,7 @@ pub mod simulation_time;
 pub mod tile_updater;
 pub mod tilemap;
 pub mod ui;
+mod walls;
 pub mod world_data;
 
 pub const CHUNK_SIZE: usize = 32;
