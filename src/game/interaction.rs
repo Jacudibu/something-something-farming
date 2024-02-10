@@ -67,28 +67,30 @@ fn select_active_tool(
     }
     let action_state = action_state.unwrap();
     if action_state.just_pressed(PlayerAction::Hotbar1) {
-        active_tool.item = Some(ItemId::Tool {
+        *active_tool = ActiveTool::Item(ItemId::Tool {
             tool_id: ToolId::Hoe,
         });
     } else if action_state.just_pressed(PlayerAction::Hotbar2) {
-        active_tool.item = Some(ItemId::Tool {
+        *active_tool = ActiveTool::Item(ItemId::Tool {
             tool_id: ToolId::Pickaxe,
         });
     } else if action_state.just_pressed(PlayerAction::Hotbar3) {
-        active_tool.item = Some(ItemId::Tool {
+        *active_tool = ActiveTool::Item(ItemId::Tool {
             tool_id: ToolId::Scythe,
         });
     } else if action_state.just_pressed(PlayerAction::Hotbar4) {
-        active_tool.item = Some(ItemId::Seed { crop_id: CropId(0) });
+        *active_tool = ActiveTool::Item(ItemId::Crop { crop_id: CropId(0) });
     } else if action_state.just_pressed(PlayerAction::Hotbar5) {
-        active_tool.item = Some(ItemId::Seed { crop_id: CropId(1) });
+        *active_tool = ActiveTool::Item(ItemId::Crop { crop_id: CropId(1) });
+    } else if action_state.just_pressed(PlayerAction::Hotbar6) {
+        *active_tool = ActiveTool::Wall;
     }
 }
 
 #[derive(Event, Debug)]
 struct TileInteractionEvent {
     pub pos: MapPos,
-    pub used_item: Option<ItemId>,
+    pub used_tool: ActiveTool,
 }
 
 #[derive(Event, Debug)]
@@ -138,7 +140,7 @@ fn detect_tile_interactions(
         // TODO: in case we ever have regularly happening AoE interaction events, batch_send will be more performant
         tile_interaction_events.send(TileInteractionEvent {
             pos: cursor.pos.clone(),
-            used_item: active_tool.item.clone(),
+            used_tool: active_tool.clone(),
         });
     }
 }
@@ -173,8 +175,8 @@ fn process_harvested_crops(
     all_crops: Res<AllCrops>,
 ) {
     for event in harvested_crop_events.read() {
-        // TODO: Consider bunching up nearby same-item drops into one bigger drop.
-        // TODO: If chunk is not loaded, just add the item to whomever caused the interaction immediately if nearby
+        // TODO: Consider bunching up nearby same-Item drops into one bigger drop.
+        // TODO: If chunk is not loaded, just add the Item to whomever caused the interaction immediately if nearby
         // TODO: (premature) Drops should probably be persisted inside the chunk they're in and get (de-)spawned accordingly, otherwise 1000+ drops somewhere in the middle of nowhere might cause performance issues?
         // Also, if an NPC with Inventory walks through that chunk (maybe a bit further away from players than chunk loading distance so they won't notice as easily), they automagically pick it up?
 
@@ -210,11 +212,13 @@ fn process_tile_interactions(
     mut sprite_params: Sprite3dParams,
 ) {
     for event in tile_interaction_event.read() {
-        match event.used_item {
-            Some(item) => {
+        match event.used_tool {
+            ActiveTool::None => {}
+            ActiveTool::Wall => {}
+            ActiveTool::Item(item) => {
                 match item {
                     ItemId::Crop { .. } => {
-                        // ignore. Might wanna eat or give the item to entities on that tile in the future.
+                        // ignore. Might wanna eat or give the Item to entities on that tile in the future.
                     }
                     ItemId::Seed { crop_id } => {
                         let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
@@ -317,9 +321,6 @@ fn process_tile_interactions(
                         }
                     },
                 }
-            }
-            None => {
-                // Do nothing for now.
             }
         }
     }

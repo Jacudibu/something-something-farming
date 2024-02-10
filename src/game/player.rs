@@ -117,6 +117,11 @@ pub enum PlayerAction {
     Hotbar3,
     Hotbar4,
     Hotbar5,
+    Hotbar6,
+    Hotbar7,
+    Hotbar8,
+    Hotbar9,
+    Hotbar0,
     ToggleDebugOverlay,
 }
 
@@ -143,6 +148,11 @@ pub fn default_input_map() -> InputMap<PlayerAction> {
     input_map.insert(KeyCode::Key3, PlayerAction::Hotbar3);
     input_map.insert(KeyCode::Key4, PlayerAction::Hotbar4);
     input_map.insert(KeyCode::Key5, PlayerAction::Hotbar5);
+    input_map.insert(KeyCode::Key6, PlayerAction::Hotbar6);
+    input_map.insert(KeyCode::Key7, PlayerAction::Hotbar7);
+    input_map.insert(KeyCode::Key8, PlayerAction::Hotbar8);
+    input_map.insert(KeyCode::Key9, PlayerAction::Hotbar9);
+    input_map.insert(KeyCode::Key0, PlayerAction::Hotbar0);
     input_map.insert(KeyCode::F2, PlayerAction::ToggleDebugOverlay);
 
     input_map.insert(KeyCode::Up, PlayerAction::Up);
