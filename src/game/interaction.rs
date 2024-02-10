@@ -79,9 +79,9 @@ fn select_active_tool(
             tool_id: ToolId::Scythe,
         });
     } else if action_state.just_pressed(PlayerAction::Hotbar4) {
-        *active_tool = ActiveTool::Item(ItemId::Crop { crop_id: CropId(0) });
+        *active_tool = ActiveTool::Item(ItemId::Seed { crop_id: CropId(0) });
     } else if action_state.just_pressed(PlayerAction::Hotbar5) {
-        *active_tool = ActiveTool::Item(ItemId::Crop { crop_id: CropId(1) });
+        *active_tool = ActiveTool::Item(ItemId::Seed { crop_id: CropId(1) });
     } else if action_state.just_pressed(PlayerAction::Hotbar6) {
         *active_tool = ActiveTool::Wall;
     }
