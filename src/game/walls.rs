@@ -1,5 +1,5 @@
 use bevy::core::Name;
-use bevy::math::Vec3;
+use bevy::math::{Quat, Vec3};
 use bevy::prelude::{
     default, BuildChildren, Commands, Component, Entity, PbrBundle, SpatialBundle, Transform,
 };
@@ -40,7 +40,11 @@ pub fn build_wall(
         .spawn((
             Name::new("Inner"),
             (PbrBundle {
-                transform: Transform::from_translation(Vec3::new(0.0, 0.0, TILE_EDGE - WALL_WIDTH)),
+                transform: Transform {
+                    translation: Vec3::new(0.0, 0.0, TILE_EDGE - WALL_WIDTH),
+                    rotation: Quat::from_rotation_y(std::f32::consts::PI),
+                    ..default()
+                },
                 mesh: debug_meshes.wall.clone(),
                 material: debug_materials.wall.clone(),
                 ..default()
@@ -52,11 +56,11 @@ pub fn build_wall(
         .spawn((
             Name::new("Top"),
             (PbrBundle {
-                transform: Transform::from_translation(Vec3::new(
-                    0.0,
-                    2.0,
-                    TILE_EDGE - WALL_WIDTH + WALL_WIDTH * 0.5,
-                )),
+                transform: Transform {
+                    translation: Vec3::new(0.0, 1.0, TILE_EDGE - WALL_WIDTH + WALL_WIDTH * 0.5),
+                    rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
+                    ..default()
+                },
                 mesh: debug_meshes.wall_top.clone(),
                 material: debug_materials.wall.clone(),
                 ..default()
