@@ -8,7 +8,7 @@ use bevy_sprite3d::{Sprite3d, Sprite3dParams};
 
 use crate::prelude::chunk_identifier::ChunkIdentifier;
 use crate::prelude::{
-    MapPos, MouseCursorOverUiState, TilePos, CHUNK_SIZE, SPRITE_PIXELS_PER_METER,
+    CardinalDirection, MapPos, MouseCursorOverUiState, TilePos, CHUNK_SIZE, SPRITE_PIXELS_PER_METER,
 };
 use crate::prelude::{SpriteAssets, TileRaycastSet};
 use crate::GameState;
@@ -29,6 +29,7 @@ impl Plugin for TileCursorPlugin {
 #[derive(Component, Debug)]
 pub struct TileCursor {
     pub pos: MapPos,
+    pub tile_edge: CardinalDirection,
 }
 
 impl TileCursor {
@@ -40,6 +41,68 @@ impl TileCursor {
     }
 }
 
+fn intersection_to_tile_edge(intersection_pos: Vec3) -> CardinalDirection {
+    /*
+         Turn the quad into 4 triangles and figure out which outer edge is the closest
+               ______
+         0    | \N /|
+       z |    |W X E|
+         1    |/ S\ |
+              ‾‾‾‾‾‾
+           0 ------- 1
+                x
+    */
+
+    const TILE_ORIGIN_OFFSET: f32 = 0.5; // Tile origin is at [0.5,0.5]
+
+    let x = {
+        let x = (intersection_pos.x + TILE_ORIGIN_OFFSET).fract();
+        if x < 0.0 {
+            x + 1.0
+        } else {
+            x
+        }
+    };
+    let z = {
+        let z = (intersection_pos.z + TILE_ORIGIN_OFFSET).fract();
+        if z < 0.0 {
+            z + 1.0
+        } else {
+            z
+        }
+    };
+
+    return if x < 0.5 {
+        if z < 0.5 {
+            if x < z {
+                CardinalDirection::West
+            } else {
+                CardinalDirection::North
+            }
+        } else {
+            if x + z > 1.0 {
+                CardinalDirection::South
+            } else {
+                CardinalDirection::West
+            }
+        }
+    } else {
+        if z < 0.5 {
+            if x + z > 1.0 {
+                CardinalDirection::East
+            } else {
+                CardinalDirection::North
+            }
+        } else {
+            if x < z {
+                CardinalDirection::South
+            } else {
+                CardinalDirection::East
+            }
+        }
+    };
+}
+
 fn update_tile_cursor(
     mut commands: Commands,
     mut sprite_params: Sprite3dParams,
@@ -49,16 +112,20 @@ fn update_tile_cursor(
     chunk_parents: Query<&ChunkIdentifier>,
     tile_cursor_q: Query<(Entity, &TileCursor)>,
 ) {
-    let mut this_frame_selection: Vec<MapPos> = Vec::new();
+    // TODO: Reconsider having only one "Main Cursor" (mouse) - All other cursors should be something else and spawned from that main cursor
+    let mut this_frame_selection: Vec<(MapPos, CardinalDirection)> = Vec::new();
 
     for source in tile_ray.iter() {
         if let Some(intersections) = source.get_intersections() {
-            for (entity, _) in intersections {
+            for (entity, intersection) in intersections {
+                let direction = intersection_to_tile_edge(intersection.position());
                 match ray_targets.get(entity.clone()) {
                     Ok((tile_pos, parent)) => {
                         let chunk_identifier = chunk_parents.get(parent.get()).unwrap();
-                        this_frame_selection
-                            .push(MapPos::new(chunk_identifier.position, tile_pos.clone()));
+                        this_frame_selection.push((
+                            MapPos::new(chunk_identifier.position, tile_pos.clone()),
+                            direction,
+                        ));
                     }
                     Err(e) => {
                         error!("Unexpected error when raycasting for tile cursor: {}", e)
@@ -73,17 +140,18 @@ fn update_tile_cursor(
     }
 
     let mut already_existing_cursors: Vec<MapPos> = Vec::new();
-    for (entity, mut cursor) in tile_cursor_q.iter() {
-        if this_frame_selection.contains(&cursor.pos) {
+    for (entity, cursor) in tile_cursor_q.iter() {
+        if this_frame_selection.contains(&(cursor.pos, cursor.tile_edge)) {
             already_existing_cursors.push(cursor.pos);
         } else {
+            // TODO: Don't despawn if
             commands.entity(entity).despawn();
         }
     }
 
-    for selected_tile in this_frame_selection.iter() {
+    for (selected_tile, tile_edge) in this_frame_selection.iter() {
         if already_existing_cursors.contains(selected_tile) {
-            // Do nothing
+            // Update edge
         } else {
             commands.spawn((
                 Name::new(format!(
@@ -104,6 +172,7 @@ fn update_tile_cursor(
                 .bundle(&mut sprite_params),
                 TileCursor {
                     pos: selected_tile.clone(),
+                    tile_edge: tile_edge.clone(),
                 },
                 NotShadowCaster,
             ));

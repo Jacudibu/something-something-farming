@@ -5,3 +5,11 @@ pub(crate) use {
     crate::game::simulation_time::SimulationTime, crate::game::tilemap::*, crate::game::ui::*,
     crate::game::world_data::*, crate::game::*, crate::load::*, crate::GameState,
 };
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum CardinalDirection {
+    North,
+    East,
+    South,
+    West,
+}
