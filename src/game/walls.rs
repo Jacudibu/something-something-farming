@@ -9,7 +9,29 @@ use crate::prelude::{DebugMaterials, DebugMeshes};
 const TILE_EDGE: f32 = 0.5;
 const WALL_WIDTH: f32 = 0.1;
 
+pub fn build_wall(
+    commands: &mut Commands,
+    tile: Entity,
+    debug_meshes: &DebugMeshes,
+    debug_materials: &DebugMaterials,
+) -> Entity {
+    return commands
+        .spawn((
+            Name::new("Wall"),
+            PbrBundle {
+                mesh: debug_meshes.wall.clone(),
+                material: debug_materials.wall.clone(),
+                transform: Transform::from_xyz(0.0, 1.0, TILE_EDGE - WALL_WIDTH * 0.5),
+                ..default()
+            },
+        ))
+        .set_parent(tile)
+        .id();
+}
+
+// TODO: Re-Test if this segmented approach is more performant once we combine meshes.
 #[derive(Component)]
+#[allow(dead_code)]
 pub struct WallParent {
     outer: Entity,
     inner: Entity,
@@ -18,7 +40,8 @@ pub struct WallParent {
     right: Option<Entity>,
 }
 
-pub fn build_wall(
+#[allow(dead_code)]
+pub fn build_segmented_wall(
     commands: &mut Commands,
     tile: Entity,
     debug_meshes: &DebugMeshes,
@@ -29,7 +52,7 @@ pub fn build_wall(
             Name::new("Outer"),
             (PbrBundle {
                 transform: Transform::from_translation(Vec3::new(0.0, 0.0, TILE_EDGE)),
-                mesh: debug_meshes.wall.clone(),
+                mesh: debug_meshes.wall_segment_front.clone(),
                 material: debug_materials.wall.clone(),
                 ..default()
             }),
@@ -45,7 +68,7 @@ pub fn build_wall(
                     rotation: Quat::from_rotation_y(std::f32::consts::PI),
                     ..default()
                 },
-                mesh: debug_meshes.wall.clone(),
+                mesh: debug_meshes.wall_segment_front.clone(),
                 material: debug_materials.wall.clone(),
                 ..default()
             }),
@@ -61,7 +84,7 @@ pub fn build_wall(
                     rotation: Quat::from_rotation_x(-std::f32::consts::FRAC_PI_2),
                     ..default()
                 },
-                mesh: debug_meshes.wall_top.clone(),
+                mesh: debug_meshes.wall_segment_top.clone(),
                 material: debug_materials.wall.clone(),
                 ..default()
             }),

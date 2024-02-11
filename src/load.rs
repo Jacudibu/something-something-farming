@@ -47,8 +47,9 @@ struct DebugTexturesForMaterials {
 pub struct DebugMeshes {
     pub tile: Handle<Mesh>,
     pub wall: Handle<Mesh>,
-    pub wall_top: Handle<Mesh>,
-    pub wall_side: Handle<Mesh>,
+    pub wall_segment_front: Handle<Mesh>,
+    pub wall_segment_top: Handle<Mesh>,
+    pub wall_segment_side: Handle<Mesh>,
 }
 
 impl FromWorld for DebugMeshes {
@@ -60,9 +61,10 @@ impl FromWorld for DebugMeshes {
 
         DebugMeshes {
             tile: mesh_assets.add(shape::Plane::from_size(1.0).into()),
-            wall: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 2.0)).into()),
-            wall_top: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 0.1)).into()),
-            wall_side: mesh_assets.add(shape::Quad::new(Vec2::new(0.1, 2.0)).into()),
+            wall: mesh_assets.add(shape::Box::new(1.0, 2.0, 0.1).into()),
+            wall_segment_front: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 2.0)).into()),
+            wall_segment_top: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 0.1)).into()),
+            wall_segment_side: mesh_assets.add(shape::Quad::new(Vec2::new(0.1, 2.0)).into()),
         }
     }
 }
