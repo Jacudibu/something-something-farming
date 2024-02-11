@@ -32,8 +32,14 @@ impl ChunkData {
     pub fn at(&self, x: u32, y: u32) -> &TileData {
         &self.tiles[x as usize + y as usize * CHUNK_SIZE]
     }
+    pub fn at_mut(&mut self, x: u32, y: u32) -> &mut TileData {
+        &mut self.tiles[x as usize + y as usize * CHUNK_SIZE]
+    }
     pub fn at_pos(&self, pos: &TilePos) -> &TileData {
         self.at(pos.x, pos.y)
+    }
+    pub fn at_pos_mut(&mut self, pos: &TilePos) -> &mut TileData {
+        self.at_mut(pos.x, pos.y)
     }
     pub fn set_at(&mut self, x: u32, y: u32, value: bool) {
         self.tiles[x as usize + y as usize * CHUNK_SIZE].is_tilled = value;

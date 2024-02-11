@@ -221,13 +221,17 @@ fn process_tile_interactions(
             ActiveTool::None => {}
             ActiveTool::Wall => {
                 // TODO: Drag Planning
-                // TODO: -> Cancel Button
+                // TODO: -> Ability to cancel placement
 
-                // TODO: Persist in world_data
-                // TODO: Determine edge location
-                // TODO: Spawn Mesh
-                // TODO: Event - Plant Seed
-                // TODO: Move this in an event
+                let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
+                let tile = chunk.at_pos_mut(&event.pos.tile);
+                if tile.walls.at(event.tile_edge) {
+                    continue;
+                }
+
+                tile.walls.set_at(event.tile_edge, true);
+
+                // TODO: Move graphic this in an event
                 if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
                     if let Some(tile) = loaded_data.get_tile(event.pos.tile.x, event.pos.tile.y) {
                         build_wall(
