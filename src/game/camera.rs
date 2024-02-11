@@ -35,6 +35,10 @@ impl Plugin for CameraPlugin {
 
 #[derive(Component)]
 pub struct CameraFocus {}
+#[derive(Component)]
+pub struct MainCameraParent {}
+#[derive(Component)]
+pub struct MainCamera {}
 
 #[derive(Actionlike, PartialEq, Eq, Hash, Clone, Copy, Debug, Reflect)]
 pub enum CameraAction {
@@ -46,44 +50,55 @@ pub enum CameraAction {
     Down,
     Left,
     Right,
+    RotateLeft,
+    RotateRight,
 }
 
 const CAMERA_OFFSET_TO_PLAYER: Vec3 = Vec3::new(0.0, 16.0, 20.0);
 
 fn init(mut commands: Commands) {
-    commands.spawn((
-        Name::new("Camera"),
-        Camera3dBundle {
-            transform: Transform {
-                translation: CAMERA_OFFSET_TO_PLAYER,
-                rotation: Quat::from_rotation_x(-0.65),
+    let main_camera = commands
+        .spawn((
+            Name::new("Main Camera"),
+            MainCamera {},
+            Camera3dBundle {
+                transform: Transform {
+                    translation: CAMERA_OFFSET_TO_PLAYER,
+                    rotation: Quat::from_rotation_x(-0.65),
+                    ..default()
+                },
+                projection: Projection::Orthographic(OrthographicProjection {
+                    scale: 1.0,
+                    scaling_mode: ScalingMode::WindowSize(60.0),
+                    ..default()
+                }),
                 ..default()
             },
-            projection: Projection::Orthographic(OrthographicProjection {
-                scale: 1.0,
-                scaling_mode: ScalingMode::WindowSize(60.0),
+            RaycastSource::<TileRaycastSet>::new_cursor(),
+        ))
+        .id();
+
+    commands
+        .spawn((
+            Name::new("Main Camera Parent"),
+            MainCameraParent {},
+            SpatialBundle::default(),
+            InputManagerBundle::<CameraAction> {
+                input_map: default_input_map_camera(),
                 ..default()
-            }),
-            ..default()
-        },
-        RaycastSource::<TileRaycastSet>::new_cursor(),
-        InputManagerBundle::<CameraAction> {
-            input_map: default_input_map_camera(),
-            ..default()
-        },
-    ));
+            },
+        ))
+        .add_child(main_camera);
 }
 
 fn move_camera(
     time: Res<Time>,
-    camera_focus: Query<&Transform, (With<CameraFocus>, Without<Camera>)>,
-    mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<Camera>>,
+    camera_focus: Query<&Transform, (With<CameraFocus>, Without<MainCameraParent>)>,
+    mut camera: Query<(&mut Transform, &ActionState<CameraAction>), With<MainCameraParent>>,
 ) {
     let (mut camera_transform, action_state) = camera.single_mut();
     let delta = match camera_focus.get_single() {
-        Ok(camera_focus) => {
-            camera_focus.translation - camera_transform.translation + CAMERA_OFFSET_TO_PLAYER
-        }
+        Ok(camera_focus) => camera_focus.translation - camera_transform.translation,
         Err(QuerySingleError::NoEntities(_)) => {
             let mut dir;
             if action_state.pressed(CameraAction::Move) {
@@ -133,13 +148,31 @@ fn move_camera(
     };
 
     camera_transform.translation += delta;
+
+    let rotation_dir: Option<f32> = if action_state.pressed(CameraAction::RotateLeft) {
+        Some(-1.0)
+    } else if action_state.pressed(CameraAction::RotateRight) {
+        Some(1.0)
+    } else {
+        None
+    };
+
+    if let Some(rotation_dir) = rotation_dir {
+        camera_transform.rotate_local_y(rotation_dir * time.delta_seconds());
+    }
 }
 
 const MAX_ZOOM: f32 = 4.0;
 const MIN_ZOOM: f32 = 0.5;
 
-fn zoom_camera(mut query: Query<(&mut Projection, &ActionState<CameraAction>), With<Camera>>) {
-    let (projection, action_state) = query.single_mut();
+fn zoom_camera(
+    mut query: Query<(&mut Projection, &Parent), With<MainCamera>>,
+    action_state: Query<&ActionState<CameraAction>>,
+) {
+    let (projection, parent) = query.single_mut();
+    let action_state = action_state
+        .get(parent.get())
+        .expect("Main Camera should always have a parent with action states!");
 
     let Projection::Orthographic(projection) = projection.into_inner() else {
         error!("Zooming isn't yet supported for perspective cameras.");
@@ -196,6 +229,9 @@ fn default_input_map_camera() -> InputMap<CameraAction> {
     input_map.insert(KeyCode::Right, CameraAction::Right);
     input_map.insert(KeyCode::D, CameraAction::Right);
     input_map.insert(GamepadButtonType::DPadRight, CameraAction::Right);
+
+    input_map.insert(KeyCode::Q, CameraAction::RotateLeft);
+    input_map.insert(KeyCode::E, CameraAction::RotateRight);
 
     input_map
 }
