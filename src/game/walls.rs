@@ -1,10 +1,8 @@
 use bevy::core::Name;
-use bevy::log::info;
 use bevy::math::{Quat, Vec3};
 use bevy::prelude::{
     default, BuildChildren, Commands, Component, Entity, PbrBundle, SpatialBundle, Transform,
 };
-use bevy::utils::info;
 
 use crate::prelude::{CardinalDirection, DebugMaterials, DebugMeshes};
 
@@ -18,7 +16,6 @@ pub fn build_wall(
     debug_meshes: &DebugMeshes,
     debug_materials: &DebugMaterials,
 ) -> Entity {
-    info!("placing {:?}", tile_edge);
     return commands
         .spawn((
             Name::new("Wall"),
