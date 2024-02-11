@@ -12,8 +12,8 @@ use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::update_tile_event::UpdateTileEvent;
 use crate::prelude::{
-    ActiveTool, DebugMaterials, DebugMeshes, MouseCursorOverUiState, SimulationTime, TilePos,
-    ToolId, WorldData, SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER,
+    ActiveTool, CardinalDirection, DebugMaterials, DebugMeshes, MouseCursorOverUiState,
+    SimulationTime, TilePos, ToolId, WorldData, SPRITE_DEFAULT_PIVOT, SPRITE_PIXELS_PER_METER,
 };
 use crate::prelude::{AllCrops, GameState};
 
@@ -91,6 +91,7 @@ fn select_active_tool(
 #[derive(Event, Debug)]
 struct TileInteractionEvent {
     pub pos: MapPos,
+    pub tile_edge: CardinalDirection,
     pub used_tool: ActiveTool,
 }
 
@@ -141,6 +142,7 @@ fn detect_tile_interactions(
         // TODO: in case we ever have regularly happening AoE interaction events, batch_send will be more performant
         tile_interaction_events.send(TileInteractionEvent {
             pos: cursor.pos.clone(),
+            tile_edge: cursor.tile_edge,
             used_tool: active_tool.clone(),
         });
     }
@@ -228,7 +230,13 @@ fn process_tile_interactions(
                 // TODO: Move this in an event
                 if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
                     if let Some(tile) = loaded_data.get_tile(event.pos.tile.x, event.pos.tile.y) {
-                        build_wall(&mut commands, tile, &debug_meshes, &debug_materials);
+                        build_wall(
+                            &mut commands,
+                            tile,
+                            event.tile_edge,
+                            &debug_meshes,
+                            &debug_materials,
+                        );
                     }
                 }
             }
