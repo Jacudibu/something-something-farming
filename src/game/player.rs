@@ -1,7 +1,6 @@
 use bevy::app::{App, Plugin, Update};
 use bevy::core::Name;
 use bevy::math::Vec3;
-use bevy::pbr::AlphaMode;
 use bevy::prelude::{
     default, in_state, Commands, Component, GamepadButtonType, IntoSystemConfigs, KeyCode,
     MouseButton, OnEnter, Query, Reflect, Res, Time, Transform, With,
@@ -122,7 +121,6 @@ pub enum PlayerAction {
     Hotbar8,
     Hotbar9,
     Hotbar0,
-    ToggleDebugOverlay,
 }
 
 pub fn default_input_map() -> InputMap<PlayerAction> {
@@ -153,7 +151,6 @@ pub fn default_input_map() -> InputMap<PlayerAction> {
     input_map.insert(KeyCode::Key8, PlayerAction::Hotbar8);
     input_map.insert(KeyCode::Key9, PlayerAction::Hotbar9);
     input_map.insert(KeyCode::Key0, PlayerAction::Hotbar0);
-    input_map.insert(KeyCode::F2, PlayerAction::ToggleDebugOverlay);
 
     input_map.insert(KeyCode::Up, PlayerAction::Up);
     input_map.insert(KeyCode::W, PlayerAction::Up);

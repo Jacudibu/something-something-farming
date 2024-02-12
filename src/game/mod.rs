@@ -12,12 +12,15 @@ use crate::game::light::LightPlugin;
 use crate::game::tile_updater::TileUpdaterPlugin;
 use crate::game::tilemap::GameMapPlugin;
 use crate::game::ui::UiPlugin;
+use crate::game::walls::WallPlugin;
 use crate::game::world_data::WorldDataPlugin;
+use crate::prelude::debug_actions::DebugActionPlugin;
 use crate::prelude::simulation_time::SimulationTimePlugin;
 use crate::prelude::PlayerPlugin;
 
 pub mod active_tool;
 pub mod camera;
+pub mod debug_actions;
 pub mod debug_overlay;
 mod drops;
 pub mod interaction;
@@ -53,6 +56,8 @@ impl Plugin for GamePlugin {
             .add_plugins(InteractionPlugin)
             .add_plugins(UiPlugin)
             .add_plugins(TileUpdaterPlugin)
+            .add_plugins(DebugActionPlugin)
+            .add_plugins(WallPlugin)
             .add_systems(First, update_cursor_pos);
     }
 }

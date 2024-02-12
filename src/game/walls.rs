@@ -1,13 +1,52 @@
+use bevy::app::App;
 use bevy::core::Name;
 use bevy::math::{Quat, Vec3};
 use bevy::prelude::{
-    default, BuildChildren, Commands, Component, Entity, PbrBundle, SpatialBundle, Transform,
+    default, in_state, BuildChildren, Commands, Component, Entity, Handle, IntoSystemConfigs,
+    OnEnter, PbrBundle, Plugin, Query, Res, SpatialBundle, StandardMaterial, Transform, With,
 };
 
+use crate::game::debug_actions::DebugWallVisibilityState;
 use crate::prelude::{CardinalDirection, DebugMaterials, DebugMeshes};
+use crate::GameState;
 
 const TILE_EDGE: f32 = 0.5;
 const WALL_WIDTH: f32 = 0.1;
+
+#[derive(Component)]
+struct WallMarker;
+
+pub struct WallPlugin;
+impl Plugin for WallPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            OnEnter(DebugWallVisibilityState::Visible),
+            show_walls.run_if(in_state(GameState::Playing)),
+        );
+        app.add_systems(
+            OnEnter(DebugWallVisibilityState::Hidden),
+            hide_walls.run_if(in_state(GameState::Playing)),
+        );
+    }
+}
+
+fn hide_walls(
+    materials: Res<DebugMaterials>,
+    mut query: Query<&mut Handle<StandardMaterial>, With<WallMarker>>,
+) {
+    for mut material in query.iter_mut() {
+        *material = materials.wall_hidden.clone();
+    }
+}
+
+fn show_walls(
+    materials: Res<DebugMaterials>,
+    mut query: Query<&mut Handle<StandardMaterial>, With<WallMarker>>,
+) {
+    for mut material in query.iter_mut() {
+        *material = materials.wall.clone();
+    }
+}
 
 pub fn build_wall(
     commands: &mut Commands,
@@ -29,6 +68,7 @@ pub fn build_wall(
                 },
                 ..default()
             },
+            WallMarker,
         ))
         .set_parent(tile)
         .id();

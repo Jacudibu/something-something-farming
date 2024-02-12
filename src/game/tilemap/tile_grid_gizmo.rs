@@ -4,7 +4,7 @@ use bevy::prelude::{
     IntoSystemConfigs, Plugin, Query, States, Update, With,
 };
 
-use crate::game::debug_overlay::DebugOverlayState;
+use crate::prelude::debug_actions::DebugOverlayState;
 use crate::prelude::TilePos;
 
 pub struct TileGridGizmo;
