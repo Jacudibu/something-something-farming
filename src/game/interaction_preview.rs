@@ -5,7 +5,7 @@ use bevy::prelude::{
 };
 use bevy::utils::HashMap;
 
-use crate::game::walls::build_and_spawn_wall_entity;
+use crate::game::walls::build_and_spawn_wall_entity_with_mesh_and_material;
 use crate::load::{DebugMaterials, DebugMeshes};
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
@@ -71,12 +71,12 @@ fn update_preview(
             ActiveTool::None => {}
             ActiveTool::Item(_) => {}
             ActiveTool::Wall => {
-                let entity = build_and_spawn_wall_entity(
+                let entity = build_and_spawn_wall_entity_with_mesh_and_material(
                     &mut commands,
                     tile,
                     cursor.tile_edge,
-                    &debug_meshes,
-                    &debug_materials,
+                    debug_meshes.wall.clone(),
+                    debug_materials.preview_ghost.clone(),
                 );
 
                 last_frame_preview_data.previews.insert(

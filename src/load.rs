@@ -75,6 +75,7 @@ pub struct DebugMaterials {
     pub tilled: Handle<StandardMaterial>,
     pub wall: Handle<StandardMaterial>,
     pub wall_hidden: Handle<StandardMaterial>,
+    pub preview_ghost: Handle<StandardMaterial>,
 }
 
 impl FromWorld for DebugMaterials {
@@ -108,6 +109,11 @@ impl FromWorld for DebugMaterials {
             wall_hidden: standard_materials.add(StandardMaterial {
                 base_color: Color::rgba(0.0, 0.0, 0.0, 0.0),
                 alpha_mode: AlphaMode::Multiply,
+                ..default()
+            }),
+            preview_ghost: standard_materials.add(StandardMaterial {
+                base_color: Color::rgba(0.0, 0.4, 0.0, 0.4),
+                alpha_mode: AlphaMode::Premultiplied,
                 ..default()
             }),
         }

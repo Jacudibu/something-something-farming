@@ -2,7 +2,7 @@ use bevy::app::App;
 use bevy::core::Name;
 use bevy::math::{Quat, Vec3};
 use bevy::prelude::{
-    default, in_state, BuildChildren, Commands, Component, Entity, Handle, IntoSystemConfigs,
+    default, in_state, BuildChildren, Commands, Component, Entity, Handle, IntoSystemConfigs, Mesh,
     OnEnter, PbrBundle, Plugin, Query, Res, SpatialBundle, StandardMaterial, Transform, With,
 };
 
@@ -48,19 +48,19 @@ fn show_walls(
     }
 }
 
-pub fn build_and_spawn_wall_entity(
+pub fn build_and_spawn_wall_entity_with_mesh_and_material(
     commands: &mut Commands,
     tile: Entity,
     tile_edge: CardinalDirection,
-    debug_meshes: &DebugMeshes,
-    debug_materials: &DebugMaterials,
+    mesh: Handle<Mesh>,
+    material: Handle<StandardMaterial>,
 ) -> Entity {
     return commands
         .spawn((
             Name::new("Wall"),
             PbrBundle {
-                mesh: debug_meshes.wall.clone(),
-                material: debug_materials.wall.clone(),
+                mesh,
+                material,
                 transform: Transform {
                     translation: tile_edge_to_position(tile_edge),
                     rotation: tile_edge_to_rotation(tile_edge),
@@ -72,6 +72,22 @@ pub fn build_and_spawn_wall_entity(
         ))
         .set_parent(tile)
         .id();
+}
+
+pub fn build_and_spawn_wall_entity(
+    commands: &mut Commands,
+    tile: Entity,
+    tile_edge: CardinalDirection,
+    debug_meshes: &DebugMeshes,
+    debug_materials: &DebugMaterials,
+) -> Entity {
+    build_and_spawn_wall_entity_with_mesh_and_material(
+        commands,
+        tile,
+        tile_edge,
+        debug_meshes.wall.clone(),
+        debug_materials.wall.clone(),
+    )
 }
 
 fn tile_edge_to_position(cardinal_direction: CardinalDirection) -> Vec3 {
