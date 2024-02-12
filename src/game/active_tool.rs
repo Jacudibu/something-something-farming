@@ -4,7 +4,7 @@ use bevy::prelude::Resource;
 
 use crate::game::item_id::ItemId;
 
-#[derive(Resource, Copy, Clone, Debug)]
+#[derive(Resource, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ActiveTool {
     None,
     Item(ItemId),
