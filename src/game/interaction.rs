@@ -5,7 +5,7 @@ use leafwing_input_manager::action_state::ActionState;
 use crate::game::drops::ItemDrop;
 use crate::game::map_pos::MapPos;
 use crate::game::player::PlayerAction;
-use crate::game::walls::build_wall;
+use crate::game::walls::build_and_spawn_wall_entity;
 use crate::prelude::chunk_data::CropData;
 use crate::prelude::item_id::{CropId, ItemId};
 use crate::prelude::loaded_chunks::LoadedChunks;
@@ -234,7 +234,7 @@ fn process_tile_interactions(
                 // TODO: Move graphic this in an event
                 if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
                     if let Some(tile) = loaded_data.get_tile(event.pos.tile.x, event.pos.tile.y) {
-                        build_wall(
+                        build_and_spawn_wall_entity(
                             &mut commands,
                             tile,
                             event.tile_edge,

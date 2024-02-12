@@ -48,7 +48,7 @@ fn show_walls(
     }
 }
 
-pub fn build_wall(
+pub fn build_and_spawn_wall_entity(
     commands: &mut Commands,
     tile: Entity,
     tile_edge: CardinalDirection,

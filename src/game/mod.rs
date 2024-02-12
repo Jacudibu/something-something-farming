@@ -8,6 +8,7 @@ use player::PlayerAction;
 use crate::game::camera::CameraPlugin;
 use crate::game::drops::ItemPickupPlugin;
 use crate::game::interaction::InteractionPlugin;
+use crate::game::interaction_preview::InteractionPreviewPlugin;
 use crate::game::light::LightPlugin;
 use crate::game::tile_updater::TileUpdaterPlugin;
 use crate::game::tilemap::GameMapPlugin;
@@ -24,6 +25,7 @@ pub mod debug_actions;
 pub mod debug_overlay;
 mod drops;
 pub mod interaction;
+mod interaction_preview;
 pub(crate) mod inventory;
 pub mod item_id;
 mod light;
@@ -54,6 +56,7 @@ impl Plugin for GamePlugin {
             .add_plugins(CameraPlugin)
             .add_plugins(LightPlugin)
             .add_plugins(InteractionPlugin)
+            .add_plugins(InteractionPreviewPlugin)
             .add_plugins(UiPlugin)
             .add_plugins(TileUpdaterPlugin)
             .add_plugins(DebugActionPlugin)

@@ -1,6 +1,5 @@
 use bevy::app::{App, Update};
 use bevy::ecs::system::SystemParam;
-use bevy::log::info;
 use bevy::prelude::{KeyCode, NextState, Plugin, Reflect, Res, ResMut, State, States};
 use leafwing_input_manager::action_state::ActionState;
 use leafwing_input_manager::input_map::InputMap;
