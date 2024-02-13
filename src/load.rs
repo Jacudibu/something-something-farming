@@ -3,7 +3,7 @@ use bevy::utils::HashMap;
 use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::AudioSource;
 
-use data::prelude::{AllItems, CropDefinition, CropId};
+use data::prelude::{AllItems, CropDefinition, CropId, PropDefinition, PropId};
 
 use crate::GameState;
 
@@ -20,7 +20,7 @@ impl Plugin for LoadingPlugin {
                 .init_resource::<DebugMaterials>()
                 .init_resource::<DebugMeshes>(),
         )
-            .add_systems(OnExit(GameState::Loading), insert_crop_resource);
+            .add_systems(OnExit(GameState::Loading), process_data);
     }
 }
 
@@ -48,6 +48,7 @@ struct DebugTexturesForMaterials {
 pub struct DebugMeshes {
     pub tile: Handle<Mesh>,
     pub wall: Handle<Mesh>,
+    pub torch: Handle<Mesh>,
     pub wall_segment_front: Handle<Mesh>,
     pub wall_segment_top: Handle<Mesh>,
     pub wall_segment_side: Handle<Mesh>,
@@ -63,6 +64,7 @@ impl FromWorld for DebugMeshes {
         DebugMeshes {
             tile: mesh_assets.add(shape::Plane::from_size(1.0).into()),
             wall: mesh_assets.add(shape::Box::new(1.0, 2.0, 0.1).into()),
+            torch: mesh_assets.add(shape::Box::new(0.1, 0.3, 0.1).into()),
             wall_segment_front: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 2.0)).into()),
             wall_segment_top: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 0.1)).into()),
             wall_segment_side: mesh_assets.add(shape::Quad::new(Vec2::new(0.1, 2.0)).into()),
@@ -142,13 +144,21 @@ pub struct HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually {
     pub red_debug_veggie: Handle<Image>,
 }
 
-fn insert_crop_resource(world: &mut World) {
+fn process_data(world: &mut World) {
     let assets = world
         .get_resource::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>()
         .expect("Hardcoded assets should be loaded! :(");
 
+    let meshes = world
+        .get_resource::<DebugMeshes>()
+        .expect("Failed to get DebugMeshes");
+    let materials = world
+        .get_resource::<DebugMaterials>()
+        .expect("Failed to get DebugMaterials");
+
     let crops = AllItems {
         crops: parse_crops(&assets),
+        props: parse_props(meshes, materials),
     };
 
     world.insert_resource(crops);
@@ -179,6 +189,25 @@ fn parse_crops(
             growth_time_per_stage: 1,
             texture_atlas: assets.red_debug_plant.clone(),
             harvested_sprite: assets.red_debug_veggie.clone(),
+        },
+    );
+
+    definitions
+}
+
+fn parse_props(
+    meshes: &DebugMeshes,
+    materials: &DebugMaterials,
+) -> HashMap<PropId, PropDefinition> {
+    let mut definitions = HashMap::new();
+
+    definitions.insert(
+        PropId(0),
+        PropDefinition {
+            id: PropId(0),
+            name: String::from("Torch"),
+            mesh: meshes.torch.clone(),
+            material: materials.wall.clone(),
         },
     );
 

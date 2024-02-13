@@ -1,3 +1,4 @@
+use bevy::pbr::StandardMaterial;
 use bevy::prelude::{Handle, Image, Mesh, Resource, TextureAtlas};
 use bevy::utils::HashMap;
 
@@ -18,7 +19,7 @@ pub struct PropDefinition {
     pub id: PropId,
     pub name: String,
     pub mesh: Handle<Mesh>,
-    pub texture: Handle<TextureAtlas>,
+    pub material: Handle<StandardMaterial>,
 }
 
 #[derive(Resource)]

@@ -250,6 +250,9 @@ fn process_tile_interactions(
                     ItemId::Crop { .. } => {
                         // ignore. Might wanna eat or give the Item to entities on that tile in the future.
                     }
+                    ItemId::Prop { .. } => {
+                        // TODO: Attempt to place the prop
+                    }
                     ItemId::Seed { crop_id } => {
                         let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
                         if !chunk.at_pos(&event.pos.tile).is_tilled {
