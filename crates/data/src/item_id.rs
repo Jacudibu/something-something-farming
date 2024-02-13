@@ -6,6 +6,9 @@ use crate::prelude::AllItems;
 pub struct CropId(pub u32);
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+pub struct PropId(pub u32);
+
+#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum ToolId {
     Hoe,
     Pickaxe,
@@ -27,6 +30,7 @@ pub enum ItemId {
     Crop { crop_id: CropId },
     Seed { crop_id: CropId },
     Tool { tool_id: ToolId },
+    Prop { prop_id: PropId },
 }
 
 impl Display for ItemId {
@@ -34,6 +38,7 @@ impl Display for ItemId {
         match self {
             ItemId::Crop { crop_id } => write!(f, "Crop (ID {})", crop_id.0),
             ItemId::Seed { crop_id } => write!(f, "Seed (ID {})", crop_id.0),
+            ItemId::Prop { prop_id: object_id } => write!(f, "Prop(ID {})", object_id.0),
             ItemId::Tool { tool_id } => tool_id.fmt(f),
         }
     }
@@ -47,6 +52,7 @@ impl ItemId {
                 format!("{} Seed", all_items.crops[crop_id].name.clone())
             }
             ItemId::Tool { tool_id } => tool_id.to_string(),
+            ItemId::Prop { prop_id: object_id } => all_items.props[object_id].name.clone(),
         }
     }
 }
