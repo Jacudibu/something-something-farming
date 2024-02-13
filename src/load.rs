@@ -3,7 +3,7 @@ use bevy::utils::HashMap;
 use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::AudioSource;
 
-use data::prelude::{AllCrops, CropDefinition, CropId};
+use data::prelude::{AllItems, CropDefinition, CropId};
 
 use crate::GameState;
 
@@ -147,8 +147,8 @@ fn insert_crop_resource(world: &mut World) {
         .get_resource::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>()
         .expect("Hardcoded assets should be loaded! :(");
 
-    let crops = AllCrops {
-        definitions: parse_crops(&assets),
+    let crops = AllItems {
+        crops: parse_crops(&assets),
     };
 
     world.insert_resource(crops);

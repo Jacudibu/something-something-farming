@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use crate::prelude::AllCrops;
+use crate::prelude::AllItems;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct CropId(pub u32);
@@ -40,11 +40,11 @@ impl Display for ItemId {
 }
 
 impl ItemId {
-    pub fn item_name(&self, all_crops: &AllCrops) -> String {
+    pub fn item_name(&self, all_items: &AllItems) -> String {
         match self {
-            ItemId::Crop { crop_id } => all_crops.definitions[crop_id].name.clone(),
+            ItemId::Crop { crop_id } => all_items.crops[crop_id].name.clone(),
             ItemId::Seed { crop_id } => {
-                format!("{} Seed", all_crops.definitions[crop_id].name.clone())
+                format!("{} Seed", all_items.crops[crop_id].name.clone())
             }
             ItemId::Tool { tool_id } => tool_id.to_string(),
         }

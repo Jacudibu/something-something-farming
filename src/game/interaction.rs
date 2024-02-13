@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_sprite3d::{AtlasSprite3d, Sprite3d, Sprite3dParams};
 use leafwing_input_manager::action_state::ActionState;
 
-use data::prelude::{AllCrops, CropId, ItemId, ToolId};
+use data::prelude::{AllItems, CropId, ItemId, ToolId};
 
 use crate::game::drops::ItemDrop;
 use crate::game::map_pos::MapPos;
@@ -176,7 +176,7 @@ fn process_harvested_crops(
     mut commands: Commands,
     mut harvested_crop_events: EventReader<CropHarvestedEvent>,
     mut sprite_params: Sprite3dParams,
-    all_crops: Res<AllCrops>,
+    all_items: Res<AllItems>,
 ) {
     for event in harvested_crop_events.read() {
         // TODO: Consider bunching up nearby same-Item drops into one bigger drop.
@@ -184,7 +184,7 @@ fn process_harvested_crops(
         // TODO: (premature) Drops should probably be persisted inside the chunk they're in and get (de-)spawned accordingly, otherwise 1000+ drops somewhere in the middle of nowhere might cause performance issues?
         // Also, if an NPC with Inventory walks through that chunk (maybe a bit further away from players than chunk loading distance so they won't notice as easily), they automagically pick it up?
 
-        if let Some(crop) = all_crops.definitions.get(&event.crop_id) {
+        if let Some(crop) = all_items.crops.get(&event.crop_id) {
             commands.spawn((
                 Name::new("Drop"),
                 Sprite3d {
@@ -212,7 +212,7 @@ fn process_tile_interactions(
     mut world_data: ResMut<WorldData>,
     mut loaded_chunk_data: ResMut<LoadedChunks>,
     simulation_time: Res<SimulationTime>,
-    all_crops: Res<AllCrops>,
+    all_items: Res<AllItems>,
     mut sprite_params: Sprite3dParams,
     debug_materials: Res<DebugMaterials>,
     debug_meshes: Res<DebugMeshes>,
@@ -260,7 +260,7 @@ fn process_tile_interactions(
                             continue;
                         }
 
-                        let crop_definition = all_crops.definitions.get(&crop_id).unwrap();
+                        let crop_definition = all_items.crops.get(&crop_id).unwrap();
                         chunk.crops.insert(
                             event.pos.tile,
                             CropData::new(&crop_definition, &simulation_time),
@@ -339,7 +339,7 @@ fn process_tile_interactions(
 
                             if let Some(crop) = chunk.crops.get(&event.pos.tile) {
                                 if crop.stage + 1
-                                    >= all_crops.definitions.get(&crop.crop_id).unwrap().stages
+                                    >= all_items.crops.get(&crop.crop_id).unwrap().stages
                                 {
                                     harvest_crop_events.send(CropHarvestedEvent {
                                         pos: event.pos,

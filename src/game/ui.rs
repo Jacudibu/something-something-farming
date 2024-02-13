@@ -6,7 +6,7 @@ use bevy::prelude::{
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
-use data::prelude::AllCrops;
+use data::prelude::AllItems;
 
 use crate::prelude::chunk_data::ChunkData;
 use crate::prelude::tile_cursor::TileCursor;
@@ -57,7 +57,7 @@ fn ui_system(
     active_tool: Res<ActiveTool>,
     simulation_time: Res<SimulationTime>,
     simulation_date: Res<SimulationDate>,
-    all_crops: Res<AllCrops>,
+    all_items: Res<AllItems>,
     inventories: Query<(&Name, &Inventory)>,
 ) {
     if let Ok(cursor) = cursor.get_single() {
@@ -76,7 +76,7 @@ fn ui_system(
                     chunk,
                     &cursor.pos,
                     &simulation_time,
-                    &all_crops,
+                    &all_items,
                 ));
             });
     }
@@ -120,7 +120,7 @@ fn ui_system(
                             content.label("Empty!");
                         } else {
                             for (id, amount) in inventory.into_iter() {
-                                content.label(format!("{}: {}", id.item_name(&all_crops), amount));
+                                content.label(format!("{}: {}", id.item_name(&all_items), amount));
                             }
                         }
                     });
@@ -133,7 +133,7 @@ fn map_data_for_position(
     chunk: &ChunkData,
     pos: &MapPos,
     simulation_time: &SimulationTime,
-    all_crops: &AllCrops,
+    all_items: &AllItems,
 ) -> String {
     let mut lines = Vec::new();
     lines.push(format!("Chunk: {}", pos.chunk));
@@ -147,7 +147,7 @@ fn map_data_for_position(
     ));
 
     if let Some(crop) = chunk.crops.get(&pos.tile) {
-        let definition = all_crops.definitions.get(&crop.crop_id).unwrap();
+        let definition = all_items.crops.get(&crop.crop_id).unwrap();
         lines.push(format!("Crop: {} ({})", definition.name, crop.crop_id.0));
         lines.push(format!("  stage: {}/{}", crop.stage + 1, definition.stages));
         if let Some(next_stage) = crop.next_stage_at {

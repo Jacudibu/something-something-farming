@@ -13,6 +13,6 @@ pub struct CropDefinition {
 }
 
 #[derive(Resource)]
-pub struct AllCrops {
-    pub definitions: HashMap<CropId, CropDefinition>,
+pub struct AllItems {
+    pub crops: HashMap<CropId, CropDefinition>,
 }

@@ -2,7 +2,7 @@ use bevy::app::{App, Plugin, Update};
 use bevy::prelude::{in_state, IntoSystemConfigs, Query, Res, ResMut};
 use bevy_sprite3d::AtlasSprite3dComponent;
 
-use data::prelude::AllCrops;
+use data::prelude::AllItems;
 
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::{MapPos, SimulationTime, WorldData};
@@ -25,7 +25,7 @@ fn update_tiles(
     mut sprites: Query<&mut AtlasSprite3dComponent>,
     simulation_time: Res<SimulationTime>,
     loaded_chunk_data: Res<LoadedChunks>,
-    all_crops: Res<AllCrops>,
+    all_items: Res<AllItems>,
 ) {
     // TODO: Performance Improvements
     // Step #1: Cache the next item that should be updated instead of doing this every frame
@@ -43,7 +43,7 @@ fn update_tiles(
                 .get_mut(&next.pos.tile)
                 .unwrap();
 
-            let crop_definition = all_crops.definitions.get(&crop.crop_id).unwrap();
+            let crop_definition = all_items.crops.get(&crop.crop_id).unwrap();
             crop.stage += 1;
             if crop.stage < crop_definition.stages - 1 {
                 crop.next_stage_at = Some(
