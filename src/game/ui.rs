@@ -6,7 +6,8 @@ use bevy::prelude::{
 use bevy_egui::egui::{Align2, Pos2};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
-use crate::load::AllCrops;
+use data::prelude::AllCrops;
+
 use crate::prelude::chunk_data::ChunkData;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::{

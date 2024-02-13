@@ -1,6 +1,7 @@
-use crate::prelude::item_id::ItemId;
 use bevy::prelude::Component;
 use bevy::utils::{hashbrown, HashMap};
+
+use data::prelude::ItemId;
 
 #[derive(Component, Default)]
 pub struct Inventory {

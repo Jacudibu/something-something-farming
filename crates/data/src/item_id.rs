@@ -1,5 +1,6 @@
-use crate::load::AllCrops;
 use std::fmt::{Display, Formatter};
+
+use crate::prelude::AllCrops;
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct CropId(pub u32);

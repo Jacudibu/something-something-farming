@@ -2,8 +2,10 @@ use bevy::app::{App, Plugin, Update};
 use bevy::prelude::{in_state, IntoSystemConfigs, Query, Res, ResMut};
 use bevy_sprite3d::AtlasSprite3dComponent;
 
+use data::prelude::AllCrops;
+
 use crate::prelude::loaded_chunks::LoadedChunks;
-use crate::prelude::{AllCrops, MapPos, SimulationTime, WorldData};
+use crate::prelude::{MapPos, SimulationTime, WorldData};
 use crate::GameState;
 
 pub struct TileUpdaterPlugin;

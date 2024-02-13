@@ -6,6 +6,7 @@ edition = "2021"
 
 [workspace]
 resolver = "2"
+members = ["crates/data"]
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
@@ -16,6 +17,7 @@ opt-level = 1
 opt-level = 3
 
 [dependencies]
+data = { path = "crates/data" }
 bevy = { version = "0.12.1", default-features = false, features = [
     "animation",
     "bevy_asset",

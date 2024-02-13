@@ -27,7 +27,6 @@ mod drops;
 pub mod interaction;
 mod interaction_preview;
 pub(crate) mod inventory;
-pub mod item_id;
 mod light;
 pub mod map_pos;
 pub mod player;

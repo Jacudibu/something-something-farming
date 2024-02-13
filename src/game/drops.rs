@@ -6,7 +6,8 @@ use bevy::prelude::{
 use bevy_kira_audio::{Audio, AudioControl};
 use rand::Rng;
 
-use crate::game::item_id::{CropId, ItemId};
+use data::prelude::{CropId, ItemId};
+
 use crate::prelude::{DebugSounds, Inventory};
 use crate::{GameState, SoundEffectsSetting};
 

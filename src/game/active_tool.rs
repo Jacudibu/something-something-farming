@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display, Formatter};
 
 use bevy::prelude::Resource;
 
-use crate::game::item_id::ItemId;
+use data::prelude::ItemId;
 
 #[derive(Resource, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ActiveTool {

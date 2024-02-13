@@ -3,7 +3,8 @@ use bevy::utils::HashMap;
 use bevy_asset_loader::prelude::*;
 use bevy_kira_audio::AudioSource;
 
-use crate::game::item_id::CropId;
+use data::prelude::{AllCrops, CropDefinition, CropId};
+
 use crate::GameState;
 
 pub struct LoadingPlugin;
@@ -145,50 +146,41 @@ fn insert_crop_resource(world: &mut World) {
     let assets = world
         .get_resource::<HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually>()
         .expect("Hardcoded assets should be loaded! :(");
-    world.insert_resource(AllCrops::from(&assets));
+
+    let crops = AllCrops {
+        definitions: parse_crops(&assets),
+    };
+
+    world.insert_resource(crops);
 }
 
-#[derive(Resource)]
-pub struct AllCrops {
-    pub(crate) definitions: HashMap<CropId, CropDefinition>,
-}
+fn parse_crops(
+    assets: &HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually,
+) -> HashMap<CropId, CropDefinition> {
+    let mut definitions = HashMap::new();
 
-impl AllCrops {
-    fn from(assets: &HardcodedCropAssetsThatShouldBeTurnedIntoDynamicResourcesEventually) -> Self {
-        let mut definitions = HashMap::new();
+    definitions.insert(
+        CropId(0),
+        CropDefinition {
+            id: CropId(0),
+            name: String::from("Blue Debug Plant"),
+            stages: 4,
+            growth_time_per_stage: 5,
+            texture_atlas: assets.blue_debug_plant.clone(),
+            harvested_sprite: assets.blue_debug_veggie.clone(),
+        },
+    );
+    definitions.insert(
+        CropId(1),
+        CropDefinition {
+            id: CropId(1),
+            name: String::from("Red Debug Plant"),
+            stages: 4,
+            growth_time_per_stage: 1,
+            texture_atlas: assets.red_debug_plant.clone(),
+            harvested_sprite: assets.red_debug_veggie.clone(),
+        },
+    );
 
-        definitions.insert(
-            CropId(0),
-            CropDefinition {
-                id: CropId(0),
-                name: String::from("Blue Debug Plant"),
-                stages: 4,
-                growth_time_per_stage: 5,
-                texture_atlas: assets.blue_debug_plant.clone(),
-                harvested_sprite: assets.blue_debug_veggie.clone(),
-            },
-        );
-        definitions.insert(
-            CropId(1),
-            CropDefinition {
-                id: CropId(1),
-                name: String::from("Red Debug Plant"),
-                stages: 4,
-                growth_time_per_stage: 1,
-                texture_atlas: assets.red_debug_plant.clone(),
-                harvested_sprite: assets.red_debug_veggie.clone(),
-            },
-        );
-
-        Self { definitions }
-    }
-}
-
-pub struct CropDefinition {
-    pub id: CropId,
-    pub name: String,
-    pub stages: u8,
-    pub growth_time_per_stage: u32,
-    pub texture_atlas: Handle<TextureAtlas>,
-    pub harvested_sprite: Handle<Image>,
+    definitions
 }
