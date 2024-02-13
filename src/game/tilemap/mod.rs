@@ -25,11 +25,6 @@ pub(crate) mod tile_cursor;
 pub mod tile_grid_gizmo;
 pub(crate) mod update_tile_event;
 
-const RENDER_CHUNK_SIZE: UVec2 = UVec2 {
-    x: CHUNK_SIZE as u32 * 2,
-    y: CHUNK_SIZE as u32 * 2,
-};
-
 #[derive(Reflect)]
 pub struct TileRaycastSet;
 
