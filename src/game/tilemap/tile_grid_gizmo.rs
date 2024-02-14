@@ -58,9 +58,10 @@ fn draw_grid(mut gizmos: Gizmos, query: Query<&GlobalTransform, With<TilePos>>) 
 }
 
 const SUBGRID_SIZE: f32 = 0.1;
-const SUBGRID_RADIUS: i8 = 10;
+const SUBGRID_RADIUS: i8 = 15;
+const SUB_CELLS_PER_TILE: i8 = (1.0 / SUBGRID_SIZE) as i8;
 
-const SUBGRID_MAX_ALPHA: f32 = 0.6;
+const SUBGRID_MAX_ALPHA: f32 = 0.8;
 const SUBGRID_MIN_ALPHA: f32 = 0.0;
 const SUBGRID_COLOR_MIN: Color = Color::rgba(0.0, 0.0, 0.0, SUBGRID_MIN_ALPHA);
 
@@ -94,7 +95,7 @@ fn draw_subgrid(mut gizmos: Gizmos, query: Query<&TileCursor>) {
             let start_color = get_start_color(row);
 
             // Horizontal
-            if (row + sub_z as i8) % SUBGRID_RADIUS != 0 {
+            if (row + sub_z as i8) % SUB_CELLS_PER_TILE != 0 {
                 let pos = grid_anchor + Vec3::new(x_subgrid_offset, 0.0, line_origin);
                 gizmos.line_gradient(
                     pos,
@@ -112,7 +113,7 @@ fn draw_subgrid(mut gizmos: Gizmos, query: Query<&TileCursor>) {
             }
 
             // Vertical
-            if (row + sub_x as i8) % SUBGRID_RADIUS != 0 {
+            if (row + sub_x as i8) % SUB_CELLS_PER_TILE != 0 {
                 let pos = grid_anchor + Vec3::new(line_origin, 0.0, z_subgrid_offset);
                 gizmos.line_gradient(
                     pos,
