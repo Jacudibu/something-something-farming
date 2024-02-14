@@ -1,4 +1,3 @@
-use bevy::log::info;
 use bevy::math::{Quat, Vec2, Vec3};
 use bevy::prelude::{
     default, in_state, App, Color, Condition, GizmoConfig, Gizmos, GlobalTransform,
@@ -58,35 +57,37 @@ fn draw_grid(mut gizmos: Gizmos, query: Query<&GlobalTransform, With<TilePos>>) 
     }
 }
 
+const GRID_SIZE: f32 = 1.0;
 const SUBGRID_SIZE: f32 = 0.1;
 const SUBGRID_COLOR: Color = Color::rgba(0.0, 0.0, 0.0, 0.5);
 
 fn draw_subgrid(mut gizmos: Gizmos, query: Query<&TileCursor>) {
     for cursor in query.iter() {
         let mouse_location = cursor.mouse_pos.clone() + Vec3::new(0.5, 0.0, 0.5);
-        let subgrid_x = (mouse_location.x.fract() / SUBGRID_SIZE).floor().abs() * SUBGRID_SIZE;
-        let subgrid_z = (mouse_location.z.fract() / SUBGRID_SIZE).floor().abs() * SUBGRID_SIZE;
+        let x_mouse_offset = mouse_location.x.fract().abs();
+        let z_mouse_offset = mouse_location.z.fract().abs();
 
-        const SUBGRID_RADIUS: u8 = 10;
+        let subgrid_x = (x_mouse_offset / SUBGRID_SIZE).floor() * SUBGRID_SIZE;
+        let subgrid_z = (z_mouse_offset / SUBGRID_SIZE).floor() * SUBGRID_SIZE;
+
+        const SUBGRID_RADIUS: i8 = 10;
         const RADIUS: f32 = SUBGRID_RADIUS as f32 * SUBGRID_SIZE;
 
-        info!("subgrid_x: {}, subgrid_z: {}", subgrid_x, subgrid_z);
-
-        let grid_anchor = cursor.pos.world_pos(0.0)
-            + Vec3::new(-RADIUS + subgrid_x - 0.5, 0.0, -RADIUS + subgrid_z - 0.5);
+        let grid_anchor =
+            cursor.pos.world_pos(0.0) + Vec3::new(subgrid_x - 0.45, 0.0, subgrid_z - 0.45);
 
         gizmos.circle(grid_anchor, Vec3::Y, 0.1, Color::BLACK);
 
-        for offset in 0..SUBGRID_RADIUS as i32 {
-            let line_length = offset as f32 * SUBGRID_SIZE;
-            let empty_length = RADIUS - line_length;
+        for row in 0..SUBGRID_RADIUS {
+            let line_origin = row as f32 * SUBGRID_SIZE + 0.05;
+            let line_length = (SUBGRID_RADIUS - row) as f32 * SUBGRID_SIZE;
 
             // Horizontal
-            let pos = grid_anchor + Vec3::new(empty_length, 0.0, line_length);
+            let pos = grid_anchor + Vec3::new(0.0, 0.0, line_origin);
             gizmos.line(pos, pos + Vec3::new(line_length, 0.0, 0.0), SUBGRID_COLOR);
 
             // Vertical
-            let pos = grid_anchor + Vec3::new(line_length, 0.0, empty_length);
+            let pos = grid_anchor + Vec3::new(line_origin, 0.0, 0.0);
             gizmos.line(pos, pos + Vec3::new(0.0, 0.0, line_length), SUBGRID_COLOR);
         }
     }
