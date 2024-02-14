@@ -1,3 +1,4 @@
+use bevy::log::info;
 use bevy::math::{Quat, Vec2, Vec3};
 use bevy::prelude::{
     default, in_state, App, Color, Condition, GizmoConfig, Gizmos, GlobalTransform,
@@ -62,24 +63,30 @@ const SUBGRID_COLOR: Color = Color::rgba(0.0, 0.0, 0.0, 0.5);
 
 fn draw_subgrid(mut gizmos: Gizmos, query: Query<&TileCursor>) {
     for cursor in query.iter() {
-        // TODO: mouse location should be the middle of the sub-grid cell?
-        let mouse_location = cursor.mouse_pos;
+        let mouse_location = cursor.mouse_pos.clone() + Vec3::new(0.5, 0.0, 0.5);
+        let subgrid_x = (mouse_location.x.fract() / SUBGRID_SIZE).floor().abs() * SUBGRID_SIZE;
+        let subgrid_z = (mouse_location.z.fract() / SUBGRID_SIZE).floor().abs() * SUBGRID_SIZE;
 
         const SUBGRID_RADIUS: u8 = 10;
         const RADIUS: f32 = SUBGRID_RADIUS as f32 * SUBGRID_SIZE;
 
-        let upper_left_edge = mouse_location + Vec3::new(-RADIUS, 0.0, -RADIUS);
+        info!("subgrid_x: {}, subgrid_z: {}", subgrid_x, subgrid_z);
+
+        let grid_anchor = cursor.pos.world_pos(0.0)
+            + Vec3::new(-RADIUS + subgrid_x - 0.5, 0.0, -RADIUS + subgrid_z - 0.5);
+
+        gizmos.circle(grid_anchor, Vec3::Y, 0.1, Color::BLACK);
 
         for offset in 0..SUBGRID_RADIUS as i32 {
             let line_length = offset as f32 * SUBGRID_SIZE;
             let empty_length = RADIUS - line_length;
 
             // Horizontal
-            let pos = upper_left_edge + Vec3::new(empty_length, 0.0, line_length);
+            let pos = grid_anchor + Vec3::new(empty_length, 0.0, line_length);
             gizmos.line(pos, pos + Vec3::new(line_length, 0.0, 0.0), SUBGRID_COLOR);
 
             // Vertical
-            let pos = upper_left_edge + Vec3::new(line_length, 0.0, empty_length);
+            let pos = grid_anchor + Vec3::new(line_length, 0.0, empty_length);
             gizmos.line(pos, pos + Vec3::new(0.0, 0.0, line_length), SUBGRID_COLOR);
         }
     }
