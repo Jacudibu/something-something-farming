@@ -73,9 +73,22 @@ fn get_start_color(row: i8) -> Color {
 
 fn draw_subgrid(mut gizmos: Gizmos, query: Query<&TileCursor>) {
     for cursor in query.iter() {
-        let mouse_location = cursor.mouse_pos.clone() + Vec3::new(0.5, 0.0, 0.5);
-        let x_mouse_offset = mouse_location.x.fract().abs();
-        let z_mouse_offset = mouse_location.z.fract().abs();
+        let x_mouse_offset = {
+            let x = (cursor.mouse_pos.x + 0.5).fract();
+            if x > 0.0 {
+                x
+            } else {
+                x + 1.0
+            }
+        };
+        let z_mouse_offset = {
+            let z = (cursor.mouse_pos.z + 0.5).fract();
+            if z > 0.0 {
+                z
+            } else {
+                z + 1.0
+            }
+        };
 
         let sub_x = (x_mouse_offset / SUBGRID_SIZE).floor();
         let sub_z = (z_mouse_offset / SUBGRID_SIZE).floor();
