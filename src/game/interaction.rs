@@ -30,7 +30,7 @@ impl Plugin for InteractionPlugin {
             .add_event::<TileInteractionEvent>()
             .add_systems(
                 Update,
-                select_active_tool.run_if(in_state(GameState::Playing)),
+                (select_active_tool, rotate_building).run_if(in_state(GameState::Playing)),
             )
             .add_systems(
                 Update,
@@ -89,6 +89,26 @@ fn select_active_tool(
         *active_tool = ActiveTool::Item(ItemId::Seed { crop_id: CropId(1) });
     } else if action_state.just_pressed(PlayerAction::Hotbar6) {
         *active_tool = ActiveTool::Wall;
+    }
+}
+
+fn rotate_building(
+    mut rotation: ResMut<BuildingRotation>,
+    action_state: Query<&ActionState<PlayerAction>>,
+) {
+    let action_state = action_state.get_single();
+    if action_state.is_err() {
+        error!("PlayerAction State was missing!");
+        return;
+    }
+    let action_state = action_state.unwrap();
+    if action_state.just_pressed(PlayerAction::Rotate) {
+        rotation.direction = match rotation.direction {
+            CardinalDirection::North => CardinalDirection::East,
+            CardinalDirection::East => CardinalDirection::South,
+            CardinalDirection::South => CardinalDirection::West,
+            CardinalDirection::West => CardinalDirection::North,
+        };
     }
 }
 
