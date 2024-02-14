@@ -30,6 +30,7 @@ impl Plugin for TileCursorPlugin {
 pub struct TileCursor {
     pub pos: MapPos,
     pub tile_edge: CardinalDirection,
+    pub mouse_pos: Vec3,
 }
 
 impl TileCursor {
@@ -110,10 +111,10 @@ fn update_tile_cursor(
     tile_ray: Query<&RaycastSource<TileRaycastSet>>,
     ray_targets: Query<(&TilePos, &Parent), With<RaycastMesh<TileRaycastSet>>>,
     chunk_parents: Query<&ChunkIdentifier>,
-    tile_cursor_q: Query<(Entity, &TileCursor)>,
+    mut tile_cursor_q: Query<(Entity, &mut TileCursor)>,
 ) {
     // TODO: Reconsider having only one "Main Cursor" (mouse) - All other cursors should be something else and spawned from that main cursor
-    let mut this_frame_selection: Vec<(MapPos, CardinalDirection)> = Vec::new();
+    let mut this_frame_selection: Vec<(MapPos, CardinalDirection, Vec3)> = Vec::new();
 
     for source in tile_ray.iter() {
         if let Some(intersections) = source.get_intersections() {
@@ -125,6 +126,7 @@ fn update_tile_cursor(
                         this_frame_selection.push((
                             MapPos::new(chunk_identifier.position, tile_pos.clone()),
                             direction,
+                            intersection.position(),
                         ));
                     }
                     Err(e) => {
@@ -140,16 +142,20 @@ fn update_tile_cursor(
     }
 
     let mut already_existing_cursors: Vec<MapPos> = Vec::new();
-    for (entity, cursor) in tile_cursor_q.iter() {
-        if this_frame_selection.contains(&(cursor.pos, cursor.tile_edge)) {
+    for (entity, mut cursor) in tile_cursor_q.iter_mut() {
+        if let Some((_, edge, mouse)) = this_frame_selection
+            .iter()
+            .find(|(pos, _, _)| pos == &cursor.pos)
+        {
             already_existing_cursors.push(cursor.pos);
+            cursor.mouse_pos = mouse.clone();
+            cursor.tile_edge = edge.clone();
         } else {
-            // TODO: Don't despawn if
             commands.entity(entity).despawn();
         }
     }
 
-    for (selected_tile, tile_edge) in this_frame_selection.iter() {
+    for (selected_tile, tile_edge, mouse_intersection) in this_frame_selection.iter() {
         if already_existing_cursors.contains(selected_tile) {
             // Update edge
         } else {
@@ -173,6 +179,7 @@ fn update_tile_cursor(
                 TileCursor {
                     pos: selected_tile.clone(),
                     tile_edge: tile_edge.clone(),
+                    mouse_pos: mouse_intersection.clone(),
                 },
                 NotShadowCaster,
             ));
