@@ -7,6 +7,7 @@ use bevy::utils::HashMap;
 
 use crate::game::walls::build_and_spawn_wall_entity_with_mesh_and_material;
 use crate::load::{DebugMaterials, DebugMeshes};
+use crate::prelude::interaction::BuildingRotation;
 use crate::prelude::loaded_chunks::LoadedChunks;
 use crate::prelude::tile_cursor::TileCursor;
 use crate::prelude::{ActiveTool, CardinalDirection, MapPos};
@@ -20,7 +21,7 @@ impl Plugin for InteractionPreviewPlugin {
 }
 
 struct LastFramePreviewDataCell {
-    tile_edge: CardinalDirection,
+    rotation: CardinalDirection,
     tool: ActiveTool,
     preview_entity: Entity,
 }
@@ -34,6 +35,7 @@ fn update_preview(
     mut commands: Commands,
     loaded_chunk_data: Res<LoadedChunks>,
     active_tool: Res<ActiveTool>,
+    building_rotation: Res<BuildingRotation>,
     cursor_query: Query<&TileCursor>,
     debug_materials: Res<DebugMaterials>,
     debug_meshes: Res<DebugMeshes>,
@@ -44,7 +46,7 @@ fn update_preview(
         still_highlighted_positions.push(&cursor.pos);
         if let Some(existing_preview) = last_frame_preview_data.previews.get(&cursor.pos) {
             if existing_preview.tool == *active_tool
-                && existing_preview.tile_edge == cursor.tile_edge
+                && existing_preview.rotation == building_rotation.direction
             {
                 continue;
             } else {
@@ -74,7 +76,7 @@ fn update_preview(
                 let entity = build_and_spawn_wall_entity_with_mesh_and_material(
                     &mut commands,
                     tile,
-                    cursor.tile_edge,
+                    building_rotation.direction,
                     debug_meshes.wall.clone(),
                     debug_materials.preview_ghost.clone(),
                 );
@@ -82,7 +84,7 @@ fn update_preview(
                 last_frame_preview_data.previews.insert(
                     cursor.pos,
                     LastFramePreviewDataCell {
-                        tile_edge: cursor.tile_edge,
+                        rotation: building_rotation.direction,
                         tool: active_tool.clone(),
                         preview_entity: entity,
                     },

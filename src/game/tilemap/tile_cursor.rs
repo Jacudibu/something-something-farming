@@ -18,10 +18,15 @@ impl Plugin for TileCursorPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             First,
-            update_tile_cursor
-                .after(crate::game::update_cursor_pos)
-                .run_if(in_state(GameState::Playing))
-                .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
+            (
+                update_mouse_cursor
+                    .run_if(in_state(GameState::Playing))
+                    .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
+                update_tile_cursor
+                    .after(update_mouse_cursor)
+                    .run_if(in_state(GameState::Playing))
+                    .run_if(in_state(MouseCursorOverUiState::NotOverUI)),
+            ),
         );
     }
 }
@@ -29,8 +34,15 @@ impl Plugin for TileCursorPlugin {
 #[derive(Component, Debug)]
 pub struct TileCursor {
     pub pos: MapPos,
-    pub tile_edge: CardinalDirection,
+}
+
+/// An optional resource detailing which tile the mouse cursor is hovering over.
+#[derive(Resource, Debug)]
+pub struct MouseCursorOnTile {
+    pub tile_pos: MapPos,
     pub mouse_pos: Vec3,
+    pub sub_tile: IVec2,
+    pub tile_edge: CardinalDirection,
 }
 
 impl TileCursor {
@@ -104,18 +116,12 @@ fn intersection_to_tile_edge(intersection_pos: Vec3) -> CardinalDirection {
     };
 }
 
-fn update_tile_cursor(
+fn update_mouse_cursor(
     mut commands: Commands,
-    mut sprite_params: Sprite3dParams,
-    assets: Res<SpriteAssets>,
     tile_ray: Query<&RaycastSource<TileRaycastSet>>,
     ray_targets: Query<(&TilePos, &Parent), With<RaycastMesh<TileRaycastSet>>>,
     chunk_parents: Query<&ChunkIdentifier>,
-    mut tile_cursor_q: Query<(Entity, &mut TileCursor)>,
 ) {
-    // TODO: Reconsider having only one "Main Cursor" (mouse) - All other cursors should be something else and spawned from that main cursor
-    let mut this_frame_selection: Vec<(MapPos, CardinalDirection, Vec3)> = Vec::new();
-
     for source in tile_ray.iter() {
         if let Some(intersections) = source.get_intersections() {
             for (entity, intersection) in intersections {
@@ -123,42 +129,49 @@ fn update_tile_cursor(
                 match ray_targets.get(entity.clone()) {
                     Ok((tile_pos, parent)) => {
                         let chunk_identifier = chunk_parents.get(parent.get()).unwrap();
-                        this_frame_selection.push((
-                            MapPos::new(chunk_identifier.position, tile_pos.clone()),
-                            direction,
-                            intersection.position(),
-                        ));
+                        commands.insert_resource(MouseCursorOnTile {
+                            tile_pos: MapPos::new(chunk_identifier.position, tile_pos.clone()),
+                            sub_tile: IVec2::ZERO,
+                            mouse_pos: intersection.position(),
+                            tile_edge: direction,
+                        });
+                        return;
                     }
                     Err(e) => {
-                        error!("Unexpected error when raycasting for tile cursor: {}", e)
+                        error!("Unexpected error when raycasting for mouse cursor: {}", e)
                     }
                 }
             }
         }
     }
 
-    if this_frame_selection.is_empty() {
+    commands.remove_resource::<MouseCursorOnTile>()
+}
+
+fn update_tile_cursor(
+    mut commands: Commands,
+    mut sprite_params: Sprite3dParams,
+    assets: Res<SpriteAssets>,
+    mouse_cursor: Option<Res<MouseCursorOnTile>>,
+    tile_cursor_q: Query<(Entity, &TileCursor)>,
+) {
+    let Some(mouse_cursor) = mouse_cursor else {
         return;
-    }
+    };
+
+    let this_frame_selection: Vec<MapPos> = vec![mouse_cursor.tile_pos];
 
     let mut already_existing_cursors: Vec<MapPos> = Vec::new();
-    for (entity, mut cursor) in tile_cursor_q.iter_mut() {
-        if let Some((_, edge, mouse)) = this_frame_selection
-            .iter()
-            .find(|(pos, _, _)| pos == &cursor.pos)
-        {
+    for (entity, cursor) in tile_cursor_q.iter() {
+        if this_frame_selection.iter().any(|pos| pos == &cursor.pos) {
             already_existing_cursors.push(cursor.pos);
-            cursor.mouse_pos = mouse.clone();
-            cursor.tile_edge = edge.clone();
         } else {
             commands.entity(entity).despawn();
         }
     }
 
-    for (selected_tile, tile_edge, mouse_intersection) in this_frame_selection.iter() {
-        if already_existing_cursors.contains(selected_tile) {
-            // Update edge
-        } else {
+    for selected_tile in this_frame_selection.iter() {
+        if !already_existing_cursors.contains(selected_tile) {
             commands.spawn((
                 Name::new(format!(
                     "Tile Cursor {} > {}",
@@ -178,8 +191,6 @@ fn update_tile_cursor(
                 .bundle(&mut sprite_params),
                 TileCursor {
                     pos: selected_tile.clone(),
-                    tile_edge: tile_edge.clone(),
-                    mouse_pos: mouse_intersection.clone(),
                 },
                 NotShadowCaster,
             ));

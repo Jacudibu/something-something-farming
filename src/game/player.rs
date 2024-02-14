@@ -111,6 +111,7 @@ pub enum PlayerAction {
     Left,
     Right,
     Interact,
+    Rotate,
     Hotbar1,
     Hotbar2,
     Hotbar3,
@@ -140,6 +141,8 @@ pub fn default_input_map() -> InputMap<PlayerAction> {
     // input_map.insert(UserInput::VirtualDPad(VirtualDPad::dpad()), Action::Move);
 
     input_map.insert(MouseButton::Left, PlayerAction::Interact);
+
+    input_map.insert(KeyCode::R, PlayerAction::Rotate);
 
     input_map.insert(KeyCode::Key1, PlayerAction::Hotbar1);
     input_map.insert(KeyCode::Key2, PlayerAction::Hotbar2);

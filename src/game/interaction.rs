@@ -22,6 +22,9 @@ pub struct InteractionPlugin;
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ActiveTool::default())
+            .insert_resource(BuildingRotation {
+                direction: CardinalDirection::North,
+            })
             .add_event::<CropDestroyedEvent>()
             .add_event::<CropHarvestedEvent>()
             .add_event::<TileInteractionEvent>()
@@ -89,10 +92,15 @@ fn select_active_tool(
     }
 }
 
+#[derive(Resource)]
+pub struct BuildingRotation {
+    pub direction: CardinalDirection,
+}
+
 #[derive(Event, Debug)]
 struct TileInteractionEvent {
     pub pos: MapPos,
-    pub tile_edge: CardinalDirection,
+    pub rotation: CardinalDirection,
     pub used_tool: ActiveTool,
 }
 
@@ -109,6 +117,7 @@ struct CropHarvestedEvent {
 
 fn detect_tile_interactions(
     active_tool: Res<ActiveTool>,
+    building_rotation: Res<BuildingRotation>,
     action_state: Query<&ActionState<PlayerAction>>,
     tile_cursor: Query<&TileCursor>,
     mut previously_interacted_tile: Local<Option<TilePos>>,
@@ -143,8 +152,8 @@ fn detect_tile_interactions(
         // TODO: in case we ever have regularly happening AoE interaction events, batch_send will be more performant
         tile_interaction_events.send(TileInteractionEvent {
             pos: cursor.pos.clone(),
-            tile_edge: cursor.tile_edge,
             used_tool: active_tool.clone(),
+            rotation: building_rotation.direction,
         });
     }
 }
@@ -226,11 +235,11 @@ fn process_tile_interactions(
 
                 let chunk = world_data.chunks.get_mut(&event.pos.chunk).unwrap();
                 let tile = chunk.at_pos_mut(&event.pos.tile);
-                if tile.walls.at(event.tile_edge) {
+                if tile.walls.at(event.rotation) {
                     continue;
                 }
 
-                tile.walls.set_at(event.tile_edge, true);
+                tile.walls.set_at(event.rotation, true);
 
                 // TODO: Move graphic this in an event
                 if let Some(loaded_data) = loaded_chunk_data.chunks.get_mut(&event.pos.chunk) {
@@ -238,7 +247,7 @@ fn process_tile_interactions(
                         build_and_spawn_wall_entity(
                             &mut commands,
                             tile,
-                            event.tile_edge,
+                            event.rotation,
                             &debug_meshes,
                             &debug_materials,
                         );

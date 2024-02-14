@@ -1,11 +1,11 @@
 use bevy::math::{Quat, Vec2, Vec3};
 use bevy::prelude::{
     default, in_state, App, Color, Condition, GizmoConfig, Gizmos, GlobalTransform,
-    IntoSystemConfigs, Plugin, Query, States, Update, With,
+    IntoSystemConfigs, Plugin, Query, Res, States, Update, With,
 };
 
 use crate::prelude::debug_actions::DebugOverlayState;
-use crate::prelude::tile_cursor::TileCursor;
+use crate::prelude::tile_cursor::MouseCursorOnTile;
 use crate::prelude::TilePos;
 
 pub struct TileGridGizmo;
@@ -71,77 +71,79 @@ fn get_start_color(row: i8) -> Color {
     Color::rgba(0.0, 0.0, 0.0, alpha)
 }
 
-fn draw_subgrid(mut gizmos: Gizmos, query: Query<&TileCursor>) {
-    for cursor in query.iter() {
-        let x_mouse_offset = {
-            let x = (cursor.mouse_pos.x + 0.5).fract();
-            if x > 0.0 {
-                x
-            } else {
-                x + 1.0
-            }
-        };
-        let z_mouse_offset = {
-            let z = (cursor.mouse_pos.z + 0.5).fract();
-            if z > 0.0 {
-                z
-            } else {
-                z + 1.0
-            }
-        };
+fn draw_subgrid(mut gizmos: Gizmos, mouse_cursor: Option<Res<MouseCursorOnTile>>) {
+    let Some(cursor) = mouse_cursor else {
+        return;
+    };
 
-        let sub_x = (x_mouse_offset / SUBGRID_SIZE).floor();
-        let sub_z = (z_mouse_offset / SUBGRID_SIZE).floor();
+    let x_mouse_offset = {
+        let x = (cursor.mouse_pos.x + 0.5).fract();
+        if x > 0.0 {
+            x
+        } else {
+            x + 1.0
+        }
+    };
+    let z_mouse_offset = {
+        let z = (cursor.mouse_pos.z + 0.5).fract();
+        if z > 0.0 {
+            z
+        } else {
+            z + 1.0
+        }
+    };
 
-        let subgrid_x = sub_x * SUBGRID_SIZE;
-        let subgrid_z = sub_z * SUBGRID_SIZE;
+    let sub_x = (x_mouse_offset / SUBGRID_SIZE).floor();
+    let sub_z = (z_mouse_offset / SUBGRID_SIZE).floor();
 
-        let x_subgrid_offset = x_mouse_offset - subgrid_x;
-        let z_subgrid_offset = z_mouse_offset - subgrid_z;
+    let subgrid_x = sub_x * SUBGRID_SIZE;
+    let subgrid_z = sub_z * SUBGRID_SIZE;
 
-        let grid_anchor =
-            cursor.pos.world_pos(0.0) + Vec3::new(subgrid_x - 0.50, 0.0, subgrid_z - 0.50);
+    let x_subgrid_offset = x_mouse_offset - subgrid_x;
+    let z_subgrid_offset = z_mouse_offset - subgrid_z;
 
-        for row in -SUBGRID_RADIUS..SUBGRID_RADIUS {
-            let line_origin = row as f32 * SUBGRID_SIZE;
-            let line_length = (SUBGRID_RADIUS - row.abs()) as f32 * SUBGRID_SIZE;
-            let start_color = get_start_color(row);
+    let grid_anchor =
+        cursor.tile_pos.world_pos(0.0) + Vec3::new(subgrid_x - 0.50, 0.0, subgrid_z - 0.50);
 
-            // Horizontal
-            if (row + sub_z as i8) % SUB_CELLS_PER_TILE != 0 {
-                let pos = grid_anchor + Vec3::new(x_subgrid_offset, 0.0, line_origin);
-                gizmos.line_gradient(
-                    pos,
-                    pos + Vec3::new(line_length, 0.0, 0.0),
-                    start_color,
-                    SUBGRID_COLOR_MIN,
-                );
+    for row in -SUBGRID_RADIUS..SUBGRID_RADIUS {
+        let line_origin = row as f32 * SUBGRID_SIZE;
+        let line_length = (SUBGRID_RADIUS - row.abs()) as f32 * SUBGRID_SIZE;
+        let start_color = get_start_color(row);
 
-                gizmos.line_gradient(
-                    pos,
-                    pos + Vec3::new(-line_length, 0.0, 0.0),
-                    start_color,
-                    SUBGRID_COLOR_MIN,
-                );
-            }
+        // Horizontal
+        if (row + sub_z as i8) % SUB_CELLS_PER_TILE != 0 {
+            let pos = grid_anchor + Vec3::new(x_subgrid_offset, 0.0, line_origin);
+            gizmos.line_gradient(
+                pos,
+                pos + Vec3::new(line_length, 0.0, 0.0),
+                start_color,
+                SUBGRID_COLOR_MIN,
+            );
 
-            // Vertical
-            if (row + sub_x as i8) % SUB_CELLS_PER_TILE != 0 {
-                let pos = grid_anchor + Vec3::new(line_origin, 0.0, z_subgrid_offset);
-                gizmos.line_gradient(
-                    pos,
-                    pos + Vec3::new(0.0, 0.0, line_length),
-                    start_color,
-                    SUBGRID_COLOR_MIN,
-                );
+            gizmos.line_gradient(
+                pos,
+                pos + Vec3::new(-line_length, 0.0, 0.0),
+                start_color,
+                SUBGRID_COLOR_MIN,
+            );
+        }
 
-                gizmos.line_gradient(
-                    pos,
-                    pos + Vec3::new(0.0, 0.0, -line_length),
-                    start_color,
-                    SUBGRID_COLOR_MIN,
-                );
-            }
+        // Vertical
+        if (row + sub_x as i8) % SUB_CELLS_PER_TILE != 0 {
+            let pos = grid_anchor + Vec3::new(line_origin, 0.0, z_subgrid_offset);
+            gizmos.line_gradient(
+                pos,
+                pos + Vec3::new(0.0, 0.0, line_length),
+                start_color,
+                SUBGRID_COLOR_MIN,
+            );
+
+            gizmos.line_gradient(
+                pos,
+                pos + Vec3::new(0.0, 0.0, -line_length),
+                start_color,
+                SUBGRID_COLOR_MIN,
+            );
         }
     }
 }
