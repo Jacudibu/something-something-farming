@@ -3,7 +3,10 @@ use bevy::core::Name;
 use bevy::log::info;
 use bevy::math::{EulerRot, Quat};
 use bevy::pbr::{CascadeShadowConfigBuilder, DirectionalLight, DirectionalLightBundle};
-use bevy::prelude::{default, Commands, OnEnter, Plugin, Query, Res, Transform, Update, With};
+use bevy::prelude::{
+    default, in_state, Commands, IntoSystemConfigs, OnEnter, Plugin, Query, Res, Transform, Update,
+    With,
+};
 
 use crate::prelude::SimulationDate;
 use crate::GameState;
@@ -12,7 +15,10 @@ pub struct LightPlugin;
 impl Plugin for LightPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Playing), init)
-            .add_systems(Update, update_sun_rotation);
+            .add_systems(
+                Update,
+                update_sun_rotation.run_if(in_state(GameState::Playing)),
+            );
     }
 }
 
