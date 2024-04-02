@@ -18,6 +18,7 @@ const SPEED: f32 = 50.0;
 const SUPERSPEED_MULTIPLIER: f32 = 3.0;
 
 pub struct CameraPlugin;
+
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<CameraAction>::default())
@@ -35,8 +36,10 @@ impl Plugin for CameraPlugin {
 
 #[derive(Component)]
 pub struct CameraFocus {}
+
 #[derive(Component)]
 pub struct MainCameraParent {}
+
 #[derive(Component)]
 pub struct MainCamera {}
 
@@ -101,9 +104,9 @@ fn move_camera(
         Ok(camera_focus) => camera_focus.translation - camera_transform.translation,
         Err(QuerySingleError::NoEntities(_)) => {
             let mut dir;
-            if action_state.pressed(CameraAction::Move) {
+            if action_state.pressed(&CameraAction::Move) {
                 dir = action_state
-                    .clamped_axis_pair(CameraAction::Move)
+                    .clamped_axis_pair(&CameraAction::Move)
                     .unwrap()
                     .xy()
                     .extend(0.0);
@@ -111,21 +114,21 @@ fn move_camera(
                 dir = Vec3::ZERO;
             }
 
-            if action_state.pressed(CameraAction::Up) {
+            if action_state.pressed(&CameraAction::Up) {
                 dir.z -= 1.0;
             }
-            if action_state.pressed(CameraAction::Down) {
+            if action_state.pressed(&CameraAction::Down) {
                 dir.z += 1.0;
             }
-            if action_state.pressed(CameraAction::Right) {
+            if action_state.pressed(&CameraAction::Right) {
                 dir.x += 1.0;
             }
-            if action_state.pressed(CameraAction::Left) {
+            if action_state.pressed(&CameraAction::Left) {
                 dir.x -= 1.0;
             }
 
             let speed = {
-                if action_state.pressed(CameraAction::Superspeed) {
+                if action_state.pressed(&CameraAction::Superspeed) {
                     SPEED * SUPERSPEED_MULTIPLIER
                 } else {
                     SPEED
@@ -149,9 +152,9 @@ fn move_camera(
 
     camera_transform.translation += delta;
 
-    let rotation_dir: Option<f32> = if action_state.pressed(CameraAction::RotateLeft) {
+    let rotation_dir: Option<f32> = if action_state.pressed(&CameraAction::RotateLeft) {
         Some(-1.0)
-    } else if action_state.pressed(CameraAction::RotateRight) {
+    } else if action_state.pressed(&CameraAction::RotateRight) {
         Some(1.0)
     } else {
         None
@@ -185,9 +188,9 @@ fn zoom_camera(
 }
 
 fn zoom_direction(action_state: &ActionState<CameraAction>, current_scaling: f32) -> Option<f32> {
-    if action_state.pressed(CameraAction::ZoomOut) && current_scaling < MAX_ZOOM {
+    if action_state.pressed(&CameraAction::ZoomOut) && current_scaling < MAX_ZOOM {
         Some(1.0)
-    } else if action_state.pressed(CameraAction::ZoomIn) && current_scaling > MIN_ZOOM {
+    } else if action_state.pressed(&CameraAction::ZoomIn) && current_scaling > MIN_ZOOM {
         Some(-1.0)
     } else {
         None
@@ -196,42 +199,42 @@ fn zoom_direction(action_state: &ActionState<CameraAction>, current_scaling: f32
 
 fn default_input_map_camera() -> InputMap<CameraAction> {
     let mut input_map = InputMap::default();
-    input_map.insert(MouseWheelDirection::Up, CameraAction::ZoomIn);
-    input_map.insert(MouseWheelDirection::Down, CameraAction::ZoomOut);
+    input_map.insert(CameraAction::ZoomIn, MouseWheelDirection::Up);
+    input_map.insert(CameraAction::ZoomOut, MouseWheelDirection::Down);
 
     input_map.insert(
+        CameraAction::Move,
         UserInput::Single(InputKind::DualAxis(DualAxis::left_stick().with_deadzone(
             DeadZoneShape::Ellipse {
                 radius_x: 0.1,
                 radius_y: 0.1,
             },
         ))),
-        CameraAction::Move,
     );
     // input_map.insert(UserInput::VirtualDPad(VirtualDPad::wasd()), Action::Move);
     // input_map.insert(UserInput::VirtualDPad(VirtualDPad::arrow_keys()), Action::Move);
     // input_map.insert(UserInput::VirtualDPad(VirtualDPad::dpad()), Action::Move);
 
-    input_map.insert(KeyCode::ShiftLeft, CameraAction::Superspeed);
+    input_map.insert(CameraAction::Superspeed, KeyCode::ShiftLeft);
 
-    input_map.insert(KeyCode::Up, CameraAction::Up);
-    input_map.insert(KeyCode::W, CameraAction::Up);
-    input_map.insert(GamepadButtonType::DPadUp, CameraAction::Up);
+    input_map.insert(CameraAction::Up, KeyCode::ArrowUp);
+    input_map.insert(CameraAction::Up, KeyCode::KeyW);
+    input_map.insert(CameraAction::Up, GamepadButtonType::DPadUp);
 
-    input_map.insert(KeyCode::Down, CameraAction::Down);
-    input_map.insert(KeyCode::S, CameraAction::Down);
-    input_map.insert(GamepadButtonType::DPadDown, CameraAction::Down);
+    input_map.insert(CameraAction::Down, KeyCode::ArrowDown);
+    input_map.insert(CameraAction::Down, KeyCode::KeyS);
+    input_map.insert(CameraAction::Down, GamepadButtonType::DPadDown);
 
-    input_map.insert(KeyCode::Left, CameraAction::Left);
-    input_map.insert(KeyCode::A, CameraAction::Left);
-    input_map.insert(GamepadButtonType::DPadLeft, CameraAction::Left);
+    input_map.insert(CameraAction::Left, KeyCode::ArrowLeft);
+    input_map.insert(CameraAction::Left, KeyCode::KeyA);
+    input_map.insert(CameraAction::Left, GamepadButtonType::DPadLeft);
 
-    input_map.insert(KeyCode::Right, CameraAction::Right);
-    input_map.insert(KeyCode::D, CameraAction::Right);
-    input_map.insert(GamepadButtonType::DPadRight, CameraAction::Right);
+    input_map.insert(CameraAction::Right, KeyCode::ArrowRight);
+    input_map.insert(CameraAction::Right, KeyCode::KeyD);
+    input_map.insert(CameraAction::Right, GamepadButtonType::DPadRight);
 
-    input_map.insert(KeyCode::Q, CameraAction::RotateLeft);
-    input_map.insert(KeyCode::E, CameraAction::RotateRight);
+    input_map.insert(CameraAction::RotateLeft, KeyCode::KeyQ);
+    input_map.insert(CameraAction::RotateRight, KeyCode::KeyE);
 
     input_map
 }

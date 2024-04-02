@@ -8,6 +8,7 @@ use data::prelude::{AllItems, CropDefinition, CropId, PropDefinition, PropId};
 use crate::GameState;
 
 pub struct LoadingPlugin;
+
 impl Plugin for LoadingPlugin {
     fn build(&self, app: &mut App) {
         app.add_loading_state(
@@ -62,12 +63,12 @@ impl FromWorld for DebugMeshes {
             .expect("Failed to get Assets<Mesh>");
 
         DebugMeshes {
-            tile: mesh_assets.add(shape::Plane::from_size(1.0).into()),
-            wall: mesh_assets.add(shape::Box::new(1.0, 2.0, 0.1).into()),
-            torch: mesh_assets.add(shape::Box::new(0.1, 0.3, 0.1).into()),
-            wall_segment_front: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 2.0)).into()),
-            wall_segment_top: mesh_assets.add(shape::Quad::new(Vec2::new(1.0, 0.1)).into()),
-            wall_segment_side: mesh_assets.add(shape::Quad::new(Vec2::new(0.1, 2.0)).into()),
+            tile: mesh_assets.add(Rectangle::new(1.0, 1.0).into()),
+            wall: mesh_assets.add(Cuboid::new(1.0, 2.0, 0.1).into()),
+            torch: mesh_assets.add(Cuboid::new(0.1, 0.3, 0.1).into()),
+            wall_segment_front: mesh_assets.add(Rectangle::new(1.0, 2.0).into()),
+            wall_segment_top: mesh_assets.add(Rectangle::new(1.0, 0.1).into()),
+            wall_segment_side: mesh_assets.add(Rectangle::new(0.1, 2.0).into()),
         }
     }
 }

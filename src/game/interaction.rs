@@ -19,6 +19,7 @@ use crate::prelude::{
 };
 
 pub struct InteractionPlugin;
+
 impl Plugin for InteractionPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(ActiveTool::default())
@@ -71,23 +72,23 @@ fn select_active_tool(
         return;
     }
     let action_state = action_state.unwrap();
-    if action_state.just_pressed(PlayerAction::Hotbar1) {
+    if action_state.just_pressed(&PlayerAction::Hotbar1) {
         *active_tool = ActiveTool::Item(ItemId::Tool {
             tool_id: ToolId::Hoe,
         });
-    } else if action_state.just_pressed(PlayerAction::Hotbar2) {
+    } else if action_state.just_pressed(&PlayerAction::Hotbar2) {
         *active_tool = ActiveTool::Item(ItemId::Tool {
             tool_id: ToolId::Pickaxe,
         });
-    } else if action_state.just_pressed(PlayerAction::Hotbar3) {
+    } else if action_state.just_pressed(&PlayerAction::Hotbar3) {
         *active_tool = ActiveTool::Item(ItemId::Tool {
             tool_id: ToolId::Scythe,
         });
-    } else if action_state.just_pressed(PlayerAction::Hotbar4) {
+    } else if action_state.just_pressed(&PlayerAction::Hotbar4) {
         *active_tool = ActiveTool::Item(ItemId::Seed { crop_id: CropId(0) });
-    } else if action_state.just_pressed(PlayerAction::Hotbar5) {
+    } else if action_state.just_pressed(&PlayerAction::Hotbar5) {
         *active_tool = ActiveTool::Item(ItemId::Seed { crop_id: CropId(1) });
-    } else if action_state.just_pressed(PlayerAction::Hotbar6) {
+    } else if action_state.just_pressed(&PlayerAction::Hotbar6) {
         *active_tool = ActiveTool::Wall;
     }
 }
@@ -102,7 +103,7 @@ fn rotate_building(
         return;
     }
     let action_state = action_state.unwrap();
-    if action_state.just_pressed(PlayerAction::Rotate) {
+    if action_state.just_pressed(&PlayerAction::Rotate) {
         rotation.direction = match rotation.direction {
             CardinalDirection::North => CardinalDirection::East,
             CardinalDirection::East => CardinalDirection::South,
@@ -150,11 +151,11 @@ fn detect_tile_interactions(
     }
     let action_state = action_state.unwrap();
 
-    if !action_state.pressed(PlayerAction::Interact) {
+    if !action_state.pressed(&PlayerAction::Interact) {
         return;
     }
 
-    if action_state.just_pressed(PlayerAction::Interact) {
+    if action_state.just_pressed(&PlayerAction::Interact) {
         *previously_interacted_tile = None;
     }
 

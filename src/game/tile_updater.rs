@@ -9,6 +9,7 @@ use crate::prelude::{MapPos, SimulationTime, WorldData};
 use crate::GameState;
 
 pub struct TileUpdaterPlugin;
+
 impl Plugin for TileUpdaterPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, update_tiles.run_if(in_state(GameState::Playing)));
